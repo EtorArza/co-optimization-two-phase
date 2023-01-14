@@ -20,13 +20,15 @@ if __name__ == "__main__":
     
     os.chdir("other_repos/evogym/examples")
     run_ga(
+        experiment_name = "test_ga",
+        res_file_path = "results/evogym/data/test_result.txt",
+        env_name = "Walker-v0",
+        seed = 2,
         max_evaluations = 250,
         train_iters = 1000,
         num_steps = 128,
-        env_name = "Walker-v0",
         pop_size = 25,
         structure_shape = (5,5),
-        experiment_name = "test_ga",
         num_cores = 1,
     )
     os.chdir("../../..")
