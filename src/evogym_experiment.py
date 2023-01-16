@@ -5,6 +5,7 @@ import numpy as np
 from ga.run import run_ga
 import os
 from NestedOptimization import NestedOptimization
+from multiprocessing.managers import BaseManager
 
 def new_argparse():
     print("Yolo")
@@ -18,17 +19,19 @@ if __name__ == "__main__":
     seed = 0
     random.seed(seed)
     np.random.seed(seed)
-    no = NestedOptimization("results/evogym/data/test_results.txt")
     os.chdir("other_repos/evogym/examples")
+    BaseManager.register('NestedOptimization', NestedOptimization)
+    manager = BaseManager()
+    manager.start()
+    no = manager.NestedOptimization("../../../results/evogym/data/test_results.txt")
     run_ga(
         experiment_name = "test_ga",
-        res_file_path = "results/evogym/data/test_result.txt",
         env_name = "Walker-v0",
         seed = 2,
         max_evaluations = 250, # Number of morphologies evaluated
-        train_iters = 1000,    # Number of iterations for training each morphology
+        train_iters = 200,    # Number of iterations for training each morphology
         num_steps = 128,       # Number of steps in each iteration
-        pop_size = 25,          # Population size of the morphologies
+        pop_size = 4,          # Population size of the morphologies
         structure_shape = (5,5),
         num_cores = 1,
         no = no,
