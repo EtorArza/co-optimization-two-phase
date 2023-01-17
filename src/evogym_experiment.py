@@ -29,9 +29,9 @@ if __name__ == "__main__":
         env_name = "Walker-v0",
         seed = 2,
         max_evaluations = 250, # Number of morphologies evaluated
-        train_iters = 1000,    # Number of iterations for training each morphology
+        train_iters = 100,    # Number of iterations for training each morphology
         num_steps = 128,       # Number of steps in each iteration
-        pop_size = 25,          # Population size of the morphologies
+        pop_size = 4,          # Population size of the morphologies
         structure_shape = (5,5),
         num_cores = 5,
         no = no,
