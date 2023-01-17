@@ -1,5 +1,6 @@
 import time
 from threading import Thread, Lock
+import numpy as np
 
 class stopwatch:
     def __init__(self):
@@ -30,45 +31,54 @@ class NestedOptimization:
     steps = 0
     iterations = 0
     evaluations = 0
-    result_file_path = None
     write_header = True
-    _last_saved = stopwatch()
-    SAVE_EVERY = 20.0
+    is_first_step_this_inner = True
+    _last_saved_sw = stopwatch()
+    SAVE_EVERY = 1.0
     mutex = Lock()
 
 
-    def __init__(self, result_file_path):
+    def __init__(self, result_file_path, mode):
         self.result_file_path = result_file_path
+        self.mode = mode
+        assert mode in ("save_all", "standard")
         self.reset()
 
     def reset(self):
         self.sw.reset()
-        self._last_saved.reset()
+        self._last_saved_sw.reset()
         self.f_best = float("-inf")
         self.f_current = None
         self.steps = 0
         self.iterations = 0
         self.evaluations = 0
+        is_first_step_this_inner = True
 
 
     def next_step(self, current_f):
         self.steps += 1
         self.f_current = current_f
-        # print("next_step()", self, current_f)
+        if self.mode == "save_all":
+            if self._last_saved_sw.get_time() > self.SAVE_EVERY or self.is_first_step_this_inner:
+                self.write_to_file()
+                self._last_saved_sw.reset()
+                self.is_first_step_this_inner = False
+        print("next_step()", self, self.steps, current_f)
 
     def next_inner(self, f_inner=None):
         self.iterations += 1
         if not f_inner is None:
-            self.f_current = f_inner
-        self.check_if_best(self.f_current)
-        if self._last_saved.get_time() > self.SAVE_EVERY or self.iterations==1:
+            self.check_if_best(f_inner)
+        if self._last_saved_sw.get_time() > self.SAVE_EVERY or self.mode == "save_all":
             self.write_to_file()
-            self._last_saved.reset()
+            self._last_saved_sw.reset()
+        self.is_first_step_this_inner = True
         print("next_inner()", self, self.f_best)
 
 
     def next_outer(self):
         self.evaluations += 1
+        self.is_first_step_this_inner = True
         print("next_outer()", self, self.f_best)
         self.check_if_best(self.f_current)
 
