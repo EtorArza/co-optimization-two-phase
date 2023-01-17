@@ -14,3 +14,4 @@ remove_exp_with_less_lines_than.sh
 data/local/**
 videos/**
 other_RL/meta_world_and_garage/data/local/experiment/**
+results/**
