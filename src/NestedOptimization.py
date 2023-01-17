@@ -1,4 +1,5 @@
 import time
+from threading import Thread, Lock
 
 class stopwatch:
     def __init__(self):
@@ -33,6 +34,8 @@ class NestedOptimization:
     write_header = True
     _last_saved = stopwatch()
     SAVE_EVERY = 20.0
+    mutex = Lock()
+
 
     def __init__(self, result_file_path):
         self.result_file_path = result_file_path
@@ -76,8 +79,13 @@ class NestedOptimization:
             print("best_found!")
     
     def write_to_file(self):
-        with open(self.result_file_path, "a") as f:
-            if self.write_header:
-                f.write("f,time,steps,iterations,evaluations\n")
-                self.write_header = False
-            f.write(f"{self.f_best}, {self.sw.get_time()}, {self.steps}, {self.iterations}, {self.evaluations}\n")
+        self.mutex.acquire()
+        try:
+            with open(self.result_file_path, "a") as f:
+                if self.write_header:
+                    f.write("f,time,steps,iterations,evaluations\n")
+                    self.write_header = False
+                f.write(f"{self.f_best}, {self.sw.get_time()}, {self.steps}, {self.iterations}, {self.evaluations}\n")
+        finally:
+            self.mutex.release()
+
