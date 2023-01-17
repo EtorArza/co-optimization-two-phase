@@ -23,7 +23,9 @@ if __name__ == "__main__":
     BaseManager.register('NestedOptimization', NestedOptimization)
     manager = BaseManager()
     manager.start()
-    no = manager.NestedOptimization("../../../results/evogym/data/test_results.txt")
+    no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "save_all")
+
+    # no = manager.NestedOptimization("../../../results/evogym/data/test_results.txt", "save_all")
     run_ga(
         experiment_name = "test_ga",
         env_name = "Walker-v0",
@@ -31,9 +33,9 @@ if __name__ == "__main__":
         max_evaluations = 250, # Number of morphologies evaluated
         train_iters = 100,    # Number of iterations for training each morphology
         num_steps = 128,       # Number of steps in each iteration
-        pop_size = 4,          # Population size of the morphologies
+        pop_size = 25,          # Population size of the morphologies
         structure_shape = (5,5),
-        num_cores = 5,
+        num_cores = 1,
         no = no,
     )
     #7.792172 128128
