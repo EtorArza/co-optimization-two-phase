@@ -49,7 +49,7 @@ elif sys.argv[1] == "--plot":
 
     print("Plot fitness in first 30 iterations in ppo on evogym...", end="") 
     fig, ax = plt.subplots(figsize=(4.5, 3))
-    sub_df = df.query("evaluations == 0 & iterations < 30 & level == 0").groupby("iterations")["f"].plot()
+    sub_df = df.query("evaluation == 0 & iteration < 30 & level == 0").groupby("iteration")["f"].plot()
     plt.yscale("symlog")
     plt.xlabel("step")
     plt.ylabel("cumulative reward")
@@ -64,9 +64,9 @@ elif sys.argv[1] == "--plot":
 
     print("Plot fitness first 4 evaluations in ppo on evogym...", end="")
     fig, ax = plt.subplots(figsize=(4.5, 3))
-    grouped = df.query("level == 1 & f.notna()").groupby("evaluations")
+    grouped = df.query("level == 1 & f.notna()").groupby("evaluation")
     for key in grouped.groups.keys():
-        plt.plot(grouped.get_group(key)["iterations"], grouped.get_group(key)["f"])
+        plt.plot(grouped.get_group(key)["iteration"], grouped.get_group(key)["f"])
     plt.xlabel("iteration")
     plt.ylabel("objective value")
     plt.title("Evaluation of first four morphologies")

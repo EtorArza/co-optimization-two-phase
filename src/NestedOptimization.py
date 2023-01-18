@@ -30,9 +30,9 @@ class NestedOptimization:
     sw = stopwatch()
     f_observed = float("-inf")
     f_best = float("-inf")
-    steps = 0
-    iterations = 0
-    evaluations = 0
+    step = 0
+    iteration = 0
+    evaluation = 0
     write_header = True
     _last_saved_sw = stopwatch()
     SAVE_EVERY = -500.0
@@ -52,22 +52,22 @@ class NestedOptimization:
         self.f_best = float("-inf")
 
 
-        self.steps = 0
-        self.iterations = 0
-        self.evaluations = 0
+        self.step = 0
+        self.iteration = 0
+        self.evaluation = 0
 
 
     def next_step(self, f_observed):
-        self.steps += 1
+        self.step += 1
         self.f_observed = f_observed
         if self.mode == "save_all":
             if self._last_saved_sw.get_time() > self.SAVE_EVERY:
                 self.write_to_file(level=0)
                 self._last_saved_sw.reset()
-        print("next_step()", self, self.steps, f_observed)
+        print("next_step()", self, self.step, f_observed)
 
     def next_inner(self, f_observed):
-        self.iterations += 1
+        self.iteration += 1
         self.f_observed = f_observed
         if not f_observed is None:
             self.check_if_best(f_observed)
@@ -77,7 +77,7 @@ class NestedOptimization:
 
 
     def next_outer(self, f_observed):
-        self.evaluations += 1
+        self.evaluation += 1
         self.f_observed = f_observed
         if not f_observed is None:
             self.check_if_best(f_observed)
@@ -97,9 +97,9 @@ class NestedOptimization:
         try:
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
-                    f.write("level,f_best,f,time,steps,iterations,evaluations\n")
+                    f.write("level,f_best,f,time,step,iteration,evaluation\n")
                     self.write_header = False
-                f.write(f"{level},{self.f_best}," + str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.steps},{self.iterations},{self.evaluations}\n")
+                f.write(f"{level},{self.f_best}," + str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.step},{self.iteration},{self.evaluation}\n")
         finally:
             self.mutex.release()
 
