@@ -76,5 +76,23 @@ elif sys.argv[1] == "--plot":
     print("done")
  
 
-    # python run_ga.py --env-name "Walker-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 4 --num-steps 128 --num-mini-batch 4 --log-interval 100 --use-linear-lr-decay --entropy-coef 0.01 --eval-interval 50
+    print("Plot higher bound lower bound first 4 evaluations in ppo on evogym...", end="")
+    fig, ax = plt.subplots(figsize=(4.5, 3))
+    df_minmax_and_level = df.query("level == 0 & f.notna()").groupby("iteration").agg({'f':['min', 'max'],'evaluation': 'median'})
+    df_minmax_and_level.columns = ["min", "max", "evaluation"]
+    df_minmax_and_level.reset_index(inplace=True)
+    grouped = df_minmax_and_level.groupby("evaluation")
+    for key in grouped.groups.keys():
+        ax.fill_between(grouped.get_group(key)["iteration"], grouped.get_group(key)["min"], grouped.get_group(key)["max"])
+    plt.xlabel("iteration")
+    plt.ylabel("Cumulative reward range")
+    plt.suptitle("Evaluation of first four morphologies")
+    ax.set_title("The lowest and highest cumulative reward observed in each iteration")
+    ax.title.set_size(8)
+    ax.title.set_color('grey')
+    plt.tight_layout()
+    plt.savefig(figpath+"/first_4_evaluations_bounds_cumulative_reward.pdf")
+    plt.close()
+    print("done")
 
+ 
