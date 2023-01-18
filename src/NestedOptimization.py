@@ -26,15 +26,14 @@ class stopwatch:
 class NestedOptimization:
 
     sw = stopwatch()
+    f_observed = float("-inf")
     f_best = float("-inf")
-    f_current = None
     steps = 0
     iterations = 0
     evaluations = 0
     write_header = True
-    is_first_step_this_inner = True
     _last_saved_sw = stopwatch()
-    SAVE_EVERY = 1.0
+    SAVE_EVERY = -500.0
     mutex = Lock()
 
 
@@ -47,40 +46,43 @@ class NestedOptimization:
     def reset(self):
         self.sw.reset()
         self._last_saved_sw.reset()
+        self.f_observed = float("-inf")
         self.f_best = float("-inf")
-        self.f_current = None
+
+
         self.steps = 0
         self.iterations = 0
         self.evaluations = 0
-        is_first_step_this_inner = True
 
 
-    def next_step(self, current_f):
+    def next_step(self, f_observed):
         self.steps += 1
-        self.f_current = current_f
+        self.f_observed = f_observed
         if self.mode == "save_all":
-            if self._last_saved_sw.get_time() > self.SAVE_EVERY or self.is_first_step_this_inner:
+            if self._last_saved_sw.get_time() > self.SAVE_EVERY:
                 self.write_to_file()
                 self._last_saved_sw.reset()
-                self.is_first_step_this_inner = False
-        print("next_step()", self, self.steps, current_f)
+        print("next_step()", self, self.steps, f_observed)
 
-    def next_inner(self, f_inner=None):
+    def next_inner(self, f_observed):
         self.iterations += 1
-        if not f_inner is None:
-            self.check_if_best(f_inner)
-        if self._last_saved_sw.get_time() > self.SAVE_EVERY or self.mode == "save_all":
-            self.write_to_file()
-            self._last_saved_sw.reset()
-        self.is_first_step_this_inner = True
+        self.f_observed = f_observed
+        if not f_observed is None:
+            self.check_if_best(f_observed)
+
+        self.write_to_file()
         print("next_inner()", self, self.f_best)
 
 
-    def next_outer(self):
+    def next_outer(self, f_observed):
         self.evaluations += 1
-        self.is_first_step_this_inner = True
+        self.f_observed = f_observed
+        if not f_observed is None:
+            self.check_if_best(f_observed)
+        
+        self.write_to_file()
         print("next_outer()", self, self.f_best)
-        self.check_if_best(self.f_current)
+
 
     def check_if_best(self, f):
         print("Checking for best found.")
@@ -95,7 +97,7 @@ class NestedOptimization:
                 if self.write_header:
                     f.write("f,time,steps,iterations,evaluations\n")
                     self.write_header = False
-                f.write(f"{self.f_best}, {self.sw.get_time()}, {self.steps}, {self.iterations}, {self.evaluations}\n")
+                f.write(f"{self.f_best}, {self.f_observed}, {self.sw.get_time()}, {self.steps}, {self.iterations}, {self.evaluations}\n")
         finally:
             self.mutex.release()
 
