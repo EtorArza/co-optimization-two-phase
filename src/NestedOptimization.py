@@ -95,9 +95,9 @@ class NestedOptimization:
         try:
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
-                    f.write("f,time,steps,iterations,evaluations\n")
+                    f.write("f_best,f,time,steps,iterations,evaluations\n")
                     self.write_header = False
-                f.write(f"{self.f_best}, {self.f_observed}, {self.sw.get_time()}, {self.steps}, {self.iterations}, {self.evaluations}\n")
+                f.write(f"{self.f_best},",self.f_observed if not self.f_observed is None else "nan",f"{self.sw.get_time()},{self.steps},{self.iterations},{self.evaluations}\n", sep="")
         finally:
             self.mutex.release()
 
