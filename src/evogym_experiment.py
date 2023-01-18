@@ -7,7 +7,7 @@ import os
 from NestedOptimization import NestedOptimization
 from multiprocessing.managers import BaseManager
 
-
+figpath = "results/evogym/figures"
 
 
 
@@ -49,17 +49,31 @@ elif sys.argv[1] == "--plot":
 
     print("Plot fitness in first 30 iterations in ppo on evogym...", end="") 
     fig, ax = plt.subplots(figsize=(4.5, 3))
-    sub_df = df.query(f"evaluations == 0 & iterations < 30 & f.notna()").groupby("iterations")["f"].plot()
+    sub_df = df.query("evaluations == 0 & iterations < 30 & level == 0").groupby("iterations")["f"].plot()
     plt.yscale("symlog")
     plt.xlabel("step")
     plt.ylabel("cumulative reward")
     plt.title("ppo first 30 iterations evogym")
     plt.tight_layout()
-    plt.savefig("ppo_first_30_iterations.pdf")
+    plt.savefig(figpath + "/ppo_first_30_iterations.pdf")
     plt.close()
     print("done")
 
 
+
+
+    print("Plot fitness first 4 evaluations in ppo on evogym...", end="")
+    fig, ax = plt.subplots(figsize=(4.5, 3))
+    grouped = df.query("level == 1 & f.notna()").groupby("evaluations")
+    for key in grouped.groups.keys():
+        plt.plot(grouped.get_group(key)["iterations"], grouped.get_group(key)["f"])
+    plt.xlabel("iteration")
+    plt.ylabel("objective value")
+    plt.title("Evaluation of first four morphologies")
+    plt.tight_layout()
+    plt.savefig(figpath+"/first_4_evaluations.pdf")
+    plt.close()
+    print("done")
  
 
     # python run_ga.py --env-name "Walker-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 4 --num-steps 128 --num-mini-batch 4 --log-interval 100 --use-linear-lr-decay --entropy-coef 0.01 --eval-interval 50
