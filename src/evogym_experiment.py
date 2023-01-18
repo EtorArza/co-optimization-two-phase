@@ -43,8 +43,24 @@ if sys.argv[1] == "--first_iteration":
 
 
 elif sys.argv[1] == "--plot":
-    pass
+    import pandas as pd
+    from matplotlib import pyplot as plt
+    df = pd.read_csv("results/evogym/data/first_iteration.txt")
 
+    print("Plot fitness in first 30 iterations in ppo on evogym...", end="") 
+    fig, ax = plt.subplots(figsize=(4.5, 3))
+    sub_df = df.query(f"evaluations == 0 & iterations < 30 & f.notna()").groupby("iterations")["f"].plot()
+    plt.yscale("symlog")
+    plt.xlabel("step")
+    plt.ylabel("cumulative reward")
+    plt.title("ppo first 30 iterations evogym")
+    plt.tight_layout()
+    plt.savefig("ppo_first_30_iterations.pdf")
+    plt.close()
+    print("done")
+
+
+ 
 
     # python run_ga.py --env-name "Walker-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 4 --num-steps 128 --num-mini-batch 4 --log-interval 100 --use-linear-lr-decay --entropy-coef 0.01 --eval-interval 50
 
