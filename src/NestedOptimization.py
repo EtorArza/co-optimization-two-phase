@@ -22,6 +22,8 @@ class stopwatch:
     def get_time(self):
         return time.time() - self.start_t - self.pause_t
 
+    def get_time_string_short_format(self):
+        return "{:.4f}".format(self.get_time())
 
 class NestedOptimization:
 
@@ -60,7 +62,7 @@ class NestedOptimization:
         self.f_observed = f_observed
         if self.mode == "save_all":
             if self._last_saved_sw.get_time() > self.SAVE_EVERY:
-                self.write_to_file()
+                self.write_to_file(level=0)
                 self._last_saved_sw.reset()
         print("next_step()", self, self.steps, f_observed)
 
@@ -70,7 +72,7 @@ class NestedOptimization:
         if not f_observed is None:
             self.check_if_best(f_observed)
 
-        self.write_to_file()
+        self.write_to_file(level=1)
         print("next_inner()", self, self.f_best)
 
 
@@ -80,7 +82,7 @@ class NestedOptimization:
         if not f_observed is None:
             self.check_if_best(f_observed)
         
-        self.write_to_file()
+        self.write_to_file(level=2)
         print("next_outer()", self, self.f_best)
 
 
@@ -90,14 +92,14 @@ class NestedOptimization:
             self.f_best = f
             print("best_found!")
     
-    def write_to_file(self):
+    def write_to_file(self, level):
         self.mutex.acquire()
         try:
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
-                    f.write("f_best,f,time,steps,iterations,evaluations\n")
+                    f.write("level,f_best,f,time,steps,iterations,evaluations\n")
                     self.write_header = False
-                f.write(f"{self.f_best},",self.f_observed if not self.f_observed is None else "nan",f"{self.sw.get_time()},{self.steps},{self.iterations},{self.evaluations}\n", sep="")
+                f.write(f"{level},{self.f_best}," + str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.steps},{self.iterations},{self.evaluations}\n")
         finally:
             self.mutex.release()
 
