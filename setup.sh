@@ -26,7 +26,7 @@ sudo apt install doxygen
 
 pip install torch==1.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 
-
+cd other_repos
 git clone https://github.com/EtorArza/RoboGrammar.git
 cd RoboGrammar
 conda deactivate
