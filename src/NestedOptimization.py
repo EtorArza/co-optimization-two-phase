@@ -42,7 +42,7 @@ class NestedOptimization:
     def __init__(self, result_file_path, mode):
         self.result_file_path = result_file_path
         self.mode = mode
-        assert mode in ("save_all", "standard")
+        assert mode in ("saveall", "standard")
         self.reset()
 
     def reset(self):
@@ -60,7 +60,7 @@ class NestedOptimization:
     def next_step(self, f_observed):
         self.step += 1
         self.f_observed = f_observed
-        if self.mode == "save_all":
+        if self.mode == "saveall":
             if self._last_saved_sw.get_time() > self.SAVE_EVERY:
                 self.write_to_file(level=0)
                 self._last_saved_sw.reset()

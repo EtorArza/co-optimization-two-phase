@@ -21,8 +21,8 @@ if sys.argv[1] == "--first_iteration":
     BaseManager.register('NestedOptimization', NestedOptimization)
     manager = BaseManager()
     manager.start()
-    # no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "save_all")
-    no = manager.NestedOptimization("../../../results/evogym/data/first_iteration.txt", "save_all")
+    # no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "saveall")
+    no = manager.NestedOptimization("../../../results/evogym/data/first_iteration.txt", "saveall")
     run_ga(
         experiment_name = "first_iteration",
         env_name = "Walker-v0",
