@@ -37,7 +37,7 @@ pip install -U pip
 pip install torch==1.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 pip install -r requirements.txt
 
-
+echo "WARNING: it will not build if conda is activated. Make sure that conda is deactivated and venv is loaded via source venv/bin/activate"
 git submodule update --init
 mkdir build; cd build
 /usr/bin/cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu  ..
