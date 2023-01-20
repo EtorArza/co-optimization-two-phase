@@ -41,5 +41,5 @@ echo "WARNING: it will not build if conda is activated. Make sure that conda is 
 git submodule update --init
 mkdir build; cd build
 /usr/bin/cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu  ..
-make -j2
+make -j6
 
