@@ -42,7 +42,7 @@ if sys.argv[1] == "--first_iteration":
                  '--max-trials', '1000',
                  '--num-eval', '1',
                  '--num-iterations', '2000',
-                 '--mpc-num-processes', '32',
+                 '--mpc-num-processes', '4',
                  '--seed', str(seed),
                  '--no-noise',
                  ]
