@@ -64,7 +64,7 @@ class NestedOptimization:
             if self._last_saved_sw.get_time() > self.SAVE_EVERY:
                 self.write_to_file(level=0)
                 self._last_saved_sw.reset()
-        print("next_step()", self, self.step, f_observed)
+        # print("next_step()", self, self.step, f_observed)
 
     def next_inner(self, f_observed):
         self.iteration += 1
