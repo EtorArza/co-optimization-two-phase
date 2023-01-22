@@ -10,43 +10,9 @@ from multiprocessing.managers import BaseManager
 figpath = "results/evogym/figures"
 
 
-
-
-if sys.argv[1] == "--first_iteration":
-    sys.argv.pop()
-    seed = 0
-    random.seed(seed)
-    np.random.seed(seed)
-    os.chdir("other_repos/evogym/examples")
-    BaseManager.register('NestedOptimization', NestedOptimization)
-    manager = BaseManager()
-    manager.start()
-    # no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "saveall")
-    no = manager.NestedOptimization("../../../results/evogym/data/first_iteration.txt", "saveall")
-    run_ga(
-        experiment_name = "first_iteration",
-        env_name = "Walker-v0",
-        seed = 2,
-        max_evaluations = 4, # Number of morphologies evaluated
-        train_iters = 1000,    # Number of iterations for training each morphology
-        num_steps = 128,       # Number of steps in each iteration
-        pop_size = 4,          # Population size of the morphologies
-        structure_shape = (5,5),
-        num_cores = 1,
-        no = no,
-    )
-    #7.792172 128128
-    # 1.403425 128128
-    # 2.734754 128128
-    # 4.80972 128128
-    os.chdir("../../..")
-
-
-elif sys.argv[1] == "--plot":
+def plot_first_iteration(df, figpath):
     import pandas as pd
     from matplotlib import pyplot as plt
-    df = pd.read_csv("results/evogym/data/first_iteration.txt")
-
     print("Plot fitness in first 30 iterations in ppo on evogym...", end="") 
     fig, ax = plt.subplots(figsize=(4.5, 3))
     sub_df = df.query("evaluation == 0 & iteration < 30 & level == 0").groupby("iteration")["f"].plot()
@@ -95,4 +61,46 @@ elif sys.argv[1] == "--plot":
     plt.close()
     print("done")
 
- 
+
+
+
+if __name__ == "__main__":
+    if sys.argv[1] == "--first_iteration":
+        sys.argv.pop()
+        seed = 0
+        random.seed(seed)
+        np.random.seed(seed)
+        os.chdir("other_repos/evogym/examples")
+        BaseManager.register('NestedOptimization', NestedOptimization)
+        manager = BaseManager()
+        manager.start()
+        # no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "saveall")
+        no = manager.NestedOptimization("../../../results/evogym/data/first_iteration.txt", "saveall")
+        run_ga(
+            experiment_name = "first_iteration",
+            env_name = "Walker-v0",
+            seed = 2,
+            max_evaluations = 4, # Number of morphologies evaluated
+            train_iters = 1000,    # Number of iterations for training each morphology
+            num_steps = 128,       # Number of steps in each iteration
+            pop_size = 4,          # Population size of the morphologies
+            structure_shape = (5,5),
+            num_cores = 1,
+            no = no,
+        )
+        #7.792172 128128
+        # 1.403425 128128
+        # 2.734754 128128
+        # 4.80972 128128
+        os.chdir("../../..")
+
+
+    elif sys.argv[1] == "--plot":
+        import pandas as pd
+        from matplotlib import pyplot as plt
+        df = pd.read_csv("results/evogym/data/first_iteration.txt")
+        plot_first_iteration(df, figpath)
+    
+    else:
+        ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")
+  
