@@ -75,6 +75,7 @@ if __name__ == "__main__":
         import evogym_experiment
         import pandas as pd
         from matplotlib import pyplot as plt
+        print("Inner learning algorithm in evogym is MPC.")
         df = pd.read_csv("results/robogrammar/data/first_iteration.txt")
-        evogym_experiment.plot_first_iteration(df, figpath)
+        evogym_experiment.plot_first_iteration(df, figpath, "RoboGrammar")
 

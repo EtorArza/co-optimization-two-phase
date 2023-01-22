@@ -10,16 +10,16 @@ from multiprocessing.managers import BaseManager
 figpath = "results/evogym/figures"
 
 
-def plot_first_iteration(df, figpath):
+def plot_first_iteration(df, figpath, envname):
     import pandas as pd
     from matplotlib import pyplot as plt
-    print("Plot fitness in first 30 iterations in ppo on evogym...", end="") 
+    print(f"Plot fitness in first 30 iterations in ppo on {envname}...", end="") 
     fig, ax = plt.subplots(figsize=(4.5, 3))
     sub_df = df.query("evaluation == 0 & iteration < 30 & level == 0").groupby("iteration")["f"].plot()
     plt.yscale("symlog")
     plt.xlabel("step")
     plt.ylabel("cumulative reward")
-    plt.title("ppo first 30 iterations evogym")
+    plt.title(f"ppo first 30 iterations {envname}")
     plt.tight_layout()
     plt.savefig(figpath + "/ppo_first_30_iterations.pdf")
     plt.close()
@@ -28,7 +28,7 @@ def plot_first_iteration(df, figpath):
 
 
 
-    print("Plot fitness first 4 evaluations in ppo on evogym...", end="")
+    print(f"Plot fitness first 4 evaluations in inner on {envname}...", end="")
     fig, ax = plt.subplots(figsize=(4.5, 3))
     grouped = df.query("level == 1 & f.notna()").groupby("evaluation")
     for key in grouped.groups.keys():
@@ -42,7 +42,7 @@ def plot_first_iteration(df, figpath):
     print("done")
  
 
-    print("Plot higher bound lower bound first 4 evaluations in ppo on evogym...", end="")
+    print(f"Plot higher bound lower bound first 4 evaluations in inner on {envname}...", end="")
     fig, ax = plt.subplots(figsize=(4.5, 3))
     df_minmax_and_level = df.query("level == 0 & f.notna()").groupby("iteration").agg({'f':['min', 'max'],'evaluation': 'median'})
     df_minmax_and_level.columns = ["min", "max", "evaluation"]
@@ -99,7 +99,8 @@ if __name__ == "__main__":
         import pandas as pd
         from matplotlib import pyplot as plt
         df = pd.read_csv("results/evogym/data/first_iteration.txt")
-        plot_first_iteration(df, figpath)
+        print("Inner learning algorithm in evogym is ppo.")
+        plot_first_iteration(df, figpath, "evogym")
     
     else:
         ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")
