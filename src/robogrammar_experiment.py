@@ -22,12 +22,16 @@ if __name__ == "__main__":
 
         sys.argv.pop()
         seed = 2
-        mode = ['saveall','standard'][0]
+        mode = ['saveall','standard'][1]
         algorithm = ["mcts", "random"][0]
-        cpus = 1
-        iterations = 4 # 2000
+        cpus = 6
+        it_params = {
+        "max_frames": 262144000,
+        "inners_per_outer": 64,
+        "inner_length_proportion":1.0,
+        }
         task = 'FlatTerrainTask'
-        resfilepath = "../../results/robogrammar/data/first_iteration.txt"
+        resfilepath = "../../results/robogrammar/data/first_iteration2.txt"
         os.chdir("other_repos/RoboGrammar")
 
 
@@ -57,8 +61,8 @@ if __name__ == "__main__":
         sys.path.append(os.path.join(base_dir, 'design_search'))
         from NestedOptimization import NestedOptimization
         import os
-        no = NestedOptimization(resfilepath, mode)
-        main(no, algorithm, cpus, iterations, task, seed)
+        no = NestedOptimization(resfilepath, mode, it_params)
+        main(no, algorithm, cpus, task, seed)
         
     elif sys.argv[1] == "--plot":
         import evogym_experiment

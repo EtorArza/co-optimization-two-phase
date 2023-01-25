@@ -33,29 +33,26 @@ class NestedOptimization:
     step = 0
     iteration = 0
     evaluation = 0
+    done = False
     write_header = True
-    its_without_save_step = 1
+    iterations_since_best_found = 0
+    result_file_path = None
+    mode = None
+    it_params = None
+    need_reevaluate = False
+
 
     SAVE_EVERY = 5
     mutex = Lock()
 
 
-    def __init__(self, result_file_path, mode):
+    def __init__(self, result_file_path, mode, it_params):
         self.result_file_path = result_file_path
         self.mode = mode
+        self.it_params = it_params
         assert mode in ("saveall", "standard")
-        self.reset()
-
-    def reset(self):
-        self.sw.reset()
-        self.f_observed = float("-inf")
-        self.f_best = float("-inf")
-        self.its_without_save_step = 1
 
 
-        self.step = 0
-        self.iteration = 0
-        self.evaluation = 0
 
 
     def next_step(self, f_observed):
@@ -63,19 +60,16 @@ class NestedOptimization:
         self.f_observed = f_observed
         if self.mode == "saveall":
             print("next_step()", self, self.step, f_observed)
-            if self.its_without_save_step >= self.SAVE_EVERY:
-                self.its_without_save_step = 1
-                self.write_to_file(level=0)
-            else:
-                self.its_without_save_step += 1
+            self.write_to_file(level=0)
+
 
 
     def next_inner(self, f_observed):
         self.iteration += 1
         self.f_observed = f_observed
-        self.its_without_save_step = 1
-        self.write_to_file(level=1)
-        # print("next_inner()", self, self.f_best)
+        if self.mode == "saveall":
+            self.write_to_file(level=1)
+            print("next_inner()", self, self.f_best)
 
 
     def next_outer(self, f_observed):
@@ -85,13 +79,22 @@ class NestedOptimization:
             self.check_if_best(f_observed)
         
         self.write_to_file(level=2)
-        print("next_outer()", self, self.f_best)
+        print("next_outer()", self, f_observed)
+        if self.it_params["max_frames"] >= self.step:
+            self.done = True
+
+    def next_saverealobjective(self, real_f):
+        self.f_observed = real_f
+        self.need_reevaluate = False
+        self.write_to_file(level=3)
+        print("next_saverealobjective()", self, real_f)
 
 
     def check_if_best(self, f):
         # print("Checking for best found.")
         if f > self.f_best:
             self.f_best = f
+            self.need_reevaluate = True
             print("best_found!")
     
     def write_to_file(self, level):
@@ -101,7 +104,7 @@ class NestedOptimization:
                 if self.write_header:
                     f.write("level,f_best,f,time,step,iteration,evaluation\n")
                     self.write_header = False
-                f.write(f"{level},{self.f_best}," + str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.step},{self.iteration},{self.evaluation}\n")
+                f.write(f"{level},"+str(self.f_best if level != 3 else "nan")+ ", "+ str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.step},{self.iteration},{self.evaluation}\n")
         finally:
             self.mutex.release()
 
