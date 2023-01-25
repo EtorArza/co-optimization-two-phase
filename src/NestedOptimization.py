@@ -62,20 +62,20 @@ class NestedOptimization:
         self.step += 1
         self.f_observed = f_observed
         if self.mode == "saveall":
+            print("next_step()", self, self.step, f_observed)
             if self.its_without_save_step >= self.SAVE_EVERY:
                 self.its_without_save_step = 1
                 self.write_to_file(level=0)
             else:
                 self.its_without_save_step += 1
 
-        print("next_step()", self, self.step, f_observed)
 
     def next_inner(self, f_observed):
         self.iteration += 1
         self.f_observed = f_observed
         self.its_without_save_step = 1
         self.write_to_file(level=1)
-        print("next_inner()", self, self.f_best)
+        # print("next_inner()", self, self.f_best)
 
 
     def next_outer(self, f_observed):
