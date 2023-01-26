@@ -38,7 +38,6 @@ class NestedOptimization:
     iterations_since_best_found = 0
     result_file_path = None
     mode = None
-    it_params = None
     need_reevaluate = False
 
 
@@ -46,10 +45,12 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_path, mode, it_params):
+    def __init__(self, result_file_path, mode, max_frames, inners_per_outer, inner_length_proportion):
         self.result_file_path = result_file_path
         self.mode = mode
-        self.it_params = it_params
+        self.max_frames = max_frames
+        self.inners_per_outer = inners_per_outer
+        self.inner_length_proportion = inner_length_proportion
         assert mode in ("saveall", "standard")
 
 
@@ -80,7 +81,7 @@ class NestedOptimization:
         
         self.write_to_file(level=2)
         print("next_outer()", self, f_observed)
-        if self.it_params["max_frames"] >= self.step:
+        if self.max_frames >= self.step:
             self.done = True
 
     def next_saverealobjective(self, real_f):

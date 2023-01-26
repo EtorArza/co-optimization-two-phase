@@ -25,11 +25,6 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_
     mode = ['saveall','standard'][1]
     algorithm = ["mcts", "random"][0]
     cpus = 6
-    it_params = {
-    "max_frames": max_frames,
-    "inners_per_outer": inners_per_outer,
-    "inner_length_proportion":inner_length_proportion,
-    }
     task = 'FlatTerrainTask'
     resfilepath = f"../../results/robogrammar/data/{max_frames}_{inners_per_outer}_{inner_length_proportion}.txt"
     os.chdir("other_repos/RoboGrammar")
@@ -42,7 +37,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_
     sys.path.append(os.path.join(base_dir, 'design_search'))
     from NestedOptimization import NestedOptimization
     import os
-    no = NestedOptimization(resfilepath, mode, it_params)
+    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer, inner_length_proportion)
     main(no, algorithm, cpus, task, seed)
 
 
