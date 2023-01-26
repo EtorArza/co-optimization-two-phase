@@ -1,10 +1,16 @@
 import sys
+import itertools
 sys.path.append("./other_repos/RoboGrammar/examples/graph_learning")
 sys.path.append("./other_repos/RoboGrammar/examples/design_search")
 from heuristic_search_algo_mpc import *
 from design_search import *
 figpath = "results/robogrammar/figures"
 
+def get_sequence_of_parameters():
+    seed_list = list(range(2,22))
+    inners_per_outer_list = [64, 32] # Default is 64
+    inner_length_proportion_list = [1.0, 0.5] # Default is 1.0
+    return list(itertools.product(seed_list, inners_per_outer_list, inner_length_proportion_list))
 
 def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_proportion):
     if sys.executable.split('/')[-3] != 'venv':
@@ -43,8 +49,16 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_
 if __name__ == "__main__":
 
 
-    if sys.argv[1] == "--first_iteration":
-        execute_experiment_locally(seed=2, max_frames=262144000, inners_per_outer=64, inner_length_proportion=1.0)
+    if sys.argv[1] == "--local_launch":
+        if len(sys.argv) != 3:
+            print("ERROR: 2 parameters are required, --local_launch and i.\n\nUsage:\npython src/robogrammar_experiment.py i")
+            exit(1)
+        i = int(sys.argv[2])
+        seq_parameters = get_sequence_of_parameters()
+        print("Number of executions:", len(seq_parameters))
+        seed, inners_per_outer, inner_length_proportion = seq_parameters[i]
+        # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
+        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer=inners_per_outer, inner_length_proportion=inner_length_proportion)
 
         
     elif sys.argv[1] == "--plot":
