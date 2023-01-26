@@ -62,10 +62,10 @@ if __name__ == "__main__":
 
         
     elif sys.argv[1] == "--plot":
-        import evogym_experiment
+        from plot_src import *
         import pandas as pd
         from matplotlib import pyplot as plt
         print("Inner learning algorithm in evogym is MPC.")
         df = pd.read_csv("results/robogrammar/data/first_iteration.txt")
-        evogym_experiment.plot_first_iteration(df, figpath, "RoboGrammar")
+        plot_first_iteration(df, figpath, "RoboGrammar")
 
