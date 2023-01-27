@@ -53,9 +53,10 @@ if __name__ == "__main__":
         i = int(sys.argv[2])
         sys.argv = sys.argv[:1]
         seq_parameters = get_sequence_of_parameters()
-        print("Number of executions:", len(seq_parameters))
+        print("Total number of executions:", len(seq_parameters))
+        print("Parameters current execution:",seq_parameters[i])
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[i]
-        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
+        execute_experiment_locally(seed=seed, max_frames=32032000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
 
 
 

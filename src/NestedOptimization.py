@@ -3,12 +3,14 @@ from threading import Thread, Lock
 import numpy as np
 
 class stopwatch:
+    paused=False
     def __init__(self):
         self.reset()
 
     def reset(self):
         self.start_t = time.time()
         self.pause_t=0
+        self.paused=False
 
     def pause(self):
         self.pause_start = time.time()
@@ -20,7 +22,13 @@ class stopwatch:
             self.paused = False
 
     def get_time(self):
-        return time.time() - self.start_t - self.pause_t
+        # print("Pause time = ", self.pause_t)
+        # print("Time without pause = ", time.time() - self.start_t)
+        # print("Time = ", time.time() - self.start_t - self.pause_t)
+        current_extra_pause_time = 0.0
+        if self.paused:
+            current_extra_pause_time = time.time() - self.pause_start
+        return time.time() - self.start_t - self.pause_t - current_extra_pause_time
 
     def get_time_string_short_format(self):
         return "{:.4f}".format(self.get_time())
@@ -79,13 +87,16 @@ class NestedOptimization:
     def next_outer(self, f_observed):
         self.evaluation += 1
         self.f_observed = f_observed
+
+        if self.max_frames > self.step:
+            print("Finished at", self.max_frames,"frames.")
+            exit(0)
+
         if not f_observed is None:
             self.check_if_best(f_observed)
         
         self.write_to_file(level=2)
         print("next_outer()", self, f_observed)
-        if self.max_frames >= self.step:
-            self.done = True
 
     def next_saverealobjective(self, real_f):
         self.f_observed = real_f
