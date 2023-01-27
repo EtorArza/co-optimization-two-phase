@@ -6,6 +6,7 @@ from ga.run import run_ga
 import os
 from NestedOptimization import NestedOptimization
 from multiprocessing.managers import BaseManager
+import itertools
 from plot_src import *
 
 figpath = "results/evogym/figures"
@@ -16,35 +17,46 @@ def get_sequence_of_parameters():
     inner_length_proportion_list = [1.0, 0.5] # Default is 1.0
     return list(itertools.product(seed_list, inners_per_outer_list, inner_length_proportion_list))
 
+def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_proportion):
+    random.seed(seed)
+    np.random.seed(seed)
+    os.chdir("other_repos/evogym/examples")
+    mode = ['saveall','standard'][1]
 
+    # # Parallel
+    # BaseManager.register('NestedOptimization', NestedOptimization)
+    # manager = BaseManager()
+    # manager.start()
+    # no = manager.NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer}_{inner_length_proportion}.txt", mode, max_frames, inners_per_outer, inner_length_proportion)
+
+    # Sequential
+    no = NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer}_{inner_length_proportion}.txt", mode, max_frames, inners_per_outer, inner_length_proportion)
+    run_ga(
+        experiment_name = "first_iteration",
+        env_name = "Walker-v0",
+        seed = seed,
+        max_evaluations = 2000000000,
+        pop_size = 25,
+        structure_shape = (5,5),
+        num_cores = 1,
+        no = no,
+    )
+    os.chdir("../../..")
 
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "--first_iteration":
-        sys.argv.pop()
-        seed = 0
-        random.seed(seed)
-        np.random.seed(seed)
-        os.chdir("other_repos/evogym/examples")
-        BaseManager.register('NestedOptimization', NestedOptimization)
-        manager = BaseManager()
-        manager.start()
-        # no = manager.NestedOptimization("../../../../../../../Documents/results_08/result_all.txt", "saveall")
-        no = manager.NestedOptimization("../../../results/evogym/data/first_iteration.txt", "saveall")
-        run_ga(
-            experiment_name = "first_iteration",
-            env_name = "Walker-v0",
-            seed = 2,
-            max_evaluations = 4, # Number of morphologies evaluated
-            train_iters = 1000,    # Number of iterations for training each morphology
-            num_steps = 128,       # Number of steps in each iteration
-            pop_size = 4,          # Population size of the morphologies
-            structure_shape = (5,5),
-            num_cores = 1,
-            no = no,
-        )
-        os.chdir("../../..")
+    if sys.argv[1] == "--local_launch":
+        if len(sys.argv) != 3:
+            print("ERROR: 2 parameters are required, --local_launch and i.\n\nUsage:\npython src/robogrammar_experiment.py i")
+            exit(1)
+        i = int(sys.argv[2])
+        sys.argv = sys.argv[:1]
+        seq_parameters = get_sequence_of_parameters()
+        print("Number of executions:", len(seq_parameters))
+        seed, inners_per_outer, inner_length_proportion = seq_parameters[i]
+        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer=inners_per_outer, inner_length_proportion=inner_length_proportion)
+
 
 
     elif sys.argv[1] == "--plot":

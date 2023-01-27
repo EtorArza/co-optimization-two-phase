@@ -36,10 +36,13 @@ class NestedOptimization:
     done = False
     write_header = True
     iterations_since_best_found = 0
-    result_file_path = None
-    mode = None
     need_reevaluate = False
 
+    result_file_path = None
+    mode = None
+    inners_per_outer = None
+    inner_length_proportion = None
+    max_frames = None
 
     SAVE_EVERY = 5
     mutex = Lock()
