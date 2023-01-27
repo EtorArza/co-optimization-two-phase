@@ -8,11 +8,11 @@ figpath = "results/robogrammar/figures"
 
 def get_sequence_of_parameters():
     seed_list = list(range(2,22))
-    inners_per_outer_list = [64, 32] # Default is 64
-    inner_length_proportion_list = [1.0, 0.5] # Default is 1.0
-    return list(itertools.product(seed_list, inners_per_outer_list, inner_length_proportion_list))
+    inners_per_outer_proportion_list = [1.0, 0.5] # Default is 64
+    inner_length_proportion_list = [1.0, 0.5] # Default is 128
+    return list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
 
-def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_proportion):
+def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, inner_length_proportion):
     if sys.executable.split('/')[-3] != 'venv':
         print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
         print("\n\nOnce 'venv' has been loaded, rerun this script.")
@@ -26,7 +26,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_
     algorithm = ["mcts", "random"][0]
     cpus = 6
     task = 'FlatTerrainTask'
-    resfilepath = f"../../results/robogrammar/data/{max_frames}_{inners_per_outer}_{inner_length_proportion}.txt"
+    resfilepath = f"../../results/robogrammar/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt"
     os.chdir("other_repos/RoboGrammar")
 
 
@@ -37,7 +37,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer, inner_length_
     sys.path.append(os.path.join(base_dir, 'design_search'))
     from NestedOptimization import NestedOptimization
     import os
-    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer, inner_length_proportion)
+    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
     main(no, algorithm, cpus, task, seed)
 
 
@@ -51,9 +51,9 @@ if __name__ == "__main__":
         i = int(sys.argv[2])
         seq_parameters = get_sequence_of_parameters()
         print("Number of executions:", len(seq_parameters))
-        seed, inners_per_outer, inner_length_proportion = seq_parameters[i]
+        seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[i]
         # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
-        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer=inners_per_outer, inner_length_proportion=inner_length_proportion)
+        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
 
         
     elif sys.argv[1] == "--plot":

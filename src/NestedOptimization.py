@@ -40,7 +40,7 @@ class NestedOptimization:
 
     result_file_path = None
     mode = None
-    inners_per_outer = None
+    inners_per_outer_proportion = None
     inner_length_proportion = None
     max_frames = None
 
@@ -48,11 +48,11 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_path, mode, max_frames, inners_per_outer, inner_length_proportion):
+    def __init__(self, result_file_path, mode, max_frames, inners_per_outer_proportion, inner_length_proportion):
         self.result_file_path = result_file_path
         self.mode = mode
         self.max_frames = max_frames
-        self.inners_per_outer = inners_per_outer
+        self.inners_per_outer_proportion = inners_per_outer_proportion
         self.inner_length_proportion = inner_length_proportion
         assert mode in ("saveall", "standard")
 
