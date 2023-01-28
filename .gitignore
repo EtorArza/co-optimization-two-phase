@@ -15,3 +15,4 @@ data/local/**
 videos/**
 other_RL/meta_world_and_garage/data/local/experiment/**
 results/**
+venv
