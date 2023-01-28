@@ -88,7 +88,7 @@ class NestedOptimization:
         self.evaluation += 1
         self.f_observed = f_observed
 
-        if self.max_frames > self.step:
+        if self.step > self.max_frames:
             print("Finished at", self.max_frames,"frames.")
             exit(0)
 
