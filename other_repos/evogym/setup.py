@@ -4,6 +4,9 @@ import sys
 import platform
 import subprocess
 
+# cmake /workspace/scratch/jobs/earza/fakeHome/other_repos/evogym/evogym/simulator -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/workspace/scratch/jobs/earza/fakeHome/other_repos/evogym/build/lib.linux-x86_64-3.9/evogym -DPYTHON_EXECUTABLE=/workspace/easybuild/x86_64/software/Python/3.9.5-GCCcore-10.3.0/bin/python -DGLEW_INCLUDE_DIR=/workspace/scratch/jobs/earza/fakeHome/glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=glew-2.1.0/
+
+
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
@@ -34,6 +37,9 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DGLEW_INCLUDE_DIR=glew-2.1.0/include/' +
+                      '-DCMAKE_PREFIX_PATH=/workspace/scratch/jobs/earza/fakeHome/glew-2.1.0/' +
+                      '-DCMAKE_BUILD_TYPE=Release' + 
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         cfg = 'Debug' if self.debug else 'Release'
