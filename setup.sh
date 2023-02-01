@@ -47,9 +47,10 @@ pip install torch==1.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.h
 pip install -r requirements.txt
 
 
+# Install glew
 cd glew-2.1.0/
 make
-make install --directory=.
+make DESTDIR=destdir/ install
 cd ..
 
 # Install evogym
