@@ -31,7 +31,10 @@
 
 #include <unistd.h>
 #include <sys/time.h>
-
+#define _POSIX_C_SOURCE 199309L
+#define POSIX_REQUIRED_STANDARD 199309L
+#define _POSIX_C_SOURCE POSIX_REQUIRED_STANDARD
+#define _POSIX_SOURCE POSIX_REQUIRED_STANDARD
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////

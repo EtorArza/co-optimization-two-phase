@@ -57,7 +57,7 @@ cd ..
 cd other_repos/evogym
 rm build -rf
 mkdir build
-python setup.py install
+python setup.py install --user
 cd ../..
 
 

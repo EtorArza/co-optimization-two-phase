@@ -18,3 +18,10 @@ results/**
 venv
 cluster_scripts
 other_repos/RoboGrammar/trained_models
+*.o
+*.so
+glew-2.1.0/bin/glewinfo
+glew-2.1.0/bin/visualinfo
+glew-2.1.0/lib/libGLEW.*
+glew-2.1.0/glew.pc
+glew-2.1.0/destdir/

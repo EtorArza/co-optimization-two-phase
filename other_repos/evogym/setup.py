@@ -36,11 +36,14 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        print(os.path.dirname(os.path.abspath(__file__))) # /workspace/scratch/jobs/earza/fakeHome/other_repos/evogym
+
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DGLEW_INCLUDE_DIR=glew-2.1.0/include/' +
-                      '-DCMAKE_PREFIX_PATH=/workspace/scratch/jobs/earza/fakeHome/glew-2.1.0/' +
-                      '-DCMAKE_BUILD_TYPE=Release' + 
+                      '-DGLEW_INCLUDE_DIR='+os.path.dirname(os.path.abspath(__file__))+'/../../glew-2.1.0/include/',
+                      '-DCMAKE_PREFIX_PATH='+os.path.dirname(os.path.abspath(__file__))+'/../../glew-2.1.0/',
+                      '-DCMAKE_BUILD_TYPE=Release',
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
+
 
         cfg = 'Debug' if self.debug else 'Release'
         cfg = 'Release'
