@@ -30,7 +30,6 @@ from copy import deepcopy
 import torch
 from torch import optim
 import torch.nn.functional as F
-from torch_geometric.data.data import Data
 
 # import our own packages
 from arguments import get_parser

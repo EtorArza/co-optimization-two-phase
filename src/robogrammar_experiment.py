@@ -1,10 +1,8 @@
 import sys
 import itertools
-sys.path.append("./other_repos/RoboGrammar/examples/graph_learning")
-sys.path.append("./other_repos/RoboGrammar/examples/design_search")
-from heuristic_search_algo_mpc import *
-from design_search import *
 figpath = "results/robogrammar/figures"
+
+
 
 def get_sequence_of_parameters():
     seed_list = list(range(2,22))
@@ -21,13 +19,19 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     import torch
     import os
 
+    os.chdir("other_repos/RoboGrammar")
+    # sys.path.append("./other_repos/RoboGrammar/examples/graph_learning")
+    # from heuristic_search_algo_mpc import *
+    sys.path.append("./other_repos/RoboGrammar/examples/design_search")
+    from design_search import main
+
+    sys.argv.pop()
     sys.argv.pop()
     mode = ['saveall','standard'][1]
     algorithm = ["mcts", "random"][0]
     cpus = 1
     task = 'FlatTerrainTask'
     resfilepath = f"../../results/robogrammar/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt"
-    os.chdir("other_repos/RoboGrammar")
 
 
     torch.set_default_dtype(torch.float64)
@@ -53,7 +57,7 @@ if __name__ == "__main__":
         print("Number of executions:", len(seq_parameters))
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[i]
         # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
-        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
+        execute_experiment_locally(seed=seed, max_frames=393216, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
 
         
     elif sys.argv[1] == "--plot":
@@ -64,3 +68,6 @@ if __name__ == "__main__":
         df = pd.read_csv("results/robogrammar/data/first_iteration.txt")
         plot_first_iteration(df, figpath, "RoboGrammar")
 
+
+    # elif sys.argv[1] == "--cluster_launch":
+        
