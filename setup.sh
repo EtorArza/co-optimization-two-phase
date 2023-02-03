@@ -66,6 +66,6 @@ cd other_repos/RoboGrammar
 rm build -rf
 mkdir build
 cd build
-cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu -DGLEW_INCLUDE_DIR=../../../glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../../../glew-2.1.0/ ..
+cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu -DGLEW_INCLUDE_DIR=../../../glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") -DCMAKE_PREFIX_PATH=../../../glew-2.1.0/ ..
 make -j6
 cd ../../..

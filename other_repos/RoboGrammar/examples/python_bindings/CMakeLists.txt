@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_CXX_STANDARD 17)
-include_directories(/workspace/easybuild/CentOS/7.7.1908/Skylake/software/Python/3.9.5-GCCcore-10.3.0/include/python3.9/)
+#include_directories(/workspace/easybuild/x86_64/software/Python/3.9.5-GCCcore-10.3.0/include/python3.9/)
 set(LIBRARY_NAME pyrobotdesign)
 
 set(PYBIND11_ROOT ${PROJECT_SOURCE_DIR}/extern/pybind11)
