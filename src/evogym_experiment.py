@@ -31,9 +31,11 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
 
     # Sequential
     no = NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
+    env_name = "Walker-v0"
+
     run_ga(
-        experiment_name = "first_iteration",
-        env_name = "Walker-v0",
+        experiment_name = f"{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}",
+        env_name = env_name,
         seed = seed,
         max_evaluations = 2000000000,
         pop_size = 25,
@@ -56,7 +58,8 @@ if __name__ == "__main__":
         print("Total number of executions:", len(seq_parameters))
         print("Parameters current execution:",seq_parameters[i])
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[i]
-        execute_experiment_locally(seed=seed, max_frames=32032000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
+        # max_frames=32032000 is the default value if we consider 250 morphologies evaluated.
+        execute_experiment_locally(seed=seed, max_frames=384384, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
 
 
 

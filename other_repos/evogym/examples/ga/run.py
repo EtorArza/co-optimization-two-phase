@@ -41,10 +41,10 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
     tc_default = TerminationCondition(default_train_iters)
 
     if os.path.isdir(internal_exp_files):
-        print("Replaceing internal exp. files:")
+        print("Removing old exp. files:")
         import shutil
-        shutil.rmtree(internal_exp_files)
- 
+        shutil.rmtree(internal_exp_files, ignore_errors=True)
+
     os.makedirs(internal_exp_files)
 
 

@@ -339,50 +339,5 @@ def main(no, algorithm, cpus, task, seed):
   env = RobotDesignEnv(task, rules, args.seed, args.jobs, args.depth)
   search_alg = algorithms[args.algorithm](env, max_tries=1000)
 
-  if args.log_file:
-    # Resume an existing run
-    log_path = args.log_file
-  else:
-    # Start a new run
-    os.makedirs(args.log_dir, exist_ok=True)
-    log_path = os.path.join(args.log_dir,
-                            f'mcts_{datetime.datetime.now():%Y%m%d_%H%M%S}.csv')
-
-  print(f"Logging to '{log_path}'")
-
-  fieldnames = ['iteration', 'rule_seq', 'opt_seed', 'result']
-
-  # Read log file if it exists and build a cache of previous results
-  result_cache = dict()
-  try:
-    with open(log_path) as log_file:
-      reader = csv.DictReader(log_file, fieldnames=fieldnames)
-      next(reader) # Skip the header row
-      for row in reader:
-        result_cache[(tuple(ast.literal_eval(row['rule_seq'])),
-                      int(row['opt_seed']))] = float(row['result'])
-    log_file_exists = True
-  except FileNotFoundError:
-    log_file_exists = False
-  env.result_cache = result_cache
-
-  with open(log_path, 'a', newline='') as log_file:
-    writer = csv.DictWriter(log_file, fieldnames=fieldnames)
-    if not log_file_exists:
-      writer.writeheader()
-      log_file.flush()
-
-    for i in range(args.iterations):
-      states, actions, result = search_alg.run_iteration(no)
-
-      if i >= len(env.result_cache):
-        rule_seq = [rules.index(rule) for rule in actions]
-        writer.writerow({'iteration': i, 'rule_seq': rule_seq,
-                         'opt_seed': env.latest_opt_seed, 'result': result})
-        log_file.flush()
-      else:
-        # Replaying existing log entries
-        if i + 1 != env.result_cache_hit_count:
-          print("Failed to replay existing log entries, stopping")
-          sys.exit(1)
-
+  for i in range(args.iterations):
+    states, actions, result = search_alg.run_iteration(no)
