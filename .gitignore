@@ -14,9 +14,17 @@ remove_exp_with_less_lines_than.sh
 data/local/**
 videos/**
 other_RL/meta_world_and_garage/data/local/experiment/**
-results/**
+results/robogrammar/data/*
+results/evogym/data/*
+results/robogrammar/data/*
+results/evogym/figures/*
+!results/robogrammar/data/.gitkeep
+!results/robogrammar/figures/.gitkeep
+!results/evogym/data/.gitkeep
+!results/evogym/figures/.gitkeep
 venv
-cluster_scripts
+cluster_scripts/connet_hip.sh
+cluster_scripts/copy_files_to_hipatia.sh
 other_repos/RoboGrammar/trained_models
 *.o
 *.so
@@ -25,3 +33,6 @@ glew-2.1.0/bin/visualinfo
 glew-2.1.0/lib/libGLEW.*
 glew-2.1.0/glew.pc
 glew-2.1.0/destdir/
+other_repos/RoboGrammar/build
+other_repos/evogym/build
+other_repos/evogym/examples/saved_data/
