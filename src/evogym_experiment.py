@@ -37,7 +37,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
         experiment_name = f"{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}",
         env_name = env_name,
         seed = seed,
-        max_evaluations = 2000000000,
+        max_evaluations = 20000,
         pop_size = 25,
         structure_shape = (5,5),
         num_cores = 1,
