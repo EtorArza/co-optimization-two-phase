@@ -37,6 +37,7 @@ class CameraTracker(object):
 def run_trajectory(sim, robot_idx, input_sequence, task, step_callback):
   step_callback(0)
 
+  print(input_sequence.shape)
   for j in range(input_sequence.shape[1]):
     for k in range(task.interval):
       step_idx = j * task.interval + k
@@ -45,12 +46,11 @@ def run_trajectory(sim, robot_idx, input_sequence, task, step_callback):
       sim.step()
       step_callback(step_idx + 1)
 
-def view_trajectory(sim, robot_idx, input_sequence, task):
+def view_trajectory(sim, robot_idx, input_sequence, task, viewer):
   record_step_indices = set()
 
   sim.save_state()
 
-  viewer = rd.GLFWViewer()
 
   # Get robot bounds
   lower = np.zeros(3)
@@ -94,12 +94,12 @@ def view_trajectory(sim, robot_idx, input_sequence, task):
         j = 0
         k = 0
         sim.restore_state()
-        tracker.reset()
+        viewer.set_should_close()
     viewer.render(sim)
 
   sim.restore_state()
-
-  return viewer.camera_params, record_step_indices
+  params = viewer.camera_params
+  return params, record_step_indices
 
 def finalize_robot(robot):
   for link in robot.links:
@@ -114,7 +114,16 @@ def finalize_robot(robot):
       link.joint_type = rd.JointType.FIXED
       link.joint_color = [1.0, 0.0, 1.0]
 
-def main():
+def generate_video(
+  task,
+  robot,
+  opt_seed,
+  input_sequence,
+  save_obj_dir,
+  save_video_file):
+
+  """ # arguments with parser
+  
   parser = argparse.ArgumentParser(description="Robot design viewer.")
   parser.add_argument("task", type=str, help="Task (Python class name)")
   parser.add_argument("grammar_file", type=str, help="Grammar file (.dot)")
@@ -136,36 +145,29 @@ def main():
   parser.add_argument("-l", "--episode_len", type=int, default=128,
                       help="Length of episode")
   args = parser.parse_args()
+  """
 
-  task_class = getattr(tasks, args.task)
-  task = task_class(episode_len=args.episode_len)
-  graphs = rd.load_graphs(args.grammar_file)
-  rules = [rd.create_rule_from_graph(g) for g in graphs]
+  print("Generating visualization...")
 
-  rule_sequence = [int(s.strip(",")) for s in args.rule_sequence]
-  if args.opt_seed is not None:
-    opt_seed = args.opt_seed
-  else:
+
+  if opt_seed is None:
     opt_seed = random.getrandbits(32)
     print("Using optimization seed:", opt_seed)
 
-  graph = make_graph(rules, rule_sequence)
-  robot = build_normalized_robot(graph)
   finalize_robot(robot)
-  if args.optim:
-    input_sequence, result = simulate(robot, task, opt_seed, args.jobs,
-                                      args.episodes)
-    print("Result:", result)
-  else:
-    input_sequence = None
+  
+  viewer = rd.GLFWViewer()
+  time.sleep(1)
 
-  if args.input_sequence_file and input_sequence is not None:
+  input_sequence_file = "tmp_imp_seq_file"
+
+  if input_sequence_file and input_sequence is not None:
     import csv
-    with open(args.input_sequence_file, 'w', newline='') as input_seq_file:
+    with open(input_sequence_file, 'w', newline='') as input_seq_file:
       writer = csv.writer(input_seq_file)
       for col in input_sequence.T:
         writer.writerow(col)
-    print("Saved input sequence to file:", args.input_sequence_file)
+    print("Saved input sequence to file:", input_sequence_file)
 
   robot_init_pos, has_self_collision = presimulate(robot)
 
@@ -178,20 +180,20 @@ def main():
   main_sim.add_robot(robot, robot_init_pos, rd.Quaterniond(0.0, 0.0, 1.0, 0.0))
   robot_idx = main_sim.find_robot_index(robot)
 
-  camera_params, record_step_indices = view_trajectory(
-      main_sim, robot_idx, input_sequence, task)
+  camera_params, record_step_indices = view_trajectory(main_sim, robot_idx, input_sequence, task, viewer)
 
-  if args.save_obj_dir and input_sequence is not None:
+
+  if save_obj_dir and input_sequence is not None:
     import export_mesh
 
     if record_step_indices:
       print("Saving .obj files for {} steps".format(len(record_step_indices)))
 
-    os.makedirs(args.save_obj_dir, exist_ok=True)
+    os.makedirs(save_obj_dir, exist_ok=True)
 
     # Save the props/terrain once
-    obj_file_name = os.path.join(args.save_obj_dir, 'terrain.obj')
-    mtl_file_name = os.path.join(args.save_obj_dir, 'terrain.mtl')
+    obj_file_name = os.path.join(save_obj_dir, 'terrain.obj')
+    mtl_file_name = os.path.join(save_obj_dir, 'terrain.mtl')
     with open(obj_file_name, 'w') as obj_file, \
          open(mtl_file_name, 'w') as mtl_file:
       dumper = export_mesh.ObjDumper(obj_file, mtl_file)
@@ -209,10 +211,10 @@ def main():
         if step_idx % 128 != 0:
           return
 
-      obj_file_name = os.path.join(args.save_obj_dir,
+      obj_file_name = os.path.join(save_obj_dir,
                                    'robot_{:04}.obj'.format(step_idx))
       # Use one .mtl file for all steps
-      mtl_file_name = os.path.join(args.save_obj_dir, 'robot.mtl')
+      mtl_file_name = os.path.join(save_obj_dir, 'robot.mtl')
       with open(obj_file_name, 'w') as obj_file, \
            open(mtl_file_name, 'w') as mtl_file:
         dumper = export_mesh.ObjDumper(obj_file, mtl_file)
@@ -222,13 +224,13 @@ def main():
 
     run_trajectory(main_sim, robot_idx, input_sequence, task, save_obj_callback)
 
-  if args.save_video_file and input_sequence is not None:
+  if save_video_file and input_sequence is not None:
     import cv2
 
     if record_step_indices:
       print("Saving video for {} steps".format(len(record_step_indices)))
+    # time.sleep(10)
 
-    viewer = rd.GLFWViewer()
 
     # Copy camera parameters from the interactive viewer
     viewer.camera_params = camera_params
@@ -236,7 +238,7 @@ def main():
     tracker = CameraTracker(viewer, main_sim, robot_idx)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    writer = cv2.VideoWriter(args.save_video_file, fourcc, 60.0,
+    writer = cv2.VideoWriter(save_video_file, fourcc, 60.0,
                              viewer.get_framebuffer_size())
     writer.set(cv2.VIDEOWRITER_PROP_QUALITY, 100)
 
@@ -248,11 +250,6 @@ def main():
             # Flip vertically, convert RGBA to BGR
             frame = viewer.render_array(main_sim)[::-1,:,2::-1]
             writer.write(frame)
-
-    run_trajectory(main_sim, robot_idx, input_sequence, task,
-                   write_frame_callback)
+    run_trajectory(main_sim, robot_idx, input_sequence, task, write_frame_callback)
 
     writer.release()
-
-if __name__ == '__main__':
-  main()

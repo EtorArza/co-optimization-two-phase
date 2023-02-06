@@ -59,6 +59,8 @@ public:
   virtual void getFramebufferSize(int &width, int &height) const override;
   virtual void setFramebufferSize(int width, int height) override;
   bool shouldClose() const;
+  void setShouldClose() const;
+  void close();
   static void errorCallback(int error, const char *description);
   static void keyCallback(GLFWwindow *window, int key, int scancode, int action,
                           int mods);
@@ -70,6 +72,7 @@ public:
                              double yoffset);
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+  bool already_closed = false;
   CameraParameters camera_params_;
   RenderParameters render_params_;
   FPSCameraController camera_controller_;

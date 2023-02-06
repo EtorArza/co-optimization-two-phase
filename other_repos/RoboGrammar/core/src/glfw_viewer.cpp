@@ -6,6 +6,8 @@
 #include <robot_design/glfw_viewer.h>
 #include <robot_design/render.h>
 #include <stdexcept>
+#include <iostream>
+
 
 namespace robot_design {
 
@@ -90,6 +92,7 @@ bool FPSCameraController::shouldRecord() const {
 }
 
 GLFWViewer::GLFWViewer(bool hidden) {
+  this->already_closed = false;
   glfwSetErrorCallback(errorCallback);
 
   if (!glfwInit()) {
@@ -133,9 +136,19 @@ GLFWViewer::GLFWViewer(bool hidden) {
 }
 
 GLFWViewer::~GLFWViewer() {
+  if (!this->already_closed)
+  {
+    close();
+  }
+}
+
+void GLFWViewer::close()
+{
+  std::cout << "Closing window in c++..." << std::endl;
   glfwDestroyWindow(window_);
   glfwTerminate();
 }
+
 
 void GLFWViewer::update(double dt) {
   camera_controller_.update(camera_params_, dt);
@@ -167,6 +180,8 @@ void GLFWViewer::setFramebufferSize(int width, int height) {
 }
 
 bool GLFWViewer::shouldClose() const { return glfwWindowShouldClose(window_); }
+
+void GLFWViewer::setShouldClose() const {glfwSetWindowShouldClose(window_, true); }
 
 void GLFWViewer::errorCallback(int error, const char *description) {
   std::cerr << "GLFW error: " << description << std::endl;

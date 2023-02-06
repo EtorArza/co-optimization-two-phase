@@ -61,7 +61,9 @@ void initRender(py::module &m) {
   py::class_<rd::GLFWViewer, rd::Viewer>(m, "GLFWViewer")
       .def(py::init<>())
       .def(py::init<bool>())
+      .def("close", &rd::GLFWViewer::close)
       .def("should_close", &rd::GLFWViewer::shouldClose)
+      .def("set_should_close", &rd::GLFWViewer::setShouldClose)
       .def_readwrite("camera_params", &rd::GLFWViewer::camera_params_)
       .def_readwrite("render_params", &rd::GLFWViewer::render_params_)
       .def_readwrite("camera_controller", &rd::GLFWViewer::camera_controller_);

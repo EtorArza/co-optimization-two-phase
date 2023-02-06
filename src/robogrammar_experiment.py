@@ -31,7 +31,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     algorithm = ["mcts", "random"][0]
     cpus = 1
     task = 'FlatTerrainTask'
-    resfilepath = f"../../results/robogrammar/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt"
+    resfilepath = f"../../results/robogrammar/data/{task}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt"
 
 
     torch.set_default_dtype(torch.float64)
