@@ -248,14 +248,17 @@ class Job():
 GIF_RESOLUTION = (1280/5, 720/5)
 # NUM_PROC = 8
 if __name__ == '__main__':
-    exp_root = os.path.join('saved_data')
+    exp_root = "examples/saved_data/"
+    exp_name = 'Walker-v0_384384_0.1_0.1'
     save_dir = os.path.join(root_dir, 'saved_data', 'all_media')
 
+    
+
     my_job = Job(
-        name = 'test_ga',
-        experiment_names= ['test_ga'],
+        name = exp_name+'_gif',
+        experiment_names= [exp_name],
         env_names = ['Walker-v0'],
-        ranks = [i for i in range(3)],
+        ranks = [0],
         load_dir = exp_root,
         organize_by_experiment=False,
         organize_by_generation=True,

@@ -3,6 +3,7 @@ import numpy as np
 import shutil
 import random
 import math
+import pathlib
 
 import sys
 curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +18,60 @@ import utils.mp_group as mp
 from utils.algo_utils import get_percent_survival_evals, mutate, TerminationCondition, Structure
 from NestedOptimization import NestedOptimization
 
-PARALLEL = False
+from ppo.envs import make_vec_envs
+import torch
+from ppo.utils import get_vec_normalize
+import imageio
+from pygifsicle import optimize
+def save_robot_gif_standalone(out_path, env_name, structure, ctrl_path):
+    print("Generating gif...")
+    gif_resolution = (1280/5, 720/5)
+
+    env = make_vec_envs(env_name, structure, 1000, 1, None, None, device='cpu', allow_early_resets=False)
+    env.get_attr("default_viewer", indices=None)[0].set_resolution(gif_resolution)
+                    
+    actor_critic, obs_rms = torch.load(ctrl_path, map_location='cpu')
+
+    vec_norm = get_vec_normalize(env)
+    if vec_norm is not None:
+        vec_norm.eval()
+        vec_norm.obs_rms = obs_rms
+
+    recurrent_hidden_states = torch.zeros(1, actor_critic.recurrent_hidden_state_size)
+    masks = torch.zeros(1, 1)
+
+    obs = env.reset()
+    img = env.render(mode='img')
+    reward = None
+    done = False
+
+    imgs = []
+    # arrays = []
+    while not done:
+
+        with torch.no_grad():
+            value, action, _, recurrent_hidden_states = actor_critic.act(
+                obs, recurrent_hidden_states, masks, deterministic=True)
+
+        obs, reward, done, _ = env.step(action)
+        img = env.render(mode='img')
+        imgs.append(img)
+
+        masks.fill_(0.0 if (done) else 1.0)
+
+        if done == True:
+            env.reset()
+
+    env.close()
+    imageio.mimsave(f'{out_path}.gif', imgs, duration=(1/50.0))
+    try:
+        optimize(out_path)
+    except:
+        pass
+        # print("Error optimizing gif. Most likely cause is that gifsicle is not installed.")
+    return 0
+
+
 
 def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure_shape, num_cores, no: NestedOptimization):
 
@@ -29,7 +83,13 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
     internal_exp_files = os.path.join(root_dir, "saved_data", experiment_name)
     temp_path = internal_exp_files + "/metadata.txt"
 
-    default_train_iters = 1000
+    # # To test stuff. If default_train_iters < 100 it does not work. 
+    # # This is because the performance of the model is only saved every 50 iterations, and 
+    # # if the parameter inner inners_per_outer_proportion is 0.5, we get 50 iterations when  
+    # # default_train_iters = 100.
+    # default_train_iters = 100 
+
+    default_train_iters = 100
     default_num_steps = 128
 
     train_iters = int(no.inners_per_outer_proportion * default_train_iters)
@@ -104,9 +164,6 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
             temp_path = os.path.join(save_path_structure, str(structures[i].label))
             np.savez(temp_path, structures[i].body, structures[i].connections)
 
-        ### TRAIN GENERATION
-        if PARALLEL:
-            group = mp.Group()
         for structure in structures:
 
             if structure.is_survivor:
@@ -122,23 +179,29 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     print(f'Error coppying controller for {save_path_controller_part}.\n')
             else:
 
-                if PARALLEL:
-                    # For parallel execution
-                    ppo_args = ((structure.body, structure.connections), tc, (save_path_controller, structure.label), env_name, no, False)
-                    group.add_job(run_ppo, ppo_args, callback=structure.set_reward)
-                else:
-                    # For sequential execution
-                    res = run_ppo((structure.body, structure.connections), tc, (save_path_controller, structure.label), env_name, no, False)
-                    structure.set_reward(res)
-                    if no.need_reevaluate:
-                        no.sw.pause()
-                        res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
-                        no.next_saverealobjective(res_reevaluated)
-                        no.sw.resume()
+                # For sequential execution
+                res = run_ppo((structure.body, structure.connections), tc, (save_path_controller, structure.label), env_name, no, False)
+                structure.set_reward(res)
 
-        if PARALLEL:
-            group.run_jobs(num_cores)
 
+                if no.need_reevaluate:
+                    no.sw.pause()
+                    res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
+                    
+                    controller_path = "controller_to_generate_animation.pt"
+                    import pathlib
+                    out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}"
+
+                    save_robot_gif_standalone(
+                        out_path=out_path_gif,
+                        env_name=env_name,
+                        structure=(structure.body, structure.connections),
+                        ctrl_path=controller_path
+                    )
+
+                    no.next_saverealobjective(res_reevaluated)
+                    
+                    no.sw.resume()
 
         ### COMPUTE FITNESS, SORT, AND SAVE ###
         for structure in structures:

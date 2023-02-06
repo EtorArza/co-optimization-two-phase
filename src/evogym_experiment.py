@@ -27,14 +27,14 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     # BaseManager.register('NestedOptimization', NestedOptimization)
     # manager = BaseManager()
     # manager.start()
-    # no = manager.NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
+    # no = manager.NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
 
     # Sequential
-    no = NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
+    no = NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
     env_name = "Walker-v0"
 
     run_ga(
-        experiment_name = f"{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}",
+        experiment_name = f"{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}",
         env_name = env_name,
         seed = seed,
         max_evaluations = 20000,

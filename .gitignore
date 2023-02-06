@@ -18,10 +18,12 @@ results/robogrammar/data/*
 results/evogym/data/*
 results/robogrammar/data/*
 results/evogym/figures/*
+results/evogym/videos/*
 !results/robogrammar/data/.gitkeep
 !results/robogrammar/figures/.gitkeep
 !results/evogym/data/.gitkeep
 !results/evogym/figures/.gitkeep
+!results/evogym/videos/.gitkeep
 venv
 cluster_scripts/connet_hip.sh
 cluster_scripts/copy_files_to_hipatia.sh
@@ -36,3 +38,4 @@ glew-2.1.0/destdir/
 other_repos/RoboGrammar/build
 other_repos/evogym/build
 other_repos/evogym/examples/saved_data/
+other_repos/evogym/examples/controller_to_generate_animation.pt

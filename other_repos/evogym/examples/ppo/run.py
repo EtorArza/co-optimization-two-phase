@@ -34,7 +34,8 @@ def run_ppo(
         print("Reevaluating...")
     assert (structure == None) == (termination_condition == None) and (structure == None) == (saving_convention == None)
 
-    print(f'Starting training on \n{structure}\nat {saving_convention}...\n')
+    # if verbose:
+    #     print(f'Starting training on \n{structure}\nat {saving_convention}...\n')
 
     args = get_args()
 
@@ -62,8 +63,8 @@ def run_ppo(
                          args.gamma, args.log_dir, device, False)
 
     # import code; code.interact(local=locals()) # start interactive for debugging
-    
-    print("Environment dims -->", envs.observation_space.shape, envs.action_space.shape)
+    if verbose:
+        print("Environment dims -->", envs.observation_space.shape, envs.action_space.shape)
 
 
     actor_critic = Policy(
@@ -200,14 +201,15 @@ def run_ppo(
                 
                 if verbose:
                     print(f'Saving {temp_path} with avg reward {max_determ_avg_reward}\n')
-                torch.save([
-                    actor_critic,
-                    getattr(utils.get_vec_normalize(envs), 'obs_rms', None)
-                ], temp_path)
+                torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], temp_path)
+
 
         # return upon reaching the termination condition
         if not termination_condition == None:
             if termination_condition(j):
+                if test:
+                    savepath = "controller_to_generate_animation.pt"
+                    torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
                 if not test:
                     no.next_outer(max_determ_avg_reward)
                 if verbose:
