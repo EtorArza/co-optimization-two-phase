@@ -57,7 +57,7 @@ if __name__ == "__main__":
         print("Number of executions:", len(seq_parameters))
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[i]
         # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
-        execute_experiment_locally(seed=seed, max_frames=393216, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
+        execute_experiment_locally(seed=seed, max_frames=262144000, inners_per_outer_proportion=inners_per_outer_proportion, inner_length_proportion=inner_length_proportion)
 
         
     elif sys.argv[1] == "--plot":

@@ -89,7 +89,7 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
     # # default_train_iters = 100.
     # default_train_iters = 100 
 
-    default_train_iters = 100
+    default_train_iters = 1000
     default_num_steps = 128
 
     train_iters = int(no.inners_per_outer_proportion * default_train_iters)
