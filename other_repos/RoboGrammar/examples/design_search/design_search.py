@@ -197,7 +197,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       opt_seed=opt_seed,
       input_sequence=input_sequence,
       save_obj_dir="tmp/",
-      save_video_file="test_video.mp4"
+      save_video_file="../../results/robogrammar/videos/"+no.result_file_path.split("/")[-1].removesuffix(".txt")+".mp4"
     )
   
   return input_sequence, np.mean(rewards)
