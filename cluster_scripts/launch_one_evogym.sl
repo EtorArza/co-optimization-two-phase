@@ -8,7 +8,7 @@
 #SBATCH --error=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_err.txt
 #SBATCH --time=5-00:00:00 #Walltime
 #SBATCH -p large
-##SBATCH --exclude=n[001-004,017-018]
+##SBATCH --exclude=n[n001-004,n017-018]
 
 echo "--"
 
