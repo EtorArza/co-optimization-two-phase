@@ -45,3 +45,10 @@ other_repos/RoboGrammar/tmp/*
 other_repos/RoboGrammar/tmp_imp_seq_file
 other_repos/evogym/examples/*.pt
 results_fakeHome/**
+other_repos/windflo/WindFLO.res
+other_repos/windflo/release/WindFLO_LINUX
+other_repos/windflo/optimum.dat
+other_repos/windflo/Examples/Example4/WindFLO.res
+other_repos/windflo/Examples/Example2/WindFLO.res
+other_repos/windflo/Examples/Example0/WindFLO.res
+other_repos/windflo/*.inp
