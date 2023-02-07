@@ -30,3 +30,4 @@ stable-baselines3==1.4.0
 torch==1.12.0
 ttkbootstrap==1.5.1
 typing==3.7.4.3
+xvfbwrapper==0.2.9

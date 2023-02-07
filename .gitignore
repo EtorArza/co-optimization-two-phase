@@ -43,3 +43,5 @@ other_repos/evogym/examples/saved_data/
 other_repos/evogym/examples/controller_to_generate_animation.pt
 other_repos/RoboGrammar/tmp/*
 other_repos/RoboGrammar/tmp_imp_seq_file
+other_repos/evogym/examples/*.pt
+results_fakeHome/**

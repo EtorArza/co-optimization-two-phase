@@ -159,15 +159,6 @@ def generate_video(
   viewer = rd.GLFWViewer()
   time.sleep(1)
 
-  input_sequence_file = "tmp_imp_seq_file"
-
-  if input_sequence_file and input_sequence is not None:
-    import csv
-    with open(input_sequence_file, 'w', newline='') as input_seq_file:
-      writer = csv.writer(input_seq_file)
-      for col in input_sequence.T:
-        writer.writerow(col)
-    print("Saved input sequence to file:", input_sequence_file)
 
   robot_init_pos, has_self_collision = presimulate(robot)
 

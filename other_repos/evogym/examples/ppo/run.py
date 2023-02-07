@@ -208,7 +208,7 @@ def run_ppo(
         if not termination_condition == None:
             if termination_condition(j):
                 if test:
-                    savepath = "controller_to_generate_animation.pt"
+                    savepath = no.controller_path_for_animation
                     torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
                 if not test:
                     no.next_outer(max_determ_avg_reward)

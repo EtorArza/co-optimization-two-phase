@@ -190,14 +190,15 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
     no.sw.resume()
 
   if test:
+    filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")
     from viewer import generate_video
     generate_video(
       task=task,
       robot=robot,
       opt_seed=opt_seed,
       input_sequence=input_sequence,
-      save_obj_dir="tmp/",
-      save_video_file="../../results/robogrammar/videos/"+no.result_file_path.split("/")[-1].removesuffix(".txt")+".mp4"
+      save_obj_dir=f"{filename_wo_extensions}_tmp/",
+      save_video_file="../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
     )
   
   return input_sequence, np.mean(rewards)

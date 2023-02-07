@@ -186,9 +186,10 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
                 if no.need_reevaluate:
                     no.sw.pause()
+                    controller_path_for_animation = f"controller_to_generate_animation_{experiment_name}.pt"
+                    no.controller_path_for_animation = controller_path_for_animation
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
-                    controller_path = "controller_to_generate_animation.pt"
                     import pathlib
                     out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}"
 
@@ -196,7 +197,7 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                         out_path=out_path_gif,
                         env_name=env_name,
                         structure=(structure.body, structure.connections),
-                        ctrl_path=controller_path
+                        ctrl_path=controller_path_for_animation
                     )
 
                     no.next_saverealobjective(res_reevaluated)
