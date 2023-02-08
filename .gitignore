@@ -27,6 +27,7 @@ results/robogrammar/videos/*
 !results/robogrammar/figures/.gitkeep
 !results/robogrammar/videos/.gitkeep
 venv
+other_repos/RoboGrammar/*_tmp
 cluster_scripts/connet_hip.sh
 cluster_scripts/copy_files_to_hipatia.sh
 other_repos/RoboGrammar/trained_models

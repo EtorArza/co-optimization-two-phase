@@ -192,7 +192,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if test:
     filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")
     video_best = "../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
-    video_notbest = "../../results/robogrammar/videos/"+filename_wo_extensions+"not_best"+".mp4"
+    video_notbest = "../../results/robogrammar/videos/"+filename_wo_extensions+"_not_best"+".mp4"
 
     from viewer import generate_video
     try:
