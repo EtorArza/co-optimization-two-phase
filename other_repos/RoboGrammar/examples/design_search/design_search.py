@@ -206,7 +206,6 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       )
       os.system(f"rm -f {video_notbest}")
     except:
-      import os
       os.system(f"[ -f {video_best} ] && mv {video_best} {video_notbest}")
       print("Could not save animation in step ", no.step)
   

@@ -63,13 +63,7 @@ def save_robot_gif_standalone(out_path, env_name, structure, ctrl_path):
             env.reset()
 
     env.close()
-    imageio.mimsave(f'{out_path}.gif', imgs, duration=(1/50.0))
-    try:
-        optimize(out_path)
-    except:
-        pass
-        # print("Error optimizing gif. Most likely cause is that gifsicle is not installed.")
-    return 0
+    imageio.mimsave(out_path, imgs, duration=(1/50.0))
 
 
 
@@ -134,7 +128,6 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
         population_structure_hashes[hashable(temp_structure[0])] = True
         num_evaluations += 1
 
-    print("Start Optimization loop:")
 
 
     while True:
@@ -191,7 +184,9 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
                     import pathlib
-                    out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}"
+                    out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}.gif"
+                    out_path_gif_notbest = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}_not_best.gif"
+
 
                     try:
                         save_robot_gif_standalone(
@@ -200,8 +195,10 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                             structure=(structure.body, structure.connections),
                             ctrl_path=controller_path_for_animation
                         )
+                        os.system(f"rm -f {out_path_gif_notbest}")
 
                     except:
+                        os.system(f"[ -f {out_path_gif} ] && mv {out_path_gif} {out_path_gif_notbest}")
                         print("Could not save animation in step ", no.step)
 
                     no.next_saverealobjective(res_reevaluated)
@@ -225,8 +222,8 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
         f.close()
 
 
-        print(f'FINISHED GENERATION {generation} - SEE TOP {round(percent_survival*100)} percent of DESIGNS:\n')
-        print(structures[:num_survivors])
+        # print(f'FINISHED GENERATION {generation} - SEE TOP {round(percent_survival*100)} percent of DESIGNS:\n')
+        # print(structures[:num_survivors])
 
         ### CROSSOVER AND MUTATION ###
         # save the survivors

@@ -29,7 +29,7 @@ def run_ppo(
     no,
     test):
 
-    verbose = True
+    verbose = False
     if verbose and test:
         print("Reevaluating...")
     assert (structure == None) == (termination_condition == None) and (structure == None) == (saving_convention == None)
