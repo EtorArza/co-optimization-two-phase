@@ -191,6 +191,9 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
 
   if test:
     filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")
+    video_best = "../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
+    video_notbest = "../../results/robogrammar/videos/"+filename_wo_extensions+"not_best"+".mp4"
+
     from viewer import generate_video
     try:
       generate_video(
@@ -199,9 +202,12 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
         opt_seed=opt_seed,
         input_sequence=input_sequence,
         save_obj_dir=f"{filename_wo_extensions}_tmp/",
-        save_video_file="../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
+        save_video_file=video_best
       )
+      os.system(f"rm -f {video_notbest}")
     except:
+      import os
+      os.system(f"[ -f {video_best} ] && mv {video_best} {video_notbest}")
       print("Could not save animation in step ", no.step)
   
   return input_sequence, np.mean(rewards)
