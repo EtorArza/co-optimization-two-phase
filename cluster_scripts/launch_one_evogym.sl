@@ -6,9 +6,9 @@
 #SBATCH --cpus-per-task=1 # number of CPUs
 #SBATCH --output=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_out.txt
 #SBATCH --error=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_err.txt
-#SBATCH --time=5-00:00:00 #Walltime
-#SBATCH -p large
-###########SBATCH --exclude=n[001-004,017-018]
+#SBATCH --time=15-00:00:00 #Walltime
+#SBATCH -p xlarge
+#SBATCH --exclude=n[001-004]
 
 echo "--"
 
@@ -27,7 +27,7 @@ source venv/bin/activate
 echo "Loaded modules."
 echo -n "Start src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
-xvfb-run python src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
+xvfb-run -a python src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
 echo -n "Done src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
 
