@@ -72,8 +72,4 @@ make -j6
 cd ../../..
 
 
-cd other_repos/windflo/release/
-make OS=LINUX MAIN=main
-cd ../../../
-
 
