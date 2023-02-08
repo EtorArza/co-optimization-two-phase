@@ -193,12 +193,16 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     import pathlib
                     out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}"
 
-                    save_robot_gif_standalone(
-                        out_path=out_path_gif,
-                        env_name=env_name,
-                        structure=(structure.body, structure.connections),
-                        ctrl_path=controller_path_for_animation
-                    )
+                    try:
+                        save_robot_gif_standalone(
+                            out_path=out_path_gif,
+                            env_name=env_name,
+                            structure=(structure.body, structure.connections),
+                            ctrl_path=controller_path_for_animation
+                        )
+
+                    except:
+                        print("Could not save animation in step ", no.step)
 
                     no.next_saverealobjective(res_reevaluated)
                     
