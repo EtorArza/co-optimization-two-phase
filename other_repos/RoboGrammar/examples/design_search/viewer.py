@@ -7,6 +7,7 @@ import pyrobotdesign as rd
 import random
 import tasks
 import time
+import pickle
 
 class CameraTracker(object):
   def __init__(self, viewer, sim, robot_idx):
@@ -113,6 +114,56 @@ def finalize_robot(robot):
     if link.joint_type == rd.JointType.NONE:
       link.joint_type = rd.JointType.FIXED
       link.joint_color = [1.0, 0.0, 1.0]
+
+def pickle_rule_sequence_for_video_generation(rule_sequence, experiment_index):
+  print("Saving rule sequence object...", end="")
+
+  # pickling the object
+  with open(f"rule_sequence_{experiment_index}.pkl", "wb") as f:
+      pickle.dump(rule_sequence, f)
+  print("done.")
+
+
+def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_sequence, experiment_index):
+
+  print("Saving simulation objects...", end="")
+
+  # an example object to be pickled
+  simulation_objects = [opt_seed, taskname, input_sequence]
+
+  # pickling the object
+  with open(f"simulation_objects_{experiment_index}.pkl", "wb") as f:
+      pickle.dump(simulation_objects, f)
+  print("done.")
+
+
+
+def unpickle_data_for_video_generation(experiment_index):
+
+
+  with open(f"simulation_objects_{experiment_index}.pkl", "rb") as f:
+    opt_seed, taskname, input_sequence = pickle.load(f)
+
+  with open(f"rule_sequence_{experiment_index}.pkl", "rb") as f:
+      rule_sequence = pickle.load(f)
+
+
+  graphs = rd.load_graphs("data/designs/grammar_apr30.dot")
+  rules = [rd.create_rule_from_graph(g) for g in graphs]
+
+  # rule_sequence = [int(s.strip(",")) for s in rule_sequence]
+
+
+  graph = make_graph(rules, rule_sequence)
+  robot = build_normalized_robot(graph)
+  finalize_robot(robot)
+  task_class = getattr(tasks, taskname)
+  task = task_class(episode_len=128)
+
+  return task, robot, opt_seed, input_sequence
+
+
+
 
 def generate_video(
   task,

@@ -194,20 +194,18 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
     video_best = "../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
     video_notbest = "../../results/robogrammar/videos/"+filename_wo_extensions+"_not_best"+".mp4"
 
-    from viewer import generate_video
-    try:
-      generate_video(
-        task=task,
-        robot=robot,
-        opt_seed=opt_seed,
-        input_sequence=input_sequence,
-        save_obj_dir=f"{filename_wo_extensions}_tmp/",
-        save_video_file=video_best
-      )
-      os.system(f"rm -f {video_notbest}")
-    except:
-      os.system(f"[ -f {video_best} ] && mv {video_best} {video_notbest}")
-      print("Could not save animation in step ", no.step)
+    from viewer import pickle_simulation_objects_for_video_generation
+    
+    
+    no.savenext=True
+    pickle_simulation_objects_for_video_generation(
+      opt_seed,
+      task.taskname,
+      input_sequence,
+      experiment_index=no.experiment_index
+    )
+      
+
   
   return input_sequence, np.mean(rewards)
 
@@ -352,13 +350,19 @@ def main(no, algorithm, cpus, task, seed):
   args = parser.parse_args(args_list)
 
   random.seed(args.seed)
-
-  task_class = getattr(tasks, args.task)
+  taskname=task
+  task_class = getattr(tasks, taskname)
   task = task_class()
+  task.taskname=taskname
   graphs = rd.load_graphs(args.grammar_file)
   rules = [rd.create_rule_from_graph(g) for g in graphs]
   env = RobotDesignEnv(task, rules, args.seed, args.jobs, args.depth)
   search_alg = algorithms[args.algorithm](env, max_tries=1000)
-
+  no.savenext=False
+  from viewer import pickle_rule_sequence_for_video_generation
   for i in range(args.iterations):
     states, actions, result = search_alg.run_iteration(no)
+    if no.savenext:
+      rule_seq = [rules.index(rule) for rule in actions]
+      pickle_rule_sequence_for_video_generation(rule_seq, no.experiment_index)
+      no.savenext=False

@@ -20,7 +20,7 @@ module load GLib/2.68.2-GCCcore-10.3.0
 module load libglvnd/1.3.3-GCCcore-10.3.0
 module load Mesa/21.1.1-GCCcore-10.3.0
 module load xorg-macros/1.19.3-GCCcore-10.3.0
-module load Xvfb/1.20.9-GCCcore-10.2.0
+module load Xvfb/1.20.9-GCCcore-10.2.0 2>/dev/null
 source venv/bin/activate
 
 

@@ -21,17 +21,21 @@ module load GLib/2.68.2-GCCcore-10.3.0
 module load libglvnd/1.3.3-GCCcore-10.3.0
 module load Mesa/21.1.1-GCCcore-10.3.0
 module load xorg-macros/1.19.3-GCCcore-10.3.0
-module load Xvfb/1.20.9-GCCcore-10.2.0
+module load Xvfb/1.20.9-GCCcore-10.2.0 2>/dev/null
 source venv/bin/activate
 
 
 echo "Loaded modules."
 echo -n "Start src/robogrammar_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
-xvfb-run -a python src/robogrammar_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
+python src/robogrammar_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
 echo -n "Done src/robogrammar_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
-
+echo -n "Generating visualization:"
+date
+xvfb-run -a python src/robogrammar_experiment.py --visualize $SLURM_ARRAY_TASK_ID
+echo -n "Done generating visualization:"
+date
 echo "--"
 
 
