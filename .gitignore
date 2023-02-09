@@ -57,3 +57,4 @@ other_repos/windflo/*.inp
 other_repos/windflo/outcmaes
 other_repos/RoboGrammar/tmp_*
 other_repos/RoboGrammar/*.pkl
+other_repos/evogym/examples/*.pkl

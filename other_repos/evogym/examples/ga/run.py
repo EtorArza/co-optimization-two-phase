@@ -23,6 +23,32 @@ import torch
 from ppo.utils import get_vec_normalize
 import imageio
 from pygifsicle import optimize
+import pickle
+
+
+def dump_visualization_data(out_path, env_name, structure, ctrl_path, experiment_index):
+
+
+    out_path, env_name, structure, ctrl_path
+
+    print("Saving simulation objects...", end="")
+
+    # an example object to be pickled
+    simulation_objects = [out_path, env_name, structure, ctrl_path]
+    print("ctrl_path =",ctrl_path)
+    # pickling the object
+    with open(f"simulation_objects_{experiment_index}.pkl", "wb") as f:
+        pickle.dump(simulation_objects, f)
+    print("done.")
+
+
+def load_visualization_data(experiment_index):
+    with open(f"simulation_objects_{experiment_index}.pkl", "rb") as f:
+        out_path, env_name, structure, ctrl_path = pickle.load(f)
+
+  
+    return out_path, env_name, structure, ctrl_path
+
 def save_robot_gif_standalone(out_path, env_name, structure, ctrl_path):
     print("Generating gif...")
     gif_resolution = (1280/5, 720/5)
@@ -179,7 +205,7 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
                 if no.need_reevaluate:
                     no.sw.pause()
-                    controller_path_for_animation = f"controller_to_generate_animation_{experiment_name}.pt"
+                    controller_path_for_animation = f"controller_to_generate_animation_{no.experiment_index}.pt"
                     no.controller_path_for_animation = controller_path_for_animation
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
@@ -188,18 +214,8 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     out_path_gif_notbest = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}_not_best.gif"
 
 
-                    try:
-                        save_robot_gif_standalone(
-                            out_path=out_path_gif,
-                            env_name=env_name,
-                            structure=(structure.body, structure.connections),
-                            ctrl_path=controller_path_for_animation
-                        )
-                        os.system(f"rm -f {out_path_gif_notbest}")
+                    dump_visualization_data(out_path_gif, env_name, (structure.body, structure.connections), controller_path_for_animation, no.experiment_index)
 
-                    except:
-                        os.system(f"[ -f {out_path_gif} ] && mv {out_path_gif} {out_path_gif_notbest}")
-                        print("Could not save animation in step ", no.step)
 
                     no.next_saverealobjective(res_reevaluated)
                     

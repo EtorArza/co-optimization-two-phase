@@ -27,8 +27,12 @@ source venv/bin/activate
 echo "Loaded modules."
 echo -n "Start src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
-xvfb-run -a python src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
+python src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
 echo -n "Done src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
-
+echo -n "Generating visualization |"
+date
+xvfb-run -a python src/evogym_experiment.py --visualize $SLURM_ARRAY_TASK_ID
+echo -n "Done generating evogym_experiment |"
+date
 echo "--"
