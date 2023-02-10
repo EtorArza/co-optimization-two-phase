@@ -147,7 +147,7 @@ class BayesOptimizer(object):
         """
         x = np.reshape(x, (1, self.num_inputs))
         mean, var = self.model.predict(x)
-        if alpha is -1:
+        if alpha == -1:
             alpha = np.sqrt(v * (2 * np.log((self.iterations
                                              ** ((self.num_inputs / 2) + 2))
                                             * (np.pi ** 2) / (3 * delta))))
