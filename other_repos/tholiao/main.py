@@ -13,7 +13,7 @@ from optimizers import JointBatchOptimizer, \
 from utils import *
 
 
-def cli_main():
+def cli_main(experiment_index):
     obj_f=0
     optimizer='hpcbbo'
     init_uc = 5 # Number of initial control optimization loops
@@ -65,7 +65,4 @@ def cli_main():
 
     optimizer.optimize(total=total)
     sim.exit()
-    np.save("./logs/main_{}_iter-{}_x".format(
-        time.strftime("%Y.%m.%d-%H.%M.%S"), optimizer.iterations), optimizer.X)
-    np.save("./logs/main_{}_iter-{}_y".format(
-        time.strftime("%Y.%m.%d-%H.%M.%S"), optimizer.iterations), optimizer.Y)
+

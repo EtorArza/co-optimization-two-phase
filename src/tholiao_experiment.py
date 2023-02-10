@@ -9,4 +9,4 @@ from main import cli_main
 
 
 if sys.argv[1] == "--local_launch":
-    cli_main()
+    cli_main(3)

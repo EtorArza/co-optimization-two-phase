@@ -12,11 +12,6 @@ class RandomOptimizer(BayesOptimizer):
         self.Y = self.evaluate(self.X)
 
         # Logging
-        print("SOFTWARE LOG Iteration {}:".format(self.iterations))
-        np.save("./logs/ro_{}_iter-{}_x".format(
-            time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), self.X)
-        np.save("./logs/ro_{}_iter-{}_y".format(
-            time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), self.Y)
         print(self.X)
         print(self.Y)
 
@@ -34,10 +29,6 @@ class RandomOptimizer(BayesOptimizer):
         for i, row in enumerate(X):
             row = row.reshape((1, self.num_inputs))
             Y[i] = self.obj_f(row, cache_walker=False).reshape((1, 1))
-            np.save("./logs/random_{}_iter-{}_x".format(
-                time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), X)
-            np.save("./logs/random_{}_iter-{}_y".format(
-                time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), Y)
         Y = np.array(np.abs(Y))
         print("SW - Evaluated to ", Y)
         return Y

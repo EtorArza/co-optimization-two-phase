@@ -103,13 +103,6 @@ class BayesOptimizer(object):
             self.train_GP(self.X, self.Y)
             self.optimize_model()
             print("OUTER LOOP: ", self.X, self.Y)
-            if self.log and self.iterations % 50 == 0:
-                np.save("./logs/opt_{}_iter-{}_x".format(
-                    time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations),
-                    self.X)
-                np.save("./logs/opt_{}_iter-{}_y".format(
-                    time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations),
-                    self.Y)
         print("FINISHED OPTIMIZATION")
 
     def evaluate(self, X):

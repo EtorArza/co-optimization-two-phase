@@ -124,12 +124,6 @@ class JointBayesOptimizer(BayesOptimizer):
             self.train_GP(self.X, self.Y)
             self.optimize_model()
 
-        # Logging
-        print("SOFTWARE LOG Iteration {}:".format(self.iterations))
-        np.save("./logs/co_{}_iter-{}_x".format(
-            time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), self.X)
-        np.save("./logs/co_{}_iter-{}_y".format(
-            time.strftime("%Y.%m.%d-%H.%M.%S"), self.iterations), self.Y)
         print(self.X)
         print(self.Y)
 
