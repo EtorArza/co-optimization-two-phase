@@ -5,7 +5,7 @@ from .bayes_optimizer import BayesOptimizer
 
 
 class RandomOptimizer(BayesOptimizer):
-    def optimize(self, total):
+    def optimize(self, no, total):
         self.update_iterations(self.n_init)
 
         self.X = self.optimize_acq_f()

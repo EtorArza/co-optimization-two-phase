@@ -88,7 +88,7 @@ class BayesOptimizer(object):
     def restore(self):
         self.x = np.load()
 
-    def optimize(self, total):
+    def optimize(self, no, total):
         if self.model is None:
             self.initialize_GP(self.n_init)
 

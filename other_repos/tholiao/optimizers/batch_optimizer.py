@@ -13,7 +13,7 @@ class BatchBayesOptimizer(BayesOptimizer):
                                                   start_with_y=start_with_y)
         self.batch_size = batch_size
 
-    def optimize(self, total):
+    def optimize(self, total, no):
         if self.model is None:
             self.initialize_GP(self.n_init)
 

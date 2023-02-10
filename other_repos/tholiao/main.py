@@ -2,6 +2,8 @@
 
 import argparse
 import time
+import sys
+from NestedOptimization import NestedOptimization
 
 import numpy as np
 
@@ -13,7 +15,7 @@ from optimizers import JointBatchOptimizer, \
 from utils import *
 
 
-def cli_main(experiment_index):
+def cli_main(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
     obj_f=0
     optimizer='hpcbbo'
     init_uc = 5 # Number of initial control optimization loops
@@ -27,6 +29,7 @@ def cli_main(experiment_index):
     num_inputs = N_CTRL_PARAMS[obj_f] + N_MRPH_PARAMS[obj_f]
     joint_bounds = np.hstack((np.array(CONTROLLER_BOUNDS[obj_f]),
                               np.array(MORPHOLOGY_BOUNDS[obj_f])))
+    no = NestedOptimization(f"../../../results/evogym/data/flatterrain_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt", "standard", max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)
 
     if obj_f == 0:
         sim = HwSwDistSim()
@@ -63,6 +66,6 @@ def cli_main(experiment_index):
                                   batch_size=batch_size,
                                   contextual=contextual)
 
-    optimizer.optimize(total=total)
+    optimizer.optimize(no, total=total)
     sim.exit()
 

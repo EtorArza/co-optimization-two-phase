@@ -86,7 +86,7 @@ class CMAESOPtimizer():
         print("Y is ", update)
         self.Y = np.concatenate((self.Y, update))
 
-    def optimize(self, total):
+    def optimize(self, no, total):
         init_params = self.random_parameters(1)
 
         bounds_norm = [[0] * self.num_variables, [100] * self.num_variables]

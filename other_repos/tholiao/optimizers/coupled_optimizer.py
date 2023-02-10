@@ -129,13 +129,13 @@ class JointBayesOptimizer(BayesOptimizer):
 
         return self.select_y_to_return()
 
-    def optimize(self, total):
+    def optimize(self, no, total):
         """
         :param total:
         :param inner_loop: Determines number of loops inner software
         optimization will do each time it's called by hw_optimizer
         """
-        self.hw_optimizer.optimize(total)
+        self.hw_optimizer.optimize(no, total)
 
     def optimize_acq_f(self, x_cn):
         def obj_sw_DIRECT(x_uc, user_data):
