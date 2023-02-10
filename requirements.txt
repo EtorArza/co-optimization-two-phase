@@ -32,3 +32,9 @@ ttkbootstrap==1.5.1
 typing==3.7.4.3
 xvfbwrapper==0.2.9
 f90nml==1.4.3
+GPy == 1.6.1
+dotmap
+direct
+click
+deap
+cma
