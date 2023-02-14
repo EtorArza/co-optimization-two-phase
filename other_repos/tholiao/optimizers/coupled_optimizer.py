@@ -163,7 +163,7 @@ class JointBayesOptimizer(BayesOptimizer):
         """
         x = x.reshape(1, self.n_uc + self.n_cn)
         mean, var = self.model.predict(x)
-        if alpha is -1:
+        if alpha == -1:
             alpha = np.sqrt(v * (2 * np.log((self.iterations
                                              ** ((self.n_uc / 2) + 2))
                                             * (np.pi ** 2) / (3 * delta))))
