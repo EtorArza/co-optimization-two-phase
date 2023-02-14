@@ -26,6 +26,12 @@ results/robogrammar/videos/*
 !results/robogrammar/data/.gitkeep
 !results/robogrammar/figures/.gitkeep
 !results/robogrammar/videos/.gitkeep
+results/tholiao/data/*
+results/tholiao/figures/*
+results/tholiao/videos/*
+!results/tholiao/data/.gitkeep
+!results/tholiao/figures/.gitkeep
+!results/tholiao/videos/.gitkeep
 venv
 other_repos/evogym/examples/saved_data
 other_repos/RoboGrammar/*_tmp
