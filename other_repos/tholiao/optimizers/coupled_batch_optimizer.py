@@ -7,8 +7,11 @@ import utils
 class JointBatchOptimizer(JointOptimizerAug):
     def __init__(self, obj_f, n_uc, init_uc, bounds_uc, uc_runs_per_cn, init_cn,
                  bounds_cn, n_cn, batch_size, contextual=True,
-                 uc_to_return='max'):
-
+                 uc_to_return='max',no=None):
+        
+        if no is None:
+            raise ValueError("no can't be None.")
+        self.no = no
         bo_x, bo_y, co_x, co_y = [None, None, None, None]
         logs = utils.recover_logs()
         if logs is not None \
@@ -31,9 +34,10 @@ class JointBatchOptimizer(JointOptimizerAug):
         super(JointBatchOptimizer, self) \
             .__init__(obj_f, n_uc, init_uc, bounds_uc, uc_runs_per_cn, init_cn,
                       bounds_cn, n_cn, contextual, uc_to_return,
-                      start_with_x=co_x, start_with_y=co_y)
+                      start_with_x=co_x, start_with_y=co_y, no=no)
 
         self.hw_optimizer = BatchBayesOptimizer(self.eval_hw, n_cn, bounds_cn,
                                                 batch_size, init_cn,
                                                 start_with_x=bo_x,
-                                                start_with_y=bo_y)
+                                                start_with_y=bo_y,
+                                                no=no)

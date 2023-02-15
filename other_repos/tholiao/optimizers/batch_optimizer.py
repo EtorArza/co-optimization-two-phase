@@ -7,14 +7,18 @@ from .bayes_optimizer import BayesOptimizer
 
 class BatchBayesOptimizer(BayesOptimizer):
     def __init__(self, obj_f, num_inputs, bounds, batch_size, n_init,
-                 start_with_x=None, start_with_y=None):
+                 start_with_x=None, start_with_y=None,no=None):
         super(BatchBayesOptimizer, self).__init__(obj_f, num_inputs, bounds, n_init,
                                                   start_with_x=start_with_x,
-                                                  start_with_y=start_with_y)
+                                                  start_with_y=start_with_y, no=no)
+        if no is None:
+            raise ValueError("no can't be None.")
         self.batch_size = batch_size
-
-    def optimize(self, total, no):
+        self.no = no
+    def optimize(self, total):
+        print("Optimize...")
         if self.model is None:
+            print("Initializing_GP...")
             self.initialize_GP(self.n_init)
 
         for i in range(total // self.batch_size):

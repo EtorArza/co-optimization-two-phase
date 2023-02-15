@@ -10,7 +10,7 @@ from .bayes_optimizer import BayesOptimizer
 class JointBayesOptimizer(BayesOptimizer):
     def __init__(self, obj_f, n_uc, init_uc, bounds_uc, uc_runs_per_cn, init_cn,
                  bounds_cn, n_cn, contextual=True, uc_to_return='max',
-                 start_with_x=None, start_with_y=None):
+                 start_with_x=None, start_with_y=None, no=None):
         """
 
         :param obj_f:
@@ -24,14 +24,15 @@ class JointBayesOptimizer(BayesOptimizer):
         :param init_cn: number of initial runs of the constrained variable
         :param contextual: whether the inner loop should share GP's across runs
         """
-
+        if no is None:
+            raise ValueError("no can't be None.")
         super(JointBayesOptimizer, self).__init__(obj_f, n_cn + n_uc, bounds_uc,
                                                   init_cn, start_with_x,
-                                                  start_with_y)
+                                                  start_with_y, no=no)
 
         self.n_cn = n_cn
         self.init_cn = init_cn
-        self.hw_optimizer = BayesOptimizer(self.eval_hw, n_cn, bounds_cn, init_cn)
+        self.hw_optimizer = BayesOptimizer(self.eval_hw, n_cn, bounds_cn, init_cn, no=no)
 
         self.uc_runs_per_cn = uc_runs_per_cn
         self.init_uc = init_uc
@@ -44,7 +45,7 @@ class JointBayesOptimizer(BayesOptimizer):
         self.uc_to_return = uc_to_return
         self.contextual = contextual
 
-    def random_parameters(self, n):
+    def random_parameters(self, n, seed):
         """
         Initializes software parameters randomly sampled
         :param n: number of parameters to sample
@@ -53,7 +54,7 @@ class JointBayesOptimizer(BayesOptimizer):
         assert n > 0, "Must initialize at least one set of parameters"
         assert len(self.bounds_lower) == len(self.bounds_upper), \
             "Number of lower and upper bounds don't match!"
-
+        np.random.seed(seed)
         print("SW - Randomly generating {} sets of {} parameters"
               .format(n, self.n_uc))
         output = np.empty((n, self.n_uc))
@@ -129,13 +130,13 @@ class JointBayesOptimizer(BayesOptimizer):
 
         return self.select_y_to_return()
 
-    def optimize(self, no, total):
+    def optimize(self, total):
         """
         :param total:
         :param inner_loop: Determines number of loops inner software
         optimization will do each time it's called by hw_optimizer
         """
-        self.hw_optimizer.optimize(no, total)
+        self.hw_optimizer.optimize(total)
 
     def optimize_acq_f(self, x_cn):
         def obj_sw_DIRECT(x_uc, user_data):
@@ -145,11 +146,13 @@ class JointBayesOptimizer(BayesOptimizer):
         def obj_sw_LBFGS(x_uc):
             x_uc = np.array(x_uc).reshape((1, self.n_uc))
             return -self.acq_f(np.concatenate((x_uc, x_cn), axis=1))
-
+        # self.no.print_to_result_file("1)->" + str(x_cn)+ str(self.n_uc)+f"|{self.iterations}\n")
         x, _, _ = solve(obj_sw_DIRECT, self.bounds_lower,
                         self.bounds_upper, maxf=500)
+        # self.no.print_to_result_file("2)->" + str(x)+f"|{self.iterations}\n")
         x = minimize(obj_sw_LBFGS, x, method='L-BFGS-B',
                      bounds=self.reformat_bounds(self.bounds)).x
+        # self.no.print_to_result_file("3)->" + str(x)+f"|{self.iterations}\n")
         return np.array(x).reshape((1, self.n_uc))
 
     def acq_f(self, x, alpha=-1, v=.01, delta=.1):
@@ -164,7 +167,7 @@ class JointBayesOptimizer(BayesOptimizer):
         x = x.reshape(1, self.n_uc + self.n_cn)
         mean, var = self.model.predict(x)
         if alpha == -1:
-            alpha = np.sqrt(v * (2 * np.log((self.iterations
+            alpha = np.sqrt(v * (2 * np.log((5
                                              ** ((self.n_uc / 2) + 2))
                                             * (np.pi ** 2) / (3 * delta))))
 

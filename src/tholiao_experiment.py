@@ -31,6 +31,6 @@ if sys.argv[1] == "--local_launch":
     print("Total number of executions:", len(seq_parameters))
     print("Parameters current execution:",seq_parameters[experiment_index])
     seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
-    # max_frames=32032000 is the default value if we consider 250 morphologies evaluated.
-    max_frames = 9999999
+    # max_frames=9999999999 is the default value.
+    max_frames = 99999999999
     cli_main(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)

@@ -47,7 +47,8 @@ class CMAESOPtimizer():
             x_new.append(self.normalize_variable(val, lower_bound, upper_bound))
         return np.array(x_new)
 
-    def random_parameters(self, n_initial):
+    def random_parameters(self, n_initial, seed):
+        np.random.seed(seed)
         return np.random.uniform(0, 100, (self.num_variables,))
 
     def wrapper(self, x):

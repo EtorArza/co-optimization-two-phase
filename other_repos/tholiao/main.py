@@ -18,13 +18,13 @@ from utils import *
 def cli_main(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
     obj_f=0
     optimizer='hpcbbo'
-    init_uc = 5 # Number of initial control optimization loops (To initialize the gaussian process)
-    init_cn = 5 # Number of initial morphology optimization loops (To initialize the gaussian process)
-    uc_runs_per_cn = 50 # Ratio of morphology opt. loops to opt. control loops
-    batch_size = 5 # Morphology batch size
+    init_uc = 2 # Number of initial control optimization loops (To initialize the gaussian process)
+    init_cn = 2 # Number of initial morphology optimization loops (To initialize the gaussian process)
+    uc_runs_per_cn = 6 # Ratio of morphology opt. loops to opt. control loops
+    batch_size = 2 # Morphology batch size
     total = 100 # Number of total morphology optimization loops
     obj_f = 0 # Switch between different objective functions
-    contextual = True # Toggle contextual optimization. Contextual means a new GP is initialized for each morphology evaluation.
+    contextual = False # Toggle contextual optimization. Contextual=False means that a new GP is initialized for each morphology evaluation.
     popsize = -1 # Only relevant for CMA-ES
     num_inputs = N_CTRL_PARAMS[obj_f] + N_MRPH_PARAMS[obj_f]
     joint_bounds = np.hstack((np.array(CONTROLLER_BOUNDS[obj_f]),
@@ -49,8 +49,8 @@ def cli_main(seed, max_frames, inners_per_outer_proportion, inner_length_proport
                                   bounds_cn=MORPHOLOGY_BOUNDS[obj_f],
                                   n_cn=N_MRPH_PARAMS[obj_f],
                                   batch_size=batch_size,
-                                  contextual=contextual)
-        
-    optimizer.optimize(total=total, no=no)
+                                  contextual=contextual,
+                                  no=no)
+    optimizer.optimize(total=total)
     sim.exit()
 

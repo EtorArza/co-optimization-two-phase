@@ -66,6 +66,14 @@ class NestedOptimization:
         assert mode in ("saveall", "standard")
 
 
+    def print_to_result_file(self, msg_string):
+        self.mutex.acquire()
+        try:
+            with open(self.result_file_path, "a") as f:
+                    f.write(msg_string)
+        finally:
+            self.mutex.release()
+
 
 
     def next_step(self, f_observed):
@@ -124,3 +132,5 @@ class NestedOptimization:
         finally:
             self.mutex.release()
 
+    def get_seed(self):
+        return 2

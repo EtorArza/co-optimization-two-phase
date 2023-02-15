@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 class BayesOptimizer(object):
     def __init__(self, obj_f, num_inputs, bounds, n_init, start_with_x=None,
-                 start_with_y=None, log=False):
+                 start_with_y=None, log=False, no = None):
         """
 
         obj_f:          Objective function
@@ -20,7 +20,9 @@ class BayesOptimizer(object):
         context_space:  Sequence of terrain z-scales to sample from
         """
         assert n_init > 0, "Must randomly initialize values"
-
+        if no is None:
+            raise ValueError("no can't be None.")
+        self.no = no
         self.model = None
         self.iterations = 0
 
@@ -55,8 +57,7 @@ class BayesOptimizer(object):
         :param n_init:
         :return:
         """
-        print(self.bounds, n_init)
-        self.X = self.random_parameters(self.bounds, n_init)
+        self.X = self.random_parameters(self.bounds, n_init, self.no.get_seed())
         self.Y = self.evaluate(self.X)
         self.Y_mean = np.zeros((self.X.shape[0], 1))
         self.Y_var = np.zeros((self.X.shape[0], 1))
@@ -65,7 +66,7 @@ class BayesOptimizer(object):
         self.optimize_model()
 
     def optimize_model(self):
-        self.model.optimize()
+        self.model.optimize(optimizer='scg')
 
     def update_iterations(self, i=1):
         self.iterations += i
@@ -102,7 +103,7 @@ class BayesOptimizer(object):
 
             self.train_GP(self.X, self.Y)
             self.optimize_model()
-            print("OUTER LOOP: ", self.X, self.Y)
+            # print("OUTER LOOP: ", self.X, self.Y)
         print("FINISHED OPTIMIZATION")
 
     def evaluate(self, X):
@@ -113,12 +114,15 @@ class BayesOptimizer(object):
         """
         n = X.shape[0]
         assert n >= 1, "Have to evaluate at least one row"
-        print("Evaluating: ", X)
+        print("Evaluating n =", n, "solutions...")
 
         Y = np.zeros((n, 1))
         for i, row in enumerate(X):
             row = row.reshape((1, self.num_inputs))
             Y[i] = self.obj_f(row, cache_walker=False).reshape((1, 1))
+            # np.set_printoptions(precision=64)
+            # np.set_printoptions(linewidth=np.inf)
+            # self.no.print_to_result_file(str(row)+" -> "+str(Y[i])+"\n")
         Y = np.array(np.abs(Y))
         print("SW - Evaluated to ", Y)
         return Y
@@ -147,8 +151,9 @@ class BayesOptimizer(object):
         """
         x = np.reshape(x, (1, self.num_inputs))
         mean, var = self.model.predict(x)
+        fake_iterations_parameter = 10
         if alpha == -1:
-            alpha = np.sqrt(v * (2 * np.log((self.iterations
+            alpha = np.sqrt(v * (2 * np.log((fake_iterations_parameter
                                              ** ((self.num_inputs / 2) + 2))
                                             * (np.pi ** 2) / (3 * delta))))
         return mean + (alpha * var)
@@ -175,11 +180,11 @@ class BayesOptimizer(object):
         print("X update shape is ", update.shape)
         self.X = np.concatenate((self.X, update))
         mean, var = self.model.predict(update)
-        print("m, var are {}, {}".format(mean, var))
+        # print("m, var are {}, {}".format(mean, var))
         self.Y_mean = np.concatenate((self.Y_mean, mean))
         self.Y_var = np.concatenate((self.Y_var, var))
-        print(self.Y_mean)
-        print(self.Y_var)
+        # print(self.Y_mean)
+        # print(self.Y_var)
 
     def update_Y(self, update):
         self.Y = np.concatenate((self.Y, update))
@@ -188,7 +193,8 @@ class BayesOptimizer(object):
         pass
 
     @staticmethod
-    def random_parameters(bounds, n_initial):
+    def random_parameters(bounds, n_initial, seed):
+        np.random.seed(seed)
         assert len(bounds[0]) == len(bounds[1]), \
             "Number of lower and upper bounds don't match!"
 
