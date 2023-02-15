@@ -38,6 +38,8 @@ module load xorg-macros/1.19.3-GCCcore-10.3.0
 module load Xvfb/1.20.9-GCCcore-10.2.0
 fi
 
+#To generate figures:
+sudo apt install python3-tk -y  
 
 
 # Setup python environment

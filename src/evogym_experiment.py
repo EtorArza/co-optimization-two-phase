@@ -64,11 +64,10 @@ if __name__ == "__main__":
 
 
     elif sys.argv[1] == "--plot":
-        import pandas as pd
-        from matplotlib import pyplot as plt
-        df = pd.read_csv("results/evogym/data/first_iteration.txt")
         print("Inner learning algorithm in evogym is ppo.")
-        plot_first_iteration(df, figpath, "evogym")
+
+        df = plot_comparison_parameters("results/evogym/data", figpath, "dummy_name")
+
 
 
     if sys.argv[1] == "--visualize":
