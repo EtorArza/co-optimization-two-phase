@@ -127,8 +127,8 @@ def run_ppo(
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             cum_reward += float(reward)
-            if not test:
-                no.next_step(float(cum_reward))
+
+            no.next_step()
 
             # track rewards
             for info in infos:
@@ -149,7 +149,7 @@ def run_ppo(
             rollouts.insert(obs, recurrent_hidden_states, action,
                             action_log_prob, value, reward, masks, bad_masks)
         if not test:
-            no.next_inner(None)
+            no.next_inner()
 
         with torch.no_grad():
             next_value = actor_critic.get_value(
@@ -191,7 +191,7 @@ def run_ppo(
                 else:
                     print(f'Evaluated using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / termination_condition.max_iters}\n')
             if not test:
-                no.next_inner(float(determ_avg_reward))
+                no.next_inner()
             if determ_avg_reward > max_determ_avg_reward:
                 max_determ_avg_reward = determ_avg_reward
 

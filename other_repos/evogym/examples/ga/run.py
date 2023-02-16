@@ -203,8 +203,7 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                 structure.set_reward(res)
 
 
-                if no.need_reevaluate:
-                    no.sw.pause()
+                if no.is_reevaluating:
                     controller_path_for_animation = f"controller_to_generate_animation_{no.experiment_index}.pt"
                     no.controller_path_for_animation = controller_path_for_animation
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
@@ -217,9 +216,8 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     dump_visualization_data(out_path_gif, env_name, (structure.body, structure.connections), controller_path_for_animation, no.experiment_index)
 
 
-                    no.next_saverealobjective(res_reevaluated)
+                    no.next_reeval_outer(res_reevaluated)
                     
-                    no.sw.resume()
 
         ### COMPUTE FITNESS, SORT, AND SAVE ###
         for structure in structures:

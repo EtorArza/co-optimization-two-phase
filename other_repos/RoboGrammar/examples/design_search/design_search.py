@@ -142,11 +142,10 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       optimizer.update()
       optimizer.return_observed_scores(ObservedScores)
       np.set_printoptions(threshold=np.inf)
-      if not test:
-        for ObservedScores_sample in ObservedScores:
-          for score in ObservedScores_sample:
-            no.next_step(score)
-          no.next_inner(np.mean(ObservedScores_sample))
+      for ObservedScores_sample in ObservedScores:
+        for score in ObservedScores_sample:
+          no.next_step()
+        no.next_inner()
 
 
       input_sequence[:,j] = optimizer.input_sequence[:,0]
@@ -181,13 +180,10 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if not test:
     no.next_outer(np.mean(rewards))
 
-  if no.need_reevaluate and not test:
+  if no.is_reevaluating and not test:
     print("Reevaluating...")
-    no.sw.pause()
     _, reeval_f = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
-    no.next_saverealobjective(reeval_f)
-    no.need_reevaluate = False
-    no.sw.resume()
+    no.next_reeval_outer(reeval_f)
 
   if test:
     filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")

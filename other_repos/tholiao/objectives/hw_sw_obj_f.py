@@ -79,9 +79,8 @@ class HwSwDistSim(DistanceSimulation):
                 # Run the simulation
                 print('Running trial...')
                 self.walk(max_steps)
-                if not no.need_reevaluate:
-                    for _ in range(max_steps):
-                        no.next_step(-10)
+                for _ in range(max_steps):
+                    no.next_step()
                 # Calculate how far the robot walked
                 end = self.get_pos(self.walker.base_handle)
                 dist = self.calc_dist(start, end)
@@ -92,8 +91,8 @@ class HwSwDistSim(DistanceSimulation):
                 self.close_scene()
                 self.stop()
                 self.exit()
-                if not no.need_reevaluate:
-                    no.next_inner(dist)
+                if not no.is_reevaluating:
+                    no.next_inner()
 
                 return np.array([dist])
 

@@ -36,15 +36,19 @@ class stopwatch:
 class NestedOptimization:
 
     sw = stopwatch()
+    sw_reeval = stopwatch()
     f_observed = float("-inf")
     f_best = float("-inf")
+    f_reeval_observed = float("-inf")
+    f_reeval_best = float("-inf")
     step = 0
+    reevaluating_steps = 0
     iteration = 0
     evaluation = 0
     done = False
     write_header = True
     iterations_since_best_found = 0
-    need_reevaluate = False
+    is_reevaluating = False
 
     result_file_path = None
     mode = None
@@ -57,6 +61,7 @@ class NestedOptimization:
 
 
     def __init__(self, result_file_path, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
+        self.sw_reeval.pause()
         self.result_file_path = result_file_path
         self.mode = mode
         self.max_frames = max_frames
@@ -74,61 +79,68 @@ class NestedOptimization:
         finally:
             self.mutex.release()
 
+    def next_step(self):
+        if self.is_reevaluating:
+            self.reevaluating_steps += 1
+        else:
+            self.step += 1
 
 
-    def next_step(self, f_observed):
-        self.step += 1
-        self.f_observed = f_observed
-        if self.mode == "saveall":
-            print("next_step()", self, self.step, f_observed)
-            self.write_to_file(level=0)
-
-
-
-    def next_inner(self, f_observed):
+    def next_inner(self):
         self.iteration += 1
-        self.f_observed = f_observed
-        if self.mode == "saveall":
-            self.write_to_file(level=1)
-            print("next_inner()", self, self.f_best)
 
 
     def next_outer(self, f_observed):
-        self.evaluation += 1
+        assert not f_observed is None
         self.f_observed = f_observed
 
         if self.step > self.max_frames:
             print("Finished at", self.max_frames,"frames.")
             exit(0)
 
-        if not f_observed is None:
-            self.check_if_best(f_observed)
-        
+        self.evaluation += 1
+        self.check_if_best(level=2)
         self.write_to_file(level=2)
         print("next_outer()", self, f_observed)
 
-    def next_saverealobjective(self, real_f):
-        self.f_observed = real_f
-        self.need_reevaluate = False
+
+    def next_reeval_outer(self, f_reeval_observed):
+        self.f_reeval_observed = f_reeval_observed
+        self.check_if_best(level=3)
         self.write_to_file(level=3)
-        print("next_saverealobjective()", self, real_f)
+        self.is_reevaluating = False
+        self.sw_reeval.pause()
+        self.sw.resume()
+        print("next_reeval_outer()", self, f_reeval_observed)
 
 
-    def check_if_best(self, f):
+    def check_if_best(self, level):
         # print("Checking for best found.")
-        if f > self.f_best:
-            self.f_best = f
-            self.need_reevaluate = True
-            print("best_found!")
-    
+        if level == 2:
+            if self.f_observed > self.f_best:
+                self.f_best = self.f_observed
+                self.is_reevaluating = True
+                self.sw_reeval.resume()
+                self.sw.pause()
+                print("best_found! (level 2)")
+        if level == 3:
+            if self.f_reeval_observed > self.f_reeval_best:
+                self.f_reeval_best = self.f_reeval_observed
+                print("best_found! (level 3)")
+
+
+
     def write_to_file(self, level):
         self.mutex.acquire()
         try:
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
-                    f.write("level,f_best,f,time,step,iteration,evaluation\n")
+                    f.write("level,evaluation,f_best,f,time,time_including_reeval,step,step_including_reeval\n")
                     self.write_header = False
-                f.write(f"{level},"+str(self.f_best if level != 3 else "nan")+ ", "+ str(self.f_observed if not self.f_observed is None else "nan") + f",{self.sw.get_time_string_short_format()},{self.step},{self.iteration},{self.evaluation}\n")
+                if level == 2:
+                    f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+                elif level == 3:
+                    f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
         finally:
             self.mutex.release()
 
