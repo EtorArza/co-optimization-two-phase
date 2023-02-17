@@ -127,24 +127,14 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
 
     main_sim.save_state()
 
+    ObservedScores = np.zeros((nsamples, task.horizon), dtype=np.float64, order='F')
     input_sequence = np.zeros((dof_count, task.episode_len))
     obs = np.zeros((value_estimator.get_observation_size(),
                     task.episode_len + 1), order='f')
     rewards = np.zeros(task.episode_len * task.interval)
     for j in range(task.episode_len):
 
-
-
       optimizer.update()
-
-
-    # This algorithm goes step by step, simulates nsample options for future 'horizon' steps, and chooses the best current step based on that.
-    for _ in range(task.episode_len): 
-      for _ in range(nsamples):
-        no.next_step()
-      no.next_inner()
-
-
       input_sequence[:,j] = optimizer.input_sequence[:,0]
       optimizer.advance(1)
 
@@ -160,6 +150,12 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
         value_estimator.get_observation(main_sim, obs[:,-1])
 
     main_sim.restore_state()
+
+    for _ in range(task.episode_len):
+      for _ in range(nsamples):
+        no.next_step()
+      no.next_inner()
+
 
     # Only train the value estimator if there will be another episode
     if episode_idx < episode_count - 1:
