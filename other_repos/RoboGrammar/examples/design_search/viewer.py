@@ -115,16 +115,16 @@ def finalize_robot(robot):
       link.joint_type = rd.JointType.FIXED
       link.joint_color = [1.0, 0.0, 1.0]
 
-def pickle_rule_sequence_for_video_generation(rule_sequence, experiment_index):
+def pickle_rule_sequence_for_video_generation(rule_sequence, dump_path):
   print("Saving rule sequence object...", end="")
 
   # pickling the object
-  with open(f"rule_sequence_{experiment_index}.pkl", "wb") as f:
+  with open(dump_path, "wb") as f:
       pickle.dump(rule_sequence, f)
   print("done.")
 
 
-def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_sequence, experiment_index):
+def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_sequence, dump_path):
 
   print("Saving simulation objects...", end="")
 
@@ -132,19 +132,19 @@ def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_seq
   simulation_objects = [opt_seed, taskname, input_sequence]
 
   # pickling the object
-  with open(f"simulation_objects_{experiment_index}.pkl", "wb") as f:
+  with open(dump_path, "wb") as f:
       pickle.dump(simulation_objects, f)
   print("done.")
 
 
 
-def unpickle_data_for_video_generation(experiment_index):
+def unpickle_data_for_video_generation(experiment_index, mode):
 
 
-  with open(f"simulation_objects_{experiment_index}.pkl", "rb") as f:
+  with open(f"simulation_objects_{experiment_index}_{mode}.pkl", "rb") as f:
     opt_seed, taskname, input_sequence = pickle.load(f)
 
-  with open(f"rule_sequence_{experiment_index}.pkl", "rb") as f:
+  with open(f"rule_sequence_{experiment_index}_{mode}.pkl", "rb") as f:
       rule_sequence = pickle.load(f)
 
 

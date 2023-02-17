@@ -78,8 +78,8 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if no is None:
     raise ValueError("NestedOptimization object should not be None.")
 
-  default_episode_len = 128
-  default_nsamples = 64
+  default_episode_len = 12
+  default_nsamples = 6
 
   task.episode_len = default_episode_len if test else int(default_episode_len * no.inner_length_proportion)
   nsamples = default_nsamples if test else int(default_nsamples * no.inners_per_outer_proportion)
@@ -179,27 +179,37 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       value_estimator.train(replay_obs, replay_returns)
   if not test:
     no.next_outer(np.mean(rewards))
+    if no.is_reevaluating: # If new best solution found...
+      print("Reevaluating...")
+      _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
+    
 
-  if no.is_reevaluating and not test:
-    print("Reevaluating...")
-    _, reeval_f = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
-    no.next_reeval(reeval_f)
-
-  if test:
-    filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")
-    video_best = "../../results/robogrammar/videos/"+filename_wo_extensions+".mp4"
-    video_notbest = "../../results/robogrammar/videos/"+filename_wo_extensions+"_not_best"+".mp4"
-
+  if test: # test=True means that no.next_outer() found a new best solution, and simulate was called recursively.
     from viewer import pickle_simulation_objects_for_video_generation
-    
-    
-    no.savenext=True
+
+    reeval_f = np.mean(rewards)
+    no.savenext_current=True
     pickle_simulation_objects_for_video_generation(
       opt_seed,
       task.taskname,
       input_sequence,
-      experiment_index=no.experiment_index
+      dump_path=f"simulation_objects_{no.experiment_index}_current.pkl"
     )
+    no.next_reeval(reeval_f)
+
+    if no.save_best_visualization_required:
+      no.savenext_best=True
+      pickle_simulation_objects_for_video_generation(
+        opt_seed,
+        task.taskname,
+        input_sequence,
+        dump_path=f"simulation_objects_{no.experiment_index}_best.pkl"
+      )
+      no.save_best_visualization_required = False
+
+
+
+    return None, None
       
 
   
@@ -354,11 +364,19 @@ def main(no, algorithm, cpus, task, seed):
   rules = [rd.create_rule_from_graph(g) for g in graphs]
   env = RobotDesignEnv(task, rules, args.seed, args.jobs, args.depth)
   search_alg = algorithms[args.algorithm](env, max_tries=1000)
-  no.savenext=False
+  no.savenext_current=False
+  no.savenext_best=False
   from viewer import pickle_rule_sequence_for_video_generation
   for i in range(args.iterations):
     states, actions, result = search_alg.run_iteration(no)
-    if no.savenext:
+    if no.savenext_current:
+      dump_path = f"rule_sequence_{no.experiment_index}_current.pkl"
       rule_seq = [rules.index(rule) for rule in actions]
-      pickle_rule_sequence_for_video_generation(rule_seq, no.experiment_index)
-      no.savenext=False
+      pickle_rule_sequence_for_video_generation(rule_seq, dump_path)
+      no.savenext_current=False
+    if no.savenext_best:
+      dump_path = f"rule_sequence_{no.experiment_index}_best.pkl"
+      rule_seq = [rules.index(rule) for rule in actions]
+      pickle_rule_sequence_for_video_generation(rule_seq, dump_path)
+      no.savenext_best=False
+      

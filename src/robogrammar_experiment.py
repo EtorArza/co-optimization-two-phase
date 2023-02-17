@@ -30,8 +30,10 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     mode = ['saveall','standard'][1]
     algorithm = ["mcts", "random"][0]
     cpus = 1
-    task = 'FlatTerrainTask'
-    resfilepath = f"../../results/robogrammar/data/{task}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt"
+    env_name = 'FlatTerrainTask'
+    experiment_name = f"{experiment_index}_{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}"
+
+    resfilepath = f"../../results/robogrammar/data/{experiment_name}.txt"
 
 
     torch.set_default_dtype(torch.float64)
@@ -41,8 +43,8 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     sys.path.append(os.path.join(base_dir, 'design_search'))
     from NestedOptimization import NestedOptimization
     import os
-    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)
-    main(no, algorithm, cpus, task, seed)
+    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name)
+    main(no, algorithm, cpus, env_name, seed)
 
 
 if __name__ == "__main__":
@@ -54,7 +56,8 @@ if __name__ == "__main__":
             exit(1)
         experiment_index = int(sys.argv[2])
         seq_parameters = get_sequence_of_parameters()
-        print("Number of executions:", len(seq_parameters))
+        print("Total number of executions:", len(seq_parameters))
+        print("Parameters current execution:",seq_parameters[experiment_index])
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
         # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
         execute_experiment_locally(seed, 262144000, inners_per_outer_proportion, inner_length_proportion, experiment_index)
@@ -65,12 +68,10 @@ if __name__ == "__main__":
         import pandas as pd
         from matplotlib import pyplot as plt
         print("Inner learning algorithm in evogym is MPC.")
-        df = pd.read_csv("results/robogrammar/data/first_iteration.txt")
-        plot_first_iteration(df, figpath, "RoboGrammar")
 
 
     elif sys.argv[1] == "--visualize":
-        from viewer import generate_video
+        from viewer import generate_video, unpickle_data_for_video_generation
         if sys.executable.split('/')[-3] != 'venv':
             print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
             print("\n\nOnce 'venv' has been loaded, rerun this script.")
@@ -88,13 +89,13 @@ if __name__ == "__main__":
         sys.argv.pop()
         sys.argv.pop()
 
-        from viewer import unpickle_data_for_video_generation
+        for mode in ["current","best"]:
         
-        task, robot, opt_seed, input_sequence = unpickle_data_for_video_generation(experiment_index)
-        video_best = "../../results/robogrammar/videos/"+f"experiment_index_{experiment_index}"+".mp4"
-        save_obj_dir = f"tmp_{experiment_index}"
+            task, robot, opt_seed, input_sequence = unpickle_data_for_video_generation(experiment_index, mode)
+            video_best = "../../results/robogrammar/videos/"+f"animation_{experiment_index}_{mode}"+".mp4"
+            save_obj_dir = f"tmp_{experiment_index}"
 
-        generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, video_best)
+            generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, video_best)
 
 
     # elif sys.argv[1] == "--cluster_launch":
