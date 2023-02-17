@@ -139,8 +139,8 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
 
 
     # This algorithm goes step by step, simulates nsample options for future 'horizon' steps, and chooses the best current step based on that.
-    for _ in task.episode_len: 
-      for _ in nsamples:
+    for _ in range(task.episode_len): 
+      for _ in range(nsamples):
         no.next_step()
       no.next_inner()
 
