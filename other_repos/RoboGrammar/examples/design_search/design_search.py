@@ -127,25 +127,22 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
 
     main_sim.save_state()
 
-    ObservedScores = np.zeros((nsamples, task.horizon), dtype=np.float64, order='F')
     input_sequence = np.zeros((dof_count, task.episode_len))
     obs = np.zeros((value_estimator.get_observation_size(),
                     task.episode_len + 1), order='f')
     rewards = np.zeros(task.episode_len * task.interval)
     for j in range(task.episode_len):
-      # import code; code.interact(local=locals()) # start interactive for debugging
-      dummy_array = np.zeros(task.episode_len, dtype=np.float64)
-      optimizer.load_refs(dummy_array)
 
 
 
       optimizer.update()
-      optimizer.return_observed_scores(ObservedScores)
-      np.set_printoptions(threshold=np.inf)
-      for ObservedScores_sample in ObservedScores:
-        for score in ObservedScores_sample:
-          no.next_step()
-        no.next_inner()
+
+
+    # This algorithm goes step by step, simulates nsample options for future 'horizon' steps, and chooses the best current step based on that.
+    for _ in task.episode_len: 
+      for _ in nsamples:
+        no.next_step()
+      no.next_inner()
 
 
       input_sequence[:,j] = optimizer.input_sequence[:,0]
