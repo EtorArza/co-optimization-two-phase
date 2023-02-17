@@ -59,8 +59,8 @@ if __name__ == "__main__":
         print("Total number of executions:", len(seq_parameters))
         print("Parameters current execution:",seq_parameters[experiment_index])
         seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
-        # max_frames=262144000 is the default value if we consider only 2000 iterations in their paper.
-        execute_experiment_locally(seed, 262144000, inners_per_outer_proportion, inner_length_proportion, experiment_index)
+        # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
+        execute_experiment_locally(seed, 40960000, inners_per_outer_proportion, inner_length_proportion, experiment_index)
 
         
     elif sys.argv[1] == "--plot":
