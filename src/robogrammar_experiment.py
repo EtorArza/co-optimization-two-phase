@@ -29,7 +29,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     sys.argv.pop()
     mode = ['saveall','standard'][1]
     algorithm = ["mcts", "random"][0]
-    cpus = 1
+    cpus = 8
     env_name = 'FlatTerrainTask'
     experiment_name = f"{experiment_index}_{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}"
 
