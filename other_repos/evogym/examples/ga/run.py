@@ -205,26 +205,26 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
                 if no.is_reevaluating:
                     controller_path_for_animation_current = f"controller_to_generate_animation_{no.experiment_index}_current.pt"
-                    controller_path_for_animation_reeval = f"controller_to_generate_animation_{no.experiment_index}_reeval.pt"
+                    controller_path_for_animation_best = f"controller_to_generate_animation_{no.experiment_index}_best.pt"
                     no.controller_path_for_animation = controller_path_for_animation_current
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
                     import pathlib
-                    out_path_gif_best_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_current.gif"
-                    out_path_gif_best_reeval = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_reeval.gif"
+                    out_path_gif_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_current.gif"
+                    out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_best.gif"
                     
                     dump_path_current = f"simulation_objects_{no.experiment_index}_current.pkl"
-                    dump_path_reeval = f"simulation_objects_{no.experiment_index}_reeval.pkl"
+                    dump_path_best = f"simulation_objects_{no.experiment_index}_best.pkl"
 
-                    dump_visualization_data(dump_path_current, out_path_gif_best_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current, no.experiment_index)
+                    dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current, no.experiment_index)
 
 
                     no.next_reeval(res_reevaluated)
                     if no.save_best_visualization_required:
                         no.save_best_visualization_required = False
-                        os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_reeval}")
+                        os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
 
-                        dump_visualization_data(dump_path_reeval, out_path_gif_best_reeval, env_name, (structure.body, structure.connections), controller_path_for_animation_reeval, no.experiment_index)
+                        dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best, no.experiment_index)
                         
                     
 
