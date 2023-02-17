@@ -105,7 +105,7 @@ class NestedOptimization:
         self.evaluation += 1
         self.check_if_best(level=2)
         self.write_to_file(level=2)
-        print("next_outer()", f_observed, self.step / self.max_frames)
+        print("next_outer()", f_observed, ", progress:", self.step / self.max_frames, ", time left:", self.sw.get_time() / (self.step / self.max_frames) )
 
 
     def next_reeval(self, f_reeval_observed):
@@ -115,7 +115,7 @@ class NestedOptimization:
         self.is_reevaluating = False
         self.sw_reeval.pause()
         self.sw.resume()
-        print("next_reeval()", f_reeval_observed, self.step / self.max_frames)
+        print("next_reeval()", f_reeval_observed, ", progress:", self.step / self.max_frames, ", time left:", self.sw.get_time() / (self.step / self.max_frames) )
 
 
     def check_if_best(self, level):
