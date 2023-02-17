@@ -78,8 +78,8 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if no is None:
     raise ValueError("NestedOptimization object should not be None.")
 
-  default_episode_len = 12
-  default_nsamples = 6
+  default_episode_len = 128
+  default_nsamples = 64
 
   task.episode_len = default_episode_len if test else int(default_episode_len * no.inner_length_proportion)
   nsamples = default_nsamples if test else int(default_nsamples * no.inners_per_outer_proportion)
