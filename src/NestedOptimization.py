@@ -51,16 +51,19 @@ class NestedOptimization:
     is_reevaluating = False
 
     result_file_path = None
+    experiment_name = None
     mode = None
     inners_per_outer_proportion = None
     inner_length_proportion = None
     max_frames = None
 
+    save_best_visualization_required = False
+
     SAVE_EVERY = 5
     mutex = Lock()
 
 
-    def __init__(self, result_file_path, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
+    def __init__(self, result_file_path, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name):
         self.sw_reeval.pause()
         self.result_file_path = result_file_path
         self.mode = mode
@@ -68,6 +71,7 @@ class NestedOptimization:
         self.inners_per_outer_proportion = inners_per_outer_proportion
         self.inner_length_proportion = inner_length_proportion
         self.experiment_index = experiment_index
+        self.experiment_name = experiment_name
         assert mode in ("saveall", "standard")
 
 
@@ -104,14 +108,14 @@ class NestedOptimization:
         print("next_outer()", self, f_observed)
 
 
-    def next_reeval_outer(self, f_reeval_observed):
+    def next_reeval(self, f_reeval_observed):
         self.f_reeval_observed = f_reeval_observed
         self.check_if_best(level=3)
         self.write_to_file(level=3)
         self.is_reevaluating = False
         self.sw_reeval.pause()
         self.sw.resume()
-        print("next_reeval_outer()", self, f_reeval_observed)
+        print("next_reeval()", self, f_reeval_observed)
 
 
     def check_if_best(self, level):
@@ -126,6 +130,7 @@ class NestedOptimization:
         if level == 3:
             if self.f_reeval_observed > self.f_reeval_best:
                 self.f_reeval_best = self.f_reeval_observed
+                self.save_best_visualization_required = True
                 print("best_found! (level 3)")
 
 

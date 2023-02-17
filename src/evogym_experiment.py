@@ -31,10 +31,11 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
 
     # Sequential
     env_name = "Walker-v0"
-    no = NestedOptimization(f"../../../results/evogym/data/{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)
+    experiment_name = f"{experiment_index}_{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}"
+    no = NestedOptimization(f"../../../results/evogym/data/{experiment_name}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name)
 
     run_ga(
-        experiment_name = f"{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}",
+        experiment_name = experiment_name,
         env_name = env_name,
         seed = seed,
         max_evaluations = 20000,
@@ -85,9 +86,12 @@ if __name__ == "__main__":
         np.random.seed(seed)
         os.chdir("other_repos/evogym/examples")
 
-        from ga.run import load_visualization_data, save_robot_gif_standalone 
-        out_path, env_name, structure, ctrl_path = load_visualization_data(experiment_index)
-        save_robot_gif_standalone(f"../../../results/evogym/videos/animation_{experiment_index}.gif", env_name, structure, ctrl_path)
+        from ga.run import load_visualization_data, save_robot_gif_standalone
+
+        for mode in ["current","reeval"]:
+            pickle_dump_path = f"simulation_objects_{experiment_index}_{mode}.pkl"
+            out_path, env_name, structure, ctrl_path = load_visualization_data(pickle_dump_path)
+            save_robot_gif_standalone(f"../../../results/evogym/videos/animation_{experiment_index}_{mode}.gif", env_name, structure, ctrl_path)
 
     else:
         ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")

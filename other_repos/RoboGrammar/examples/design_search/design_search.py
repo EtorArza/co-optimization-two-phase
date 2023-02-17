@@ -183,7 +183,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if no.is_reevaluating and not test:
     print("Reevaluating...")
     _, reeval_f = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
-    no.next_reeval_outer(reeval_f)
+    no.next_reeval(reeval_f)
 
   if test:
     filename_wo_extensions = no.result_file_path.split("/")[-1].removesuffix(".txt")

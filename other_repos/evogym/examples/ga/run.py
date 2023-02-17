@@ -26,24 +26,24 @@ from pygifsicle import optimize
 import pickle
 
 
-def dump_visualization_data(out_path, env_name, structure, ctrl_path, experiment_index):
+def dump_visualization_data(dump_path, out_gif_path, env_name, structure, ctrl_path, experiment_index):
 
 
-    out_path, env_name, structure, ctrl_path
+    out_gif_path, env_name, structure, ctrl_path
 
     print("Saving simulation objects...", end="")
 
     # an example object to be pickled
-    simulation_objects = [out_path, env_name, structure, ctrl_path]
+    simulation_objects = [out_gif_path, env_name, structure, ctrl_path]
     print("ctrl_path =",ctrl_path)
     # pickling the object
-    with open(f"simulation_objects_{experiment_index}.pkl", "wb") as f:
+    with open(dump_path, "wb") as f:
         pickle.dump(simulation_objects, f)
     print("done.")
 
 
-def load_visualization_data(experiment_index):
-    with open(f"simulation_objects_{experiment_index}.pkl", "rb") as f:
+def load_visualization_data(pickle_dump_path):
+    with open(pickle_dump_path, "rb") as f:
         out_path, env_name, structure, ctrl_path = pickle.load(f)
 
   
@@ -204,19 +204,28 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
 
                 if no.is_reevaluating:
-                    controller_path_for_animation = f"controller_to_generate_animation_{no.experiment_index}.pt"
-                    no.controller_path_for_animation = controller_path_for_animation
+                    controller_path_for_animation_current = f"controller_to_generate_animation_{no.experiment_index}_current.pt"
+                    controller_path_for_animation_reeval = f"controller_to_generate_animation_{no.experiment_index}_reeval.pt"
+                    no.controller_path_for_animation = controller_path_for_animation_current
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
                     import pathlib
-                    out_path_gif = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}.gif"
-                    out_path_gif_notbest = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid{experiment_name}_not_best.gif"
+                    out_path_gif_best_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_current.gif"
+                    out_path_gif_best_reeval = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.experiment_name}_reeval.gif"
+                    
+                    dump_path_current = f"simulation_objects_{no.experiment_index}_current.pkl"
+                    dump_path_reeval = f"simulation_objects_{no.experiment_index}_reeval.pkl"
+
+                    dump_visualization_data(dump_path_current, out_path_gif_best_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current, no.experiment_index)
 
 
-                    dump_visualization_data(out_path_gif, env_name, (structure.body, structure.connections), controller_path_for_animation, no.experiment_index)
+                    no.next_reeval(res_reevaluated)
+                    if no.save_best_visualization_required:
+                        no.save_best_visualization_required = False
+                        os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_reeval}")
 
-
-                    no.next_reeval_outer(res_reevaluated)
+                        dump_visualization_data(dump_path_reeval, out_path_gif_best_reeval, env_name, (structure.body, structure.connections), controller_path_for_animation_reeval, no.experiment_index)
+                        
                     
 
         ### COMPUTE FITNESS, SORT, AND SAVE ###
