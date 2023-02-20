@@ -181,7 +181,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
                                        returns[:task.episode_len]))
       value_estimator.train(replay_obs, replay_returns)
   if not test:
-    no.next_outer(np.mean(rewards), controller_size, morphology_size)
+    no.next_outer(np.mean(rewards), controller_size, -1, morphology_size)
     if no.is_reevaluating: # If new best solution found...
       print("Reevaluating...")
       _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
@@ -198,7 +198,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       input_sequence,
       dump_path=f"simulation_objects_{no.experiment_index}_current.pkl"
     )
-    no.next_reeval(reeval_f, controller_size, morphology_size)
+    no.next_reeval(reeval_f, controller_size, -1, morphology_size)
 
     if no.save_best_visualization_required:
       no.savenext_best=True
