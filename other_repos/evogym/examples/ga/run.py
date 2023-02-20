@@ -218,8 +218,11 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
                     dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current, no.experiment_index)
 
-
-                    no.next_reeval(res_reevaluated)
+                    morphology = structure.body
+                    controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
+                    controller_size2 = structure.connections.shape[1]
+                    morphology_size = np.sum(morphology != 0)
+                    no.next_reeval(res_reevaluated, controller_size, controller_size2, morphology_size)
                     if no.save_best_visualization_required:
                         no.save_best_visualization_required = False
                         os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")

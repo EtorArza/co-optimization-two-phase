@@ -37,6 +37,19 @@ def run_ppo(
     # if verbose:
     #     print(f'Starting training on \n{structure}\nat {saving_convention}...\n')
 
+
+    morphology = structure[0]
+
+    # 0 -> Empty
+    # 1 -> Black rigid
+    # 2 -> Grey flexible
+    # 3 -> Orange (controllable)
+    # 4 -> Blue (controllable)
+
+    controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
+    controller_size2 = structure[1].shape[1]
+    morphology_size = np.sum(morphology != 0)
+
     args = get_args()
 
     args.env_name = env_name
@@ -211,7 +224,7 @@ def run_ppo(
                     savepath = no.controller_path_for_animation
                     torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
                 if not test:
-                    no.next_outer(max_determ_avg_reward)
+                    no.next_outer(max_determ_avg_reward, controller_size, controller_size2, morphology_size)
                 if verbose:
                     print(f'{saving_convention} has met termination condition ({j})...terminating...\n')
                 return max_determ_avg_reward

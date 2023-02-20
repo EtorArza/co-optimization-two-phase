@@ -94,11 +94,13 @@ class NestedOptimization:
         self.iteration += 1
 
 
-    def next_outer(self, f_observed, controller_size, morphology_size):
+    def next_outer(self, f_observed, controller_size, controller_size2, morphology_size):
         assert not f_observed is None
         self.f_observed = f_observed
         self.controller_size = controller_size
         self.morphology_size = morphology_size
+        self.controller_size2 = controller_size2
+
         if self.step > self.max_frames:
             print("Finished at", self.max_frames,"frames.")
             exit(0)
@@ -109,10 +111,11 @@ class NestedOptimization:
         print("next_outer()", f_observed, ", progress:", self.step / self.max_frames, ", time left:", self.sw.get_time() / (self.step / self.max_frames) )
 
 
-    def next_reeval(self, f_reeval_observed, controller_size, morphology_size):
+    def next_reeval(self, f_reeval_observed, controller_size, controller_size2, morphology_size):
         self.f_reeval_observed = f_reeval_observed
         self.controller_size = controller_size
         self.morphology_size = morphology_size
+        self.controller_size2 = controller_size2
         self.check_if_best(level=3)
         self.write_to_file(level=3)
         self.is_reevaluating = False
@@ -144,12 +147,12 @@ class NestedOptimization:
         try:
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
-                    f.write("level,evaluation,f_best,f,controller_size,morphology_size,time,time_including_reeval,step,step_including_reeval\n")
+                    f.write("level,evaluation,f_best,f,controller_size,controller_size2,morphology_size,time,time_including_reeval,step,step_including_reeval\n")
                     self.write_header = False
                 if level == 2:
-                    f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.controller_size},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+                    f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
                 elif level == 3:
-                    f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.controller_size},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+                    f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
         finally:
             self.mutex.release()
 
