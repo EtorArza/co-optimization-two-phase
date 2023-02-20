@@ -133,7 +133,8 @@ class NestedOptimization:
         if level == 3:
             if self.f_reeval_observed > self.f_reeval_best:
                 self.f_reeval_best = self.f_reeval_observed
-                self.save_best_visualization_required = True
+                if self.step + self.reevaluating_steps <= self.max_frames:
+                    self.save_best_visualization_required = True
                 print("best_found! (level 3)")
 
 
