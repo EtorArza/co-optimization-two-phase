@@ -6,9 +6,11 @@ figpath = "results/robogrammar/figures"
 
 def get_sequence_of_parameters():
     seed_list = list(range(2,22))
-    inners_per_outer_proportion_list = [1.0, 0.5] # Default is 64
-    inner_length_proportion_list = [1.0, 0.5] # Default is 128
-    return list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
+    inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 64
+    inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 128
+    res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
+    res = [item for item in res if not (0.25 in item and 0.5 in item)]
+    return res
 
 def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
     if sys.executable.split('/')[-3] != 'venv':
