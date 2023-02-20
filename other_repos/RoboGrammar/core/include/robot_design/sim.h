@@ -48,6 +48,7 @@ public:
                                     Ref<VectorX> motor_torques) const = 0;
   virtual void setJointTargets(Index robot_idx,
                                const Ref<const VectorX> &target) = 0;
+  virtual  int getNLinks(Index robot_idx) = 0;
   virtual void
   setJointTargetPositions(Index robot_idx,
                           const Ref<const VectorX> &target_pos) = 0;
@@ -141,6 +142,7 @@ public:
                                     Ref<VectorX> motor_torques) const override;
   virtual void setJointTargets(Index robot_idx,
                                const Ref<const VectorX> &target) override;
+  virtual int getNLinks(Index robot_idx) override;
   virtual void
   setJointTargetPositions(Index robot_idx,
                           const Ref<const VectorX> &target_pos) override;

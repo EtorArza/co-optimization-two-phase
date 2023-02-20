@@ -100,6 +100,16 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   robot_idx = main_sim.find_robot_index(robot)
 
   dof_count = main_sim.get_robot_dof_count(robot_idx)
+  links_count = main_sim.get_n_links(robot_idx)
+
+  # dof stands for degrees of freedom (I think), and measures the amount of joints that can move
+  # links_count counts the number of 'limbs' of the robot
+  # print("dof_count", dof_count, "links_count",  links_count)
+
+  controller_size = dof_count
+  morphology_size =links_count
+
+
 
   value_estimator = rd.NullValueEstimator()
   input_sampler = rd.DefaultInputSampler()
@@ -171,7 +181,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
                                        returns[:task.episode_len]))
       value_estimator.train(replay_obs, replay_returns)
   if not test:
-    no.next_outer(np.mean(rewards))
+    no.next_outer(np.mean(rewards), controller_size, morphology_size)
     if no.is_reevaluating: # If new best solution found...
       print("Reevaluating...")
       _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
@@ -188,7 +198,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       input_sequence,
       dump_path=f"simulation_objects_{no.experiment_index}_current.pkl"
     )
-    no.next_reeval(reeval_f)
+    no.next_reeval(reeval_f, controller_size, morphology_size)
 
     if no.save_best_visualization_required:
       no.savenext_best=True

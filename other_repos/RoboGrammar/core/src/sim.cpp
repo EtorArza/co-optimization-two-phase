@@ -376,6 +376,15 @@ void BulletSimulation::getJointMotorTorques(Index robot_idx,
   motor_torques = robot_wrappers_[robot_idx].joint_motor_torques_;
 }
 
+
+int BulletSimulation::getNLinks(Index robot_idx)
+{
+  BulletRobotWrapper &wrapper = robot_wrappers_[robot_idx];
+  const Robot *robot = wrapper.robot_.get();
+  return robot->links_.size();
+}
+
+
 void BulletSimulation::setJointTargets(Index robot_idx,
                                        const Ref<const VectorX> &target) {
   BulletRobotWrapper &wrapper = robot_wrappers_[robot_idx];
