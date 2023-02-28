@@ -55,11 +55,12 @@ def read_comparison_parameter_csvs(csv_folder_path):
             df = pd.concat([df, n_df])
     return df
 
-def plot_comparison_parameters(csv_folder_path, figpath, exp_name):
-    df = read_comparison_parameter_csvs(csv_folder_path)
+
+
+def _plot_performance(df, figpath, exp_name):
+
     max_steps = max(df["step"])
     n_seeds = len(df["seed"].unique())
-
 
     # Check how many steps where computed.
     indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
@@ -89,50 +90,56 @@ def plot_comparison_parameters(csv_folder_path, figpath, exp_name):
     inner_quantity_values = sorted(list(df["inner_quantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
     inner_length_values = sorted(list(df["inner_length"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
+    for plotname, column in (("reeval_end", "f"), ("reeval_best", "f_best")):
+        step_slices = 30
+        i=-1
+        for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
+            i+=1
 
+            x = []
+            y_mean = []
+            y_lower = []
+            y_upper = []
 
-    print("Generating plot...")
-    step_slices = 30
-    i=-1
-    for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
-        i+=1
+            marker = marker_list[inner_quantity_values.index(group_name[0])]
+            linestyle = linestyle_list[inner_quantity_values.index(group_name[1])]
+            color = color_list[i]
 
-        x = []
-        y_mean = []
-        y_lower = []
-        y_upper = []
-
-        marker = marker_list[inner_quantity_values.index(group_name[0])]
-        linestyle = linestyle_list[inner_quantity_values.index(group_name[1])]
-        color = color_list[i]
-
-        df_group = df_group.reset_index()
+            df_group = df_group.reset_index()
 
 
 
-        for step in np.linspace(0, max_steps, step_slices):
-            selected_indices = df_group[df_group["step"] < step].groupby("seed")["f"].idxmax()
-            scores = np.array(df_group.iloc[selected_indices]["f"])
-            if len(scores) < 0.75*n_seeds:
-                continue
-            x.append(step)
-            mean, lower, upper = bootstrap_median_and_confiance_interval(scores)
-            y_mean.append(mean)
-            y_lower.append(lower)
-            y_upper.append(upper)
+            for step in np.linspace(0, max_steps, step_slices):
+                selected_indices = df_group[df_group["step"] < step].groupby("seed")[column].idxmax()
+                scores = np.array(df_group.loc[selected_indices,][column])
+                if len(scores) < 0.75*n_seeds:
+                    continue
+                x.append(step)
+                mean, lower, upper = bootstrap_median_and_confiance_interval(scores)
+                y_mean.append(mean)
+                y_lower.append(lower)
+                y_upper.append(upper)
 
-        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
-        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+            plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
+            plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
-    for inner_quantity, marker in zip(inner_quantity_values[1:], marker_list[1:]):
-        plt.plot([],[],label=f"inner_quantity = {inner_quantity}", marker=marker, color="black")
+        for inner_quantity, marker in zip(inner_quantity_values[1:], marker_list[1:]):
+            plt.plot([],[],label=f"inner_quantity = {inner_quantity}", marker=marker, color="black")
 
-    for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
+        for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
+            plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
+        plt.legend()
+        plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
+        plt.close()
 
-        plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
-    plt.legend()
-    plt.savefig(figpath + "/comparison_cutting_controller_budget.pdf")
-    plt.ylim((10,11))
-    plt.savefig(figpath + "/comparison_cutting_controller_budget_zoom.pdf")
+def plot_comparison_parameters(csv_folder_path, figpath, exp_name):
+    df = read_comparison_parameter_csvs(csv_folder_path)
+    _plot_performance(df, figpath, exp_name)
+
+    
+
+
+    
+
 
 
