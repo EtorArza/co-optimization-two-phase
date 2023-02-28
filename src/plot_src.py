@@ -99,7 +99,7 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     return df
 
 
-def _plot_performance(df, figpath):
+def _plot_performance(df: pd.DataFrame, figpath):
 
     max_steps = max(df["step"])
     n_seeds = len(df["seed"].unique())
@@ -115,11 +115,12 @@ def _plot_performance(df, figpath):
     plt.savefig(figpath + "/number_of_steps.pdf")
     plt.close()
     
+    df = df.query("level == '3'")
 
     # # Print all seeds with certain parameters.
-    # df = df[df["level"]==3]
-    # df = df[df["inner_quantity"]=='0.5']
-    # df = df[df["inner_length"]=='0.5']
+    # df = df[df["level"]=="3"]
+    # df = df[df["inner_quantity"]==0.5]
+    # df = df[df["inner_length"]==0.5]
     # for seed in range(2,19):
     #     # print(df[df["seed"]==seed])
     #     # print(df.query(f"seed == {seed}"))
@@ -152,7 +153,7 @@ def _plot_performance(df, figpath):
 
 
             for step in np.linspace(0, max_steps, step_slices):
-                selected_indices = df_group[df_group[stepname] < step].groupby("seed")[column].idxmax()
+                selected_indices = df_group[df_group[stepname] < step].groupby("seed")[stepname].idxmax()
                 scores = np.array(df_group.loc[selected_indices,][column])
                 if len(scores) < 0.75*n_seeds:
                     continue
@@ -177,7 +178,6 @@ def _plot_performance(df, figpath):
 def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
     df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
     _plot_performance(df, figpath)
-    raise ValueError("idxmax() assumes f is monotone increasing (this is not the case).")
 
 
 
