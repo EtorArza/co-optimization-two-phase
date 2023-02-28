@@ -175,10 +175,62 @@ def _plot_performance(df: pd.DataFrame, figpath):
         plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
         plt.close()
 
+
+def _plot_stability(df: pd.DataFrame, figpath):
+
+    for fitness_metric in ["f", "f_best"]:
+
+        max_steps = max(df["step"])
+        n_seeds = len(df["seed"].unique())
+
+        df = df.query("level == '3'")
+        pd.pandas.set_option('display.max_columns', None)
+
+        print(df.query("experiment_index == '102'"))
+        print("TODO: The animation of experiment_index == 102 does not correspond with the objective values observed.")
+
+        indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
+        max_only_df = df.loc[indices_with_highest_step,]
+
+        labels = []
+        dfs = []
+        index_of_lowest_each_group = []
+        for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+            labels.append(group_name)
+            dfs.append(np.array(df_group[fitness_metric]))
+            index_of_lowest_each_group.append(df_group[fitness_metric].idxmin())
+
+        
+        plt.figure(figsize=(6.5,3))
+        plt.boxplot(dfs, labels=labels)
+
+        # Add labels to outliers.
+        for x_text, idx in zip(plt.xticks()[0], index_of_lowest_each_group):
+            y_text = max_only_df.loc[idx, fitness_metric]
+            text_label = max_only_df.loc[idx, "experiment_index"]
+            plt.text(x_text, y_text, text_label)
+
+        # for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+        #     plt.text()
+
+        plt.xlabel("(inner_quantity, inner_length)")
+        plt.title("")
+        plt.ylim((0,11))
+        plt.ylabel("objective value")
+        plt.tight_layout()
+        plt.savefig(figpath + f"/final_fitness_{fitness_metric}.pdf")
+        plt.close()
+    
+
+
+
+    
+
+
 def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
     df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
-    _plot_performance(df, figpath)
-
+    #_plot_performance(df.copy(), figpath)
+    _plot_stability(df.copy(), figpath)
 
 
 
