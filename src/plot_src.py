@@ -16,8 +16,32 @@ def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=1000):
     return np.mean(data),np.quantile(mean_list, 0.05),np.quantile(mean_list, 0.95)
 
 
-def read_comparison_parameter_csvs(csv_folder_path):
-    print("Reading Dataframes...")
+def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
+
+    assert resumable_dimension in ("lenght", "quantity", "neither", None) 
+
+    """
+    What is the parameter reusable_dimension?
+
+    Computation time can be saved in special cases when either inner_length or inner_quantity are 1.0
+    For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
+    inner_quantity = 0.5 during training, it will only train for 500 iterations. If we have considered 
+    the default episode length (with inner_length = 1.0), then, when reevaluating, we only need to finish
+    the next 500 iterations. In this case, the resumable dimension would be quantity.  
+
+    quantity -> number of controllers tested
+    length   -> the length of the episode
+
+    With the current frameworks, the resumable dimensions are as follows:
+
+    evogym      -> resumable_dimension = quantity
+    RoboGrammar -> resumable_dimension = length
+
+    When resumable == "neither", only inner_length == inner_quantity == 1.0 gets a bonus of not having to
+    reevaluate at all.
+    """
+
+    print(f"Reading csv_folder_path with resumable_dimension {resumable_dimension}...")
     dtypes={
         "level":object,
         "evaluation": np.int64,
@@ -49,15 +73,33 @@ def read_comparison_parameter_csvs(csv_folder_path):
             n_df["experiment_index"] = experiment_index
             n_df["env_name"] = env_name
             n_df["max_steps"] = int(max_steps)
-            n_df["inner_quantity"] = inner_quantity
-            n_df["inner_length"] = inner_length
+            n_df["inner_quantity"] = float(inner_quantity)
+            n_df["inner_length"] = float(inner_length)
             n_df["seed"] = int(seed)
-            df = pd.concat([df, n_df])
+            df = pd.concat([df, n_df], ignore_index=True)
+    
+    # Adjust runtimes based on resumable dimension:
+    if resumable_dimension == 'quantity':
+        sub_df = df.query("inner_length == 1.0 & level == '3'")
+        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["inner_quantity"]
+        cols = list(df.columns) 
+        df.loc[sub_df.index, cols] = sub_df[cols]
+    elif resumable_dimension == 'length':
+        sub_df = df.query("inner_quantity == 1.0 & level == '3'")
+        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["inner_length"]
+        cols = list(df.columns) 
+        df.loc[sub_df.index, cols] = sub_df[cols]
+    elif resumable_dimension == 'neither':
+        sub_df = df.query("inner_quantity == 1.0 & inner_quantity == 1.0 & level == '3'")
+        sub_df["step_including_reeval"] = sub_df["step"]
+        cols = list(df.columns) 
+        df.loc[sub_df.index, cols] = sub_df[cols]
+
+    print(df[["step", "step_including_reeval", "inner_quantity", "inner_length"]].iloc[1014:,])
     return df
 
 
-
-def _plot_performance(df, figpath, exp_name):
+def _plot_performance(df, figpath):
 
     max_steps = max(df["step"])
     n_seeds = len(df["seed"].unique())
@@ -90,7 +132,7 @@ def _plot_performance(df, figpath, exp_name):
     inner_quantity_values = sorted(list(df["inner_quantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
     inner_length_values = sorted(list(df["inner_length"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
-    for plotname, column in (("reeval_end", "f"), ("reeval_best", "f_best")):
+    for plotname, column, stepname in (("reeval_end", "f", "step"), ("reeval_best", "f_best", "step_including_reeval")):
         step_slices = 30
         i=-1
         for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
@@ -110,7 +152,7 @@ def _plot_performance(df, figpath, exp_name):
 
 
             for step in np.linspace(0, max_steps, step_slices):
-                selected_indices = df_group[df_group["step"] < step].groupby("seed")[column].idxmax()
+                selected_indices = df_group[df_group[stepname] < step].groupby("seed")[column].idxmax()
                 scores = np.array(df_group.loc[selected_indices,][column])
                 if len(scores) < 0.75*n_seeds:
                     continue
@@ -132,11 +174,12 @@ def _plot_performance(df, figpath, exp_name):
         plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
         plt.close()
 
-def plot_comparison_parameters(csv_folder_path, figpath, exp_name):
-    df = read_comparison_parameter_csvs(csv_folder_path)
-    _plot_performance(df, figpath, exp_name)
+def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
+    df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
+    _plot_performance(df, figpath)
+    raise ValueError("idxmax() assumes f is monotone increasing (this is not the case).")
 
-    
+
 
 
     

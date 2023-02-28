@@ -68,8 +68,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "--plot":
         print("Inner learning algorithm in evogym is ppo.")
-
-        df = plot_comparison_parameters("results/evogym/data", figpath, "dummy_name")
+        df = plot_comparison_parameters("results/evogym/data", figpath, "quantity")
 
 
 
