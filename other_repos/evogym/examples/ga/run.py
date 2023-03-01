@@ -26,7 +26,7 @@ from pygifsicle import optimize
 import pickle
 
 
-def dump_visualization_data(dump_path, out_gif_path, env_name, structure, ctrl_path, experiment_index):
+def dump_visualization_data(dump_path, out_gif_path, env_name, structure, ctrl_path):
 
 
     out_gif_path, env_name, structure, ctrl_path
@@ -93,14 +93,17 @@ def save_robot_gif_standalone(out_path, env_name, structure, ctrl_path):
 
 
 
-def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure_shape, num_cores, no: NestedOptimization):
+def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
+    seed = no.seed
+    env_name = no.env_name
+    max_evaluations = no.max_frames
 
     random.seed(seed)
     import numpy as np
     np.random.seed(seed)
 
-    internal_exp_files = os.path.join(root_dir, "saved_data", experiment_name)
+    internal_exp_files = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}")
     temp_path = internal_exp_files + "/metadata.txt"
 
     # # To test stuff. If default_train_iters < 100 it does not work. 
@@ -109,8 +112,8 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
     # # default_train_iters = 100.
     # default_train_iters = 100 
 
-    default_train_iters = 1000
-    default_num_steps = 128
+    default_train_iters = 100
+    default_num_steps = 12
 
     train_iters = int(no.inners_per_outer_proportion * default_train_iters)
     num_steps = int(no.inner_length_proportion * default_num_steps)
@@ -165,8 +168,8 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
 
 
         ### MAKE GENERATION DIRECTORIES ###
-        save_path_structure = os.path.join(root_dir, "saved_data", experiment_name, "generation_" + str(generation), "structure")
-        save_path_controller = os.path.join(root_dir, "saved_data", experiment_name, "generation_" + str(generation), "controller")
+        save_path_structure = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "structure")
+        save_path_controller = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "controller")
         
         try:
             os.makedirs(save_path_structure)
@@ -186,9 +189,9 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
         for structure in structures:
 
             if structure.is_survivor:
-                save_path_controller_part = os.path.join(root_dir, "saved_data", experiment_name, "generation_" + str(generation), "controller",
+                save_path_controller_part = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "controller",
                     "robot_" + str(structure.label) + "_controller" + ".pt")
-                save_path_controller_part_old = os.path.join(root_dir, "saved_data", experiment_name, "generation_" + str(generation-1), "controller",
+                save_path_controller_part_old = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation-1), "controller",
                     "robot_" + str(structure.prev_gen_label) + "_controller" + ".pt")
                 
                 print(f'Skipping training for {save_path_controller_part}.\n')
@@ -222,13 +225,13 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
                     no.next_reeval(res_reevaluated, controller_size, controller_size2, morphology_size)
                     out_path_gif_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_current.gif"
                     out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_best.gif"                    
-                    dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current, no.experiment_index)
+                    dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current)
 
                     if no.save_best_visualization_required:
                         no.save_best_visualization_required = False
                         os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
 
-                        dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best, no.experiment_index)
+                        dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best)
                         
                     
 
@@ -239,7 +242,7 @@ def run_ga(experiment_name, env_name, seed, max_evaluations, pop_size, structure
         structures = sorted(structures, key=lambda structure: structure.fitness, reverse=True)
 
         #SAVE RANKING TO FILE
-        temp_path = os.path.join(root_dir, "saved_data", experiment_name, "generation_" + str(generation), "output.txt")
+        temp_path = os.path.join(root_dir, "saved_data", no.experiment_index, "generation_" + str(generation), "output.txt")
         f = open(temp_path, "w")
 
         out = ""

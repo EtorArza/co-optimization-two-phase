@@ -12,18 +12,26 @@ from plot_src import *
 figpath = "results/evogym/figures"
 
 def get_sequence_of_parameters():
-    seed_list = list(range(2,22))
-    inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 1000
-    inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 64
-    res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
-    res = [item for item in res if not (0.25 in item and 0.5 in item)]
-    return res
+        import itertools
+        seed_list = list(range(2,22))
+        inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 1000
+        inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 64
+        env_name_list = ["Walker-v0"]
+        experiment_mode_list = ["reeval_each_vs_end"]
+        max_frames_list = [32032000]
 
-def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
+        res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
+        res = [item for item in res if not (0.25 in item and 0.5 in item)]
+        return res
+
+
+def execute_experiment_locally(experiment_index):
+
+    seed, inners_per_outer_proportion, inner_length_proportion, env_name, experiment_mode, max_frames = get_sequence_of_parameters()[experiment_index]
+
     random.seed(seed)
     np.random.seed(seed)
     os.chdir("other_repos/evogym/examples")
-    mode = ['saveall','standard'][1]
 
     # # Parallel
     # BaseManager.register('NestedOptimization', NestedOptimization)
@@ -32,19 +40,13 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     # no = manager.NestedOptimization(f"../../../results/evogym/data/{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion)
 
     # Sequential
-    env_name = "Walker-v0"
-    experiment_name = f"{experiment_index}_{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}"
-    no = NestedOptimization(f"../../../results/evogym/data/{experiment_name}.txt", mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name)
+
+    no = NestedOptimization("../../../results/evogym/data/", experiment_mode, experiment_index, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, seed)
 
     run_ga(
-        experiment_name = experiment_name,
-        env_name = env_name,
-        seed = seed,
-        max_evaluations = 20000,
         pop_size = 25,
         structure_shape = (5,5),
-        num_cores = 1,
-        no = no,
+        no = no
     )
     os.chdir("../../..")
 
@@ -60,9 +62,8 @@ if __name__ == "__main__":
         seq_parameters = get_sequence_of_parameters()
         print("Total number of executions:", len(seq_parameters))
         print("Parameters current execution:",seq_parameters[experiment_index])
-        seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
         # max_frames=32032000 is the default value if we consider 250 morphologies evaluated.
-        execute_experiment_locally(seed, 32032000, inners_per_outer_proportion, inner_length_proportion, experiment_index)
+        execute_experiment_locally(experiment_index)
 
 
 
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         seq_parameters = get_sequence_of_parameters()
         print("Total number of executions:", len(seq_parameters))
         print("Parameters current execution:",seq_parameters[experiment_index])
-        seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
+        seed, inners_per_outer_proportion, inner_length_proportion, env_name, experiment_mode, max_frames = seq_parameters[experiment_index]
 
         random.seed(seed)
         np.random.seed(seed)
@@ -89,8 +90,8 @@ if __name__ == "__main__":
 
         from ga.run import load_visualization_data, save_robot_gif_standalone
 
-        for mode in ["current","best"]:
-            pickle_dump_path = f"simulation_objects_{experiment_index}_{mode}.pkl"
+        for best_or_current in ["current","best"]:
+            pickle_dump_path = f"simulation_objects_{experiment_index}_{best_or_current}.pkl"
             out_path, env_name, structure, ctrl_path = load_visualization_data(pickle_dump_path)
             save_robot_gif_standalone(out_path, env_name, structure, ctrl_path)
 

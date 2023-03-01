@@ -2,6 +2,9 @@ import time
 from threading import Thread, Lock
 import numpy as np
 
+
+
+
 class stopwatch:
     paused=False
     def __init__(self):
@@ -35,6 +38,21 @@ class stopwatch:
 
 class NestedOptimization:
 
+    """
+    Experiment modes:
+
+    ----------------------------------
+    reeval_each_vs_end
+    
+    We try to find the best morphology with a reduced amount of resources.
+    Once we have found the best candidate morphology, we retrain this morphology with proper resources.
+    This 'retraining' can be done each time a new best morphology is found, or, at the end of the search.
+    ----------------------------------
+    
+    
+
+    """
+
     sw = stopwatch()
     sw_reeval = stopwatch()
     f_observed = float("-inf")
@@ -52,7 +70,7 @@ class NestedOptimization:
 
     result_file_path = None
     experiment_name = None
-    mode = None
+    experiment_mode = None
     inners_per_outer_proportion = None
     inner_length_proportion = None
     max_frames = None
@@ -63,16 +81,17 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_path, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name):
+    def __init__(self, result_file_folder_path, experiment_mode, experiment_index, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, seed):
         self.sw_reeval.pause()
-        self.result_file_path = result_file_path
-        self.mode = mode
+        self.result_file_path = result_file_folder_path + f"/{experiment_mode}_{experiment_index}_{env_name}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt"
+        self.experiment_mode = experiment_mode
+        self.experiment_index = experiment_index
+        self.env_name = env_name
         self.max_frames = max_frames
         self.inners_per_outer_proportion = inners_per_outer_proportion
         self.inner_length_proportion = inner_length_proportion
-        self.experiment_index = experiment_index
-        self.experiment_name = experiment_name
-        assert mode in ("saveall", "standard")
+        self.seed = seed
+        assert experiment_mode in ("reeval_each_vs_end")
 
 
     def print_to_result_file(self, msg_string):
@@ -160,4 +179,4 @@ class NestedOptimization:
         return 2
 
     def get_video_label(self):
-        return f"{self.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"
+        return f"{self.experiment_mode}_{self.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"
