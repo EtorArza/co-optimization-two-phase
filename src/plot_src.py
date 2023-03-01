@@ -68,6 +68,11 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
 
+            omit_which = "0.5"
+            if omit_which in csv_name:
+                continue
+
+
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
             experiment_index,env_name,max_steps,inner_quantity, inner_length, seed = csv_name.removesuffix(".txt").split("_")
             n_df["experiment_index"] = experiment_index
@@ -134,7 +139,7 @@ def _plot_performance(df: pd.DataFrame, figpath):
     inner_length_values = sorted(list(df["inner_length"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
     for plotname, column, stepname in (("reeval_end", "f", "step"), ("reeval_best", "f_best", "step_including_reeval")):
-        step_slices = 30
+        step_slices = 100
         i=-1
         for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
             i+=1
@@ -150,9 +155,14 @@ def _plot_performance(df: pd.DataFrame, figpath):
 
             df_group = df_group.reset_index()
 
+            # base = 10
+            # start = 0
+            # end = np.log10(max_steps)
+            # for step in np.logspace(start=start, stop=end, base=base, num=step_slices):
 
 
             for step in np.linspace(0, max_steps, step_slices):
+                step = int(step)
                 selected_indices = df_group[df_group[stepname] < step].groupby("seed")[stepname].idxmax()
                 scores = np.array(df_group.loc[selected_indices,][column])
                 if len(scores) < 0.75*n_seeds:
@@ -171,6 +181,7 @@ def _plot_performance(df: pd.DataFrame, figpath):
 
         for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
             plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
+        # plt.xscale("log")
         plt.legend()
         plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
         plt.close()
@@ -222,15 +233,45 @@ def _plot_stability(df: pd.DataFrame, figpath):
         plt.close()
     
 
+def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
+    fitness_metric = "f_best"
+
+
+    df = df.query("level == '3'")
+    pd.pandas.set_option('display.max_columns', None)
+
+    print(df.query("experiment_index == '102'"))
+    print("TODO: The animation of experiment_index == 102 does not correspond with the objective values observed.")
+
+    indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
+    max_only_df = df.loc[indices_with_highest_step,]
+
+    labels = []
+    dfs = []
+    index_of_lowest_each_group = []
+    for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+        labels.append(group_name)
+        dfs.append(np.array(df_group[complexity_metric]))
+
 
 
     
+    plt.figure(figsize=(6.5,3))
+    plt.boxplot(dfs, labels=labels)    
+    plt.xlabel("(inner_quantity, inner_length)")
+    plt.title("")
+    plt.ylabel(f"sol. complexity as {complexity_metric}")
+    plt.tight_layout()
+    plt.savefig(figpath + f"/solution_complexity_{complexity_metric}.pdf")
+    plt.close()
 
 
 def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
     df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
-    #_plot_performance(df.copy(), figpath)
+    _plot_performance(df.copy(), figpath)
     _plot_stability(df.copy(), figpath)
+    for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
+        _plot_complexity(df.copy(), figpath)
 
 
 
