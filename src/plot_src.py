@@ -8,7 +8,7 @@ marker_list = ["","o","x"]
 linestyle_list = ["-","--","-."]
 color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
-def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=1000):
+def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
     mean_list=[]
     for i in range(bootstrap_iterations):
         sample = np.random.choice(data, len(data), replace=True) 
@@ -68,9 +68,9 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
 
-            omit_which = "0.5"
-            if omit_which in csv_name:
-                continue
+            # omit_which = "0.5"
+            # if omit_which in csv_name:
+            #     continue
 
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
@@ -104,7 +104,7 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     return df
 
 
-def _plot_performance(df: pd.DataFrame, figpath):
+def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label="f", resources="step"):
 
     max_steps = max(df["step"])
     n_seeds = len(df["seed"].unique())
@@ -138,53 +138,52 @@ def _plot_performance(df: pd.DataFrame, figpath):
     inner_quantity_values = sorted(list(df["inner_quantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
     inner_length_values = sorted(list(df["inner_length"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
-    for plotname, column, stepname in (("reeval_end", "f", "step"), ("reeval_best", "f_best", "step_including_reeval")):
-        step_slices = 100
-        i=-1
-        for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
-            i+=1
+    step_slices = 100
+    i=-1
+    for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
+        i+=1
 
-            x = []
-            y_mean = []
-            y_lower = []
-            y_upper = []
+        x = []
+        y_mean = []
+        y_lower = []
+        y_upper = []
 
-            marker = marker_list[inner_quantity_values.index(group_name[0])]
-            linestyle = linestyle_list[inner_quantity_values.index(group_name[1])]
-            color = color_list[i]
+        marker = marker_list[inner_quantity_values.index(group_name[0])]
+        linestyle = linestyle_list[inner_quantity_values.index(group_name[1])]
+        color = color_list[i]
 
-            df_group = df_group.reset_index()
+        df_group = df_group.reset_index()
 
-            # base = 10
-            # start = 0
-            # end = np.log10(max_steps)
-            # for step in np.logspace(start=start, stop=end, base=base, num=step_slices):
+        # base = 10
+        # start = 0
+        # end = np.log10(max_steps)
+        # for step in np.logspace(start=start, stop=end, base=base, num=step_slices):
 
 
-            for step in np.linspace(0, max_steps, step_slices):
-                step = int(step)
-                selected_indices = df_group[df_group[stepname] < step].groupby("seed")[stepname].idxmax()
-                scores = np.array(df_group.loc[selected_indices,][column])
-                if len(scores) < 0.75*n_seeds:
-                    continue
-                x.append(step)
-                mean, lower, upper = bootstrap_median_and_confiance_interval(scores)
-                y_mean.append(mean)
-                y_lower.append(lower)
-                y_upper.append(upper)
+        for step in np.linspace(0, max_steps, step_slices):
+            step = int(step)
+            selected_indices = df_group[df_group[resources] < step].groupby("seed")[resources].idxmax()
+            scores = np.array(df_group.loc[selected_indices,][score_label])
+            if len(scores) < 0.75*n_seeds:
+                continue
+            x.append(step)
+            mean, lower, upper = bootstrap_median_and_confiance_interval(scores)
+            y_mean.append(mean)
+            y_lower.append(lower)
+            y_upper.append(upper)
 
-            plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
-            plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
-        for inner_quantity, marker in zip(inner_quantity_values[1:], marker_list[1:]):
-            plt.plot([],[],label=f"inner_quantity = {inner_quantity}", marker=marker, color="black")
+    for inner_quantity, marker in zip(inner_quantity_values[1:], marker_list[1:]):
+        plt.plot([],[],label=f"inner_quantity = {inner_quantity}", marker=marker, color="black")
 
-        for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
-            plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
-        # plt.xscale("log")
-        plt.legend()
-        plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
-        plt.close()
+    for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
+        plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
+    # plt.xscale("log")
+    plt.legend()
+    plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
+    plt.close()
 
 
 def _plot_stability(df: pd.DataFrame, figpath):
@@ -265,7 +264,16 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
 
 def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
     df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
-    _plot_performance(df.copy(), figpath)
+
+    for plotname, score_label, resources in (
+        ("reeval_end", "f", "step"), 
+        ("reeval_best", "f_best", "step_including_reeval"),
+        ("controller_size", "controller_size", "step_including_reeval"),
+        ("controller_size2", "controller_size2", "step_including_reeval"),
+        ("morphology_size", "morphology_size", "step_including_reeval"),
+        ):
+
+        _plot_performance(df.copy(), figpath, plotname, score_label, resources)
     _plot_stability(df.copy(), figpath)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
         _plot_complexity(df.copy(), figpath, complexity_metric)
