@@ -240,9 +240,6 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     df = df.query("level == '3'")
     pd.pandas.set_option('display.max_columns', None)
 
-    print(df.query("experiment_index == '102'"))
-    print("TODO: The animation of experiment_index == 102 does not correspond with the objective values observed.")
-
     indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
     max_only_df = df.loc[indices_with_highest_step,]
 
@@ -271,7 +268,7 @@ def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
     _plot_performance(df.copy(), figpath)
     _plot_stability(df.copy(), figpath)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
-        _plot_complexity(df.copy(), figpath)
+        _plot_complexity(df.copy(), figpath, complexity_metric)
 
 
 
