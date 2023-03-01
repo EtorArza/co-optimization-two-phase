@@ -93,11 +93,10 @@ if __name__ == "__main__":
 
         for mode in ["current","best"]:
         
-            task, robot, opt_seed, input_sequence = unpickle_data_for_video_generation(experiment_index, mode)
-            video_best = "../../results/robogrammar/videos/"+f"animation_{experiment_index}_{mode}"+".mp4"
+            task, robot, opt_seed, input_sequence, visualization_path = unpickle_data_for_video_generation(experiment_index, mode)
             save_obj_dir = f"tmp_{experiment_index}"
 
-            generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, video_best)
+            generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, visualization_path)
 
 
     # elif sys.argv[1] == "--cluster_launch":

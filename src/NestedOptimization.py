@@ -158,3 +158,6 @@ class NestedOptimization:
 
     def get_seed(self):
         return 2
+
+    def get_video_label(self):
+        return f"{self.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"

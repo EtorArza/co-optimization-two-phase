@@ -124,12 +124,12 @@ def pickle_rule_sequence_for_video_generation(rule_sequence, dump_path):
   print("done.")
 
 
-def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_sequence, dump_path):
+def pickle_simulation_objects_for_video_generation(opt_seed, taskname, input_sequence, dump_path, visualization_path):
 
   print("Saving simulation objects...", end="")
 
   # an example object to be pickled
-  simulation_objects = [opt_seed, taskname, input_sequence]
+  simulation_objects = [opt_seed, taskname, input_sequence, visualization_path]
 
   # pickling the object
   with open(dump_path, "wb") as f:
@@ -142,7 +142,7 @@ def unpickle_data_for_video_generation(experiment_index, mode):
 
 
   with open(f"simulation_objects_{experiment_index}_{mode}.pkl", "rb") as f:
-    opt_seed, taskname, input_sequence = pickle.load(f)
+    opt_seed, taskname, input_sequence, visualization_path = pickle.load(f)
 
   with open(f"rule_sequence_{experiment_index}_{mode}.pkl", "rb") as f:
       rule_sequence = pickle.load(f)
@@ -160,7 +160,7 @@ def unpickle_data_for_video_generation(experiment_index, mode):
   task_class = getattr(tasks, taskname)
   task = task_class(episode_len=128)
 
-  return task, robot, opt_seed, input_sequence
+  return task, robot, opt_seed, input_sequence, visualization_path
 
 
 

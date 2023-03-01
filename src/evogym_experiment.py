@@ -92,7 +92,7 @@ if __name__ == "__main__":
         for mode in ["current","best"]:
             pickle_dump_path = f"simulation_objects_{experiment_index}_{mode}.pkl"
             out_path, env_name, structure, ctrl_path = load_visualization_data(pickle_dump_path)
-            save_robot_gif_standalone(f"../../../results/evogym/videos/animation_{experiment_index}_{mode}.gif", env_name, structure, ctrl_path)
+            save_robot_gif_standalone(out_path, env_name, structure, ctrl_path)
 
     else:
         ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")

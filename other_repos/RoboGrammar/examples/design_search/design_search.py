@@ -192,21 +192,23 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
 
     reeval_f = np.mean(rewards)
     no.savenext_current=True
+    no.next_reeval(reeval_f, controller_size, -1, morphology_size)
     pickle_simulation_objects_for_video_generation(
       opt_seed,
       task.taskname,
       input_sequence,
-      dump_path=f"simulation_objects_{no.experiment_index}_current.pkl"
+      dump_path=f"simulation_objects_{no.experiment_index}_current.pkl",
+      visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_current"+".mp4"
     )
-    no.next_reeval(reeval_f, controller_size, -1, morphology_size)
-
     if no.save_best_visualization_required:
       no.savenext_best=True
       pickle_simulation_objects_for_video_generation(
         opt_seed,
         task.taskname,
         input_sequence,
-        dump_path=f"simulation_objects_{no.experiment_index}_best.pkl"
+        dump_path=f"simulation_objects_{no.experiment_index}_best.pkl",
+      visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_best"+".mp4"
+
       )
       no.save_best_visualization_required = False
 
