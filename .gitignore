@@ -67,3 +67,6 @@ other_repos/evogym/examples/*.pkl
 other_repos/tholiao/logs/*
 !other_repos/tholiao/logs/.gitkeep
 other_repos/tholiao/DIRresults.txt
+
+other_repos/rem/__pycache__/
+other_repos/rem/*.egg-info/

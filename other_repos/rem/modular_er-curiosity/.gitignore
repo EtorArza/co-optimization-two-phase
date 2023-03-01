@@ -1,0 +1,4 @@
+# Ignore python outputs
+*.pyc
+__pycache__/
+*.egg-info/
