@@ -74,6 +74,3 @@ make -j6
 cd ../../..
 
 
-cd other_repos/rem/
-pip install -U -e .
-cd ../..
