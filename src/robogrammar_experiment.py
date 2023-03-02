@@ -100,5 +100,11 @@ if __name__ == "__main__":
             generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, visualization_path)
 
 
+    elif sys.argv[1] == "--cluster_launch":
+        print("Launching evogym in cluster...")
+        n = len(get_sequence_of_parameters())
+        import subprocess
+        subprocess.call(f"sbatch --array=0-{n-1} cluster_scripts/launch_one_robogrammar.sl")
+
     # elif sys.argv[1] == "--cluster_launch":
         

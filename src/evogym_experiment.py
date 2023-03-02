@@ -96,6 +96,15 @@ if __name__ == "__main__":
             out_path, env_name, structure, ctrl_path = load_visualization_data(pickle_dump_path)
             save_robot_gif_standalone(out_path, env_name, structure, ctrl_path)
 
+    elif sys.argv[1] == "--cluster_launch":
+        print("Launching evogym in cluster...")
+        n = len(get_sequence_of_parameters())
+        import subprocess
+        subprocess.call(f"sbatch --array=0-{n-1} cluster_scripts/launch_one_evogym.sl")
+
+
+
+
     else:
         ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")
   
