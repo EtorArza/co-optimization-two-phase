@@ -1,18 +1,21 @@
 import sys
-import itertools
 figpath = "results/robogrammar/figures"
 
 
 
 def get_sequence_of_parameters():
+    import itertools
     seed_list = list(range(2,22))
     inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 64
     inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 128
-    res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
+    env_name_list = ['FlatTerrainTask']
+    experiment_mode_list = ["reeval_each_vs_end"]
+    max_frames_list = [40960000] # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
+    res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
     res = [item for item in res if not (0.25 in item and 0.5 in item)]
     return res
 
-def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
+def execute_experiment_locally(seed, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):
     if sys.executable.split('/')[-3] != 'venv':
         print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
         print("\n\nOnce 'venv' has been loaded, rerun this script.")
@@ -29,13 +32,10 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
 
     sys.argv.pop()
     sys.argv.pop()
-    mode = ['saveall','standard'][1]
     algorithm = ["mcts", "random"][0]
     cpus = 8
-    env_name = 'FlatTerrainTask'
-    experiment_name = f"{experiment_index}_{env_name}_{max_frames}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}"
 
-    resfilepath = f"../../results/robogrammar/data/{experiment_name}.txt"
+    resfilepath = f"../../results/robogrammar/data"
 
 
     torch.set_default_dtype(torch.float64)
@@ -45,7 +45,7 @@ def execute_experiment_locally(seed, max_frames, inners_per_outer_proportion, in
     sys.path.append(os.path.join(base_dir, 'design_search'))
     from NestedOptimization import NestedOptimization
     import os
-    no = NestedOptimization(resfilepath, mode, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index, experiment_name)
+    no = NestedOptimization(resfilepath, experiment_mode, experiment_index, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, seed)
     main(no, algorithm, cpus, env_name, seed)
 
 
@@ -60,9 +60,9 @@ if __name__ == "__main__":
         seq_parameters = get_sequence_of_parameters()
         print("Total number of executions:", len(seq_parameters))
         print("Parameters current execution:",seq_parameters[experiment_index])
-        seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
+        seed, inners_per_outer_proportion, inner_length_proportion, env_name, experiment_mode, max_frames = seq_parameters[experiment_index]
         # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
-        execute_experiment_locally(seed, 40960000, inners_per_outer_proportion, inner_length_proportion, experiment_index)
+        execute_experiment_locally(seed, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)
 
         
     elif sys.argv[1] == "--plot":
