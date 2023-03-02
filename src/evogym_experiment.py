@@ -14,8 +14,8 @@ figpath = "results/evogym/figures"
 def get_sequence_of_parameters():
         import itertools
         seed_list = list(range(2,22))
-        inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 1000
-        inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 64
+        inners_per_outer_proportion_list = [1.0, 0.2] # Default is 1000
+        inner_length_proportion_list = [1.0, 0.2] # Default is 64
         env_name_list = ["Walker-v0"]
         experiment_mode_list = ["reeval_each_vs_end"]
         max_frames_list = [4004000] # Default 32032000 considering 250 morphologies evaluated (easy tasks).

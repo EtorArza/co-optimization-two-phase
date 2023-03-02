@@ -6,8 +6,8 @@ figpath = "results/robogrammar/figures"
 def get_sequence_of_parameters():
     import itertools
     seed_list = list(range(2,22))
-    inners_per_outer_proportion_list = [1.0, 0.5, 0.25] # Default is 64
-    inner_length_proportion_list = [1.0, 0.5, 0.25] # Default is 128
+    inners_per_outer_proportion_list = [1.0, 0.2] # Default is 64
+    inner_length_proportion_list = [1.0, 0.2] # Default is 128
     env_name_list = ['FlatTerrainTask']
     experiment_mode_list = ["reeval_each_vs_end"]
     max_frames_list = [5120000] # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
