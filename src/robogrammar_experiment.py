@@ -12,7 +12,8 @@ def get_sequence_of_parameters():
     experiment_mode_list = ["reeval_each_vs_end"]
     max_frames_list = [5120000] # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
     res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
-    res = [item for item in res if not (0.25 in item and 0.5 in item)]
+    # remove the combinations containining 2 different parameters != 1.0.
+    res = [item for item in res if 1.0 in item or item[1] == item[2]]
     return res
 
 def execute_experiment_locally(seed, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index):

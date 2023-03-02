@@ -21,7 +21,8 @@ def get_sequence_of_parameters():
         max_frames_list = [4004000] # Default 32032000 considering 250 morphologies evaluated (easy tasks).
 
         res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
-        res = [item for item in res if not (0.25 in item and 0.5 in item)]
+        # remove the combinations containining 2 different parameters != 1.0.
+        res = [item for item in res if 1.0 in item or item[1] == item[2]]
         return res
 
 
