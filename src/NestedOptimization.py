@@ -36,6 +36,78 @@ class stopwatch:
     def get_time_string_short_format(self):
         return "{:.4f}".format(self.get_time())
 
+class Parameters:
+
+    nseeds = 20
+
+    def __init__(self, framework_name, experiment_index):
+
+        self.experiment_index = experiment_index
+
+        if framework_name == "evogym":
+            self.max_frames = 4004000 # Default 32032000 considering 250 morphologies evaluated (easy tasks).
+            self.env_name_list = ["Walker-v0"]
+            self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
+            self.default_inner_length = 128 # Episode length.
+
+        elif framework_name == "robogrammar":
+            self.max_frames = 5120000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
+            self.env_name_list = ["FlatTerrainTask"]
+            self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
+            self.default_inner_length = 128 # Episode length.
+
+        else:
+            raise ValueError(f"Framework {framework_name} not found.")
+
+
+        params = self._get_parameter_list()[experiment_index]
+
+        if "reevaleachvsend" in params:
+            self.experiment_mode, self.seed, self.inners_per_outer_proportion, self.inner_length_proportion, self.env_name = params
+        elif "incrementalandesnof" in params:
+            self.experiment_mode, self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name = params
+        else:
+            raise ValueError(f"params variable {params} does not contain a recognized experiment")
+
+
+
+    def _get_parameter_list(self):
+        import itertools
+        res = []
+        seed_list = list(range(2,2 + self.nseeds))
+
+        # reevaleachvsend
+        inners_per_outer_proportion_list = [1.0, 0.2] # Default is 1000
+        inner_length_proportion_list = [1.0, 0.2] # Default is 64
+        experiment_mode_list = ["reevaleachvsend"]
+        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,self.env_name_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
+        res += params_with_undesired_combinations
+
+        # incrementalandesnof
+        minimum_non_resumable_param_list = [1.0, 0.2]
+        time_grace_list = [1.0, 0.2]
+        experiment_mode_list = ["incrementalandesnof"]
+        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
+        res += params_with_undesired_combinations
+
+        return res
+
+    def get_result_file_name(self):
+        if self.experiment_mode == "reevaleachvsend":
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inners_per_outer_proportion}_{self.inner_length_proportion}_{self.seed}"
+        else:
+            raise NotImplementedError("Result file name not implemented for incrementalandesnof yet.")
+
+    def get_n_experiments(self):
+        return len(self._get_parameter_list())
+
+
+
+
+
+
 class NestedOptimization:
 
     """
@@ -48,8 +120,11 @@ class NestedOptimization:
     Once we have found the best candidate morphology, we retrain this morphology with proper resources.
     This 'retraining' can be done each time a new best morphology is found, or, at the end of the search.
     ----------------------------------
-    
-    
+    incrementalandesnof
+
+    We apply ESNOF in the 'resumable' parameter, and we incrementally increase the other parameter throughout
+    the execution. 
+    ----------------------------------
 
     """
 
@@ -69,11 +144,6 @@ class NestedOptimization:
     is_reevaluating = False
 
     result_file_path = None
-    experiment_name = None
-    experiment_mode = None
-    inners_per_outer_proportion = None
-    inner_length_proportion = None
-    max_frames = None
 
     save_best_visualization_required = False
 
@@ -81,17 +151,12 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_folder_path, experiment_mode, experiment_index, env_name, max_frames, inners_per_outer_proportion, inner_length_proportion, seed):
+    def __init__(self, result_file_folder_path, params: Parameters):
+        self.params = params
         self.sw_reeval.pause()
-        self.result_file_path = result_file_folder_path + f"/{experiment_mode}_{experiment_index}_{env_name}_{inners_per_outer_proportion}_{inner_length_proportion}_{seed}.txt"
-        self.experiment_mode = experiment_mode
-        self.experiment_index = experiment_index
-        self.env_name = env_name
-        self.max_frames = max_frames
-        self.inners_per_outer_proportion = inners_per_outer_proportion
-        self.inner_length_proportion = inner_length_proportion
-        self.seed = seed
-        assert experiment_mode in ("reevaleachvsend")
+        self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
+        self.max_frames = params.max_frames
+        assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof")
 
 
     def print_to_result_file(self, msg_string):
