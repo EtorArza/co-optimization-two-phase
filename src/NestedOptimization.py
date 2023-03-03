@@ -42,7 +42,7 @@ class NestedOptimization:
     Experiment modes:
 
     ----------------------------------
-    reeval_each_vs_end
+    reevaleachvsend
     
     We try to find the best morphology with a reduced amount of resources.
     Once we have found the best candidate morphology, we retrain this morphology with proper resources.
@@ -91,7 +91,7 @@ class NestedOptimization:
         self.inners_per_outer_proportion = inners_per_outer_proportion
         self.inner_length_proportion = inner_length_proportion
         self.seed = seed
-        assert experiment_mode in ("reeval_each_vs_end")
+        assert experiment_mode in ("reevaleachvsend")
 
 
     def print_to_result_file(self, msg_string):

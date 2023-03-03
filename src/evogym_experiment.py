@@ -17,7 +17,7 @@ def get_sequence_of_parameters():
         inners_per_outer_proportion_list = [1.0, 0.2] # Default is 1000
         inner_length_proportion_list = [1.0, 0.2] # Default is 64
         env_name_list = ["Walker-v0"]
-        experiment_mode_list = ["reeval_each_vs_end"]
+        experiment_mode_list = ["reevaleachvsend"]
         max_frames_list = [4004000] # Default 32032000 considering 250 morphologies evaluated (easy tasks).
 
         res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))

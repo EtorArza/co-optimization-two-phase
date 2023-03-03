@@ -9,7 +9,7 @@ def get_sequence_of_parameters():
     inners_per_outer_proportion_list = [1.0, 0.2] # Default is 64
     inner_length_proportion_list = [1.0, 0.2] # Default is 128
     env_name_list = ['FlatTerrainTask']
-    experiment_mode_list = ["reeval_each_vs_end"]
+    experiment_mode_list = ["reevaleachvsend"]
     max_frames_list = [5120000] # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
     res = list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
     # remove the combinations containining 2 different parameters != 1.0.
