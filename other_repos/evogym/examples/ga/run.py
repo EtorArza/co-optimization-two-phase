@@ -95,9 +95,9 @@ def save_robot_gif_standalone(out_path, env_name, structure, ctrl_path):
 
 def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
-    seed = no.seed
-    env_name = no.env_name
-    max_evaluations = no.max_frames
+    seed = no.params.seed
+    env_name = no.params.env_name
+    max_evaluations = no.params.max_frames
 
     random.seed(seed)
     import numpy as np
@@ -106,22 +106,11 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     internal_exp_files = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}")
     temp_path = internal_exp_files + "/metadata.txt"
 
-    # # To test stuff. If default_train_iters < 100 it does not work. 
-    # # This is because the performance of the model is only saved every 50 iterations, and 
-    # # if the parameter inner inner_quantity_proportion is 0.5, we get 50 iterations when  
-    # # default_train_iters = 100.
-    # default_train_iters = 100 
-
-    default_train_iters = 1000
-    default_num_steps = 128
-
-    train_iters = int(no.inner_quantity_proportion * default_train_iters)
-    num_steps = int(no.inner_length_proportion * default_num_steps)
 
 
 
     tc = TerminationCondition(train_iters)
-    tc_default = TerminationCondition(default_train_iters)
+    tc_default = TerminationCondition(no.params.default_train_iters)
 
     if os.path.isdir(internal_exp_files):
         print("Removing old exp. files:")

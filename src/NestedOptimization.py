@@ -43,8 +43,14 @@ class Parameters:
     def __init__(self, framework_name, experiment_index):
 
         self.experiment_index = experiment_index
+        self.framework_name = self.framework_name
 
         if framework_name == "evogym":
+
+            # If default_train_iters < 100 (to test stuff) it does not work. This is because the performance
+            # of the model is only saved every 50 iterations, and if the parameter inner 
+            # inner_quantity_proportion is 0.5, we get 50 iterations when default_train_iters = 100.
+
             self.max_frames = 4004000 # Default 32032000 considering 250 morphologies evaluated (easy tasks).
             self.env_name_list = ["Walker-v0"]
             self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
@@ -69,6 +75,12 @@ class Parameters:
         else:
             raise ValueError(f"params variable {params} does not contain a recognized experiment")
 
+
+    def get_inner_quantity_absolute(self):
+        return int(self.inner_quantity_proportion * self.default_inner_quantity)
+
+    def get_inner_quantity_absolute(self):
+        return int(self.inner_quantity_proportion * self.default_inner_quantity)
 
 
     def _get_parameter_list(self):
