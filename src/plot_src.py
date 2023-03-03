@@ -56,14 +56,13 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
         "step_including_reeval": np.int64,
         "experiment_index": object,
         "env_name": object,
-        "max_steps": int,
         "inner_quantity": object,
         "inner_length": object,
         "seed": int,
     }
 
 
-    df = pd.DataFrame(columns=["level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","experiment_index","env_name","max_steps","inner_quantity","inner_length","seed"])
+    df = pd.DataFrame(columns=["level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","experiment_index","env_name","inner_quantity","inner_length","seed"])
     df = df.astype(dtype=dtypes)
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
@@ -74,10 +73,9 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
 
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
-            experiment_index,env_name,max_steps,inner_quantity, inner_length, seed = csv_name.removesuffix(".txt").split("_")
+            experiment_name,experiment_index,env_name,inner_quantity, inner_length, seed = csv_name.removesuffix(".txt").split("_")
             n_df["experiment_index"] = experiment_index
             n_df["env_name"] = env_name
-            n_df["max_steps"] = int(max_steps)
             n_df["inner_quantity"] = float(inner_quantity)
             n_df["inner_length"] = float(inner_length)
             n_df["seed"] = int(seed)
@@ -148,8 +146,9 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
         y_lower = []
         y_upper = []
 
+
         marker = marker_list[inner_quantity_values.index(group_name[0])]
-        linestyle = linestyle_list[inner_quantity_values.index(group_name[1])]
+        linestyle = linestyle_list[inner_length_values.index(group_name[1])]
         color = color_list[i]
 
         df_group = df_group.reset_index()
@@ -196,8 +195,7 @@ def _plot_stability(df: pd.DataFrame, figpath):
         df = df.query("level == '3'")
         pd.pandas.set_option('display.max_columns', None)
 
-        print(df.query("experiment_index == '102'"))
-        print("TODO: The animation of experiment_index == 102 does not correspond with the objective values observed.")
+        print("TODO: The animation and the objective value might not be the same!")
 
         indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
         max_only_df = df.loc[indices_with_highest_step,]
