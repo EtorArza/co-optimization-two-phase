@@ -112,8 +112,8 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     # # default_train_iters = 100.
     # default_train_iters = 100 
 
-    default_train_iters = 100
-    default_num_steps = 12
+    default_train_iters = 1000
+    default_num_steps = 128
 
     train_iters = int(no.inners_per_outer_proportion * default_train_iters)
     num_steps = int(no.inner_length_proportion * default_num_steps)
