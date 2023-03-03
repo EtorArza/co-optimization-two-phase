@@ -63,7 +63,7 @@ class Parameters:
         params = self._get_parameter_list()[experiment_index]
 
         if "reevaleachvsend" in params:
-            self.experiment_mode, self.seed, self.inners_per_outer_proportion, self.inner_length_proportion, self.env_name = params
+            self.experiment_mode, self.seed, self.inner_quantity_proportion, self.inner_length_proportion, self.env_name = params
         elif "incrementalandesnof" in params:
             self.experiment_mode, self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name = params
         else:
@@ -77,10 +77,10 @@ class Parameters:
         seed_list = list(range(2,2 + self.nseeds))
 
         # reevaleachvsend
-        inners_per_outer_proportion_list = [1.0, 0.2] # Default is 1000
+        inner_quantity_proportion_list = [1.0, 0.2] # Default is 1000
         inner_length_proportion_list = [1.0, 0.2] # Default is 64
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, inners_per_outer_proportion_list, inner_length_proportion_list,self.env_name_list))
+        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, inner_quantity_proportion_list, inner_length_proportion_list,self.env_name_list))
         params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
         res += params_with_undesired_combinations
 
@@ -96,7 +96,7 @@ class Parameters:
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
-            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inners_per_outer_proportion}_{self.inner_length_proportion}_{self.seed}"
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inner_quantity_proportion}_{self.inner_length_proportion}_{self.seed}"
         else:
             raise NotImplementedError("Result file name not implemented for incrementalandesnof yet.")
 

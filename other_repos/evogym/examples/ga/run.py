@@ -108,14 +108,14 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
     # # To test stuff. If default_train_iters < 100 it does not work. 
     # # This is because the performance of the model is only saved every 50 iterations, and 
-    # # if the parameter inner inners_per_outer_proportion is 0.5, we get 50 iterations when  
+    # # if the parameter inner inner_quantity_proportion is 0.5, we get 50 iterations when  
     # # default_train_iters = 100.
     # default_train_iters = 100 
 
     default_train_iters = 1000
     default_num_steps = 128
 
-    train_iters = int(no.inners_per_outer_proportion * default_train_iters)
+    train_iters = int(no.inner_quantity_proportion * default_train_iters)
     num_steps = int(no.inner_length_proportion * default_num_steps)
 
 

@@ -12,9 +12,9 @@ from main import cli_main
 
 def get_sequence_of_parameters():
     seed_list = list(range(2,22))
-    inners_per_outer_proportion_list = [1.0, 0.5] # Default is 1000
+    inner_quantity_proportion_list = [1.0, 0.5] # Default is 1000
     inner_length_proportion_list = [1.0, 0.5] # Default is 64
-    return list(itertools.product(seed_list, inners_per_outer_proportion_list, inner_length_proportion_list))
+    return list(itertools.product(seed_list, inner_quantity_proportion_list, inner_length_proportion_list))
 
 
 if sys.argv[1] == "--local_launch":
@@ -30,7 +30,7 @@ if sys.argv[1] == "--local_launch":
     seq_parameters = get_sequence_of_parameters()
     print("Total number of executions:", len(seq_parameters))
     print("Parameters current execution:",seq_parameters[experiment_index])
-    seed, inners_per_outer_proportion, inner_length_proportion = seq_parameters[experiment_index]
+    seed, inner_quantity_proportion, inner_length_proportion = seq_parameters[experiment_index]
     # max_frames=9999999999 is the default value.
     max_frames = 99999999999
-    cli_main(seed, max_frames, inners_per_outer_proportion, inner_length_proportion, experiment_index)
+    cli_main(seed, max_frames, inner_quantity_proportion, inner_length_proportion, experiment_index)

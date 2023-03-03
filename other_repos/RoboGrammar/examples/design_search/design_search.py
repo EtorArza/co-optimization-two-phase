@@ -82,7 +82,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   default_nsamples = 64
 
   task.episode_len = default_episode_len if test else int(default_episode_len * no.inner_length_proportion)
-  nsamples = default_nsamples if test else int(default_nsamples * no.inners_per_outer_proportion)
+  nsamples = default_nsamples if test else int(default_nsamples * no.inner_quantity_proportion)
 
   robot_init_pos, has_self_collision = presimulate(robot)
 
