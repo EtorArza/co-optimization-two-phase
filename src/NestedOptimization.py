@@ -51,14 +51,14 @@ class Parameters:
             # of the model is only saved every 50 iterations, and if the parameter inner 
             # inner_quantity_proportion is 0.5, we get 50 iterations when default_train_iters = 100.
 
-            self.max_frames = 4004000 # Default 32032000 considering 250 morphologies evaluated (easy tasks).
+            self.max_frames = 8633000 # Default 34532000 considering 250 morphologies evaluated (easy tasks).
             self.env_name_list = ["Walker-v0"]
             self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
             self.default_inner_length = 128 # Episode length.
             self.non_resumable_param = "length"
 
         elif framework_name == "robogrammar":
-            self.max_frames = 5120000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
+            self.max_frames = 10240000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
             self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
             self.default_inner_length = 128 # Episode length.
@@ -72,7 +72,7 @@ class Parameters:
         params = self._get_parameter_list()[experiment_index]
 
         if "reevaleachvsend" in params:
-            self.experiment_mode, self.seed, self.inner_quantity_proportion, self.inner_length_proportion, self.env_name = params
+            self.inner_quantity_proportion, self.inner_length_proportion, self.env_name, self.experiment_mode, self.seed = params
         elif "incrementalandesnof" in params:
             self.experiment_mode, self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name = params
         else:
@@ -92,20 +92,22 @@ class Parameters:
         seed_list = list(range(2,2 + self.nseeds))
 
         # reevaleachvsend
-        inner_quantity_proportion_list = [1.0, 0.2] # Default is 1000
-        inner_length_proportion_list = [1.0, 0.2] # Default is 64
+        inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
+        inner_length_proportion_list =   [0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, inner_quantity_proportion_list, inner_length_proportion_list,self.env_name_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
+        params_with_undesired_combinations = list(itertools.product(inner_quantity_proportion_list, inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         res += params_with_undesired_combinations
 
-        # incrementalandesnof
-        minimum_non_resumable_param_list = [1.0, 0.2]
-        time_grace_list = [1.0, 0.2]
-        experiment_mode_list = ["incrementalandesnof"]
-        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
-        res += params_with_undesired_combinations
+
+
+        # # incrementalandesnof
+        # minimum_non_resumable_param_list = [1.0, 0.2]
+        # time_grace_list = [1.0, 0.2]
+        # experiment_mode_list = ["incrementalandesnof"]
+        # params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list))
+        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
+        # res += params_with_undesired_combinations
 
         return res
 
