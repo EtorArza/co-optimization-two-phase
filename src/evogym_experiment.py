@@ -16,7 +16,7 @@ figpath = "results/evogym/figures"
 def execute_experiment_locally(experiment_index):
 
     params = Parameters("evogym", experiment_index)
-    print("Total number of executions:", params.get_n_experiments())
+    params.print_parameters()
 
 
     random.seed(params.seed)
