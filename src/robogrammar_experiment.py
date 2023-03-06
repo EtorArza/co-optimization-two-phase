@@ -68,9 +68,8 @@ if __name__ == "__main__":
         
     elif sys.argv[1] == "--plot":
         from plot_src import *
-        import pandas as pd
-        from matplotlib import pyplot as plt
-        print("Inner learning algorithm in evogym is MPC.")
+        print("Inner learning algorithm in robogrammar is MPC.")
+        df = plot_comparison_parameters("results/robogrammar/data", figpath, "quantity")
 
 
     elif sys.argv[1] == "--visualize":
