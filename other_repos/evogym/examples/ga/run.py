@@ -113,9 +113,12 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     temp_path = internal_exp_files + "/metadata.txt"
 
 
-
-
-    tc = TerminationCondition(no.params.get_inner_quantity_absolute())
+    if no.params.experiment_mode == "reevaleachvsend":
+        tc = TerminationCondition(no.params.get_inner_quantity_absolute())
+    elif no.params.experiment_mode == "incrementalandesnof":
+        tc = TerminationCondition(no.params.default_inner_quantity) # Termination is done with ESNOF
+    else:
+        raise ValueError("ERROR: no.params.experiment_mode = ", no.params.experiment_mode, "not recognized.")
     tc_default = TerminationCondition(no.params.default_inner_quantity)
 
     if os.path.isdir(internal_exp_files):

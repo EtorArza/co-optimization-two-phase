@@ -55,12 +55,15 @@ class Parameters:
             self.env_name_list = ["Walker-v0"]
             self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
             self.default_inner_length = 128 # Episode length.
+            self.non_resumable_param = "length"
 
         elif framework_name == "robogrammar":
             self.max_frames = 5120000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
             self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
             self.default_inner_length = 128 # Episode length.
+            self.non_resumable_param = "quantity"
+
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -238,6 +241,18 @@ class NestedOptimization:
                 if self.step + self.reevaluating_steps <= self.max_frames:
                     self.save_best_visualization_required = True
                 print("best_found! (level 3)")
+
+
+
+    def get_inner_non_resumable_increasing(self):
+
+        param_proportion = self.params.minimum_non_resumable_param  + (1.0 - self.params.minimum_non_resumable_param) * (self.step / self.max_frames)
+        if self.params.non_resumable_param == "length":
+            res = int(param_proportion * self.params.default_inner_length)
+        if self.params.non_resumable_param == "quantity":
+            res = int(param_proportion * self.params.default_inner_quantity)
+
+        return res
 
 
 

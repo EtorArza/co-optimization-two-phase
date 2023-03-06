@@ -53,7 +53,14 @@ def run_ppo(
     args = get_args()
 
     args.env_name = env_name
-    args.num_steps = no.params.default_inner_length if test else no.params.get_inner_length_absolute()
+
+    if no.params.experiment_mode == "reevaleachvsend":
+        args.num_steps = no.params.default_inner_length if test else no.params.get_inner_length_absolute()
+    elif no.params.experiment_mode == "incrementalandesnof":
+        args.num_steps = no.get_inner_non_resumable_increasing()
+    else:
+        raise ValueError("ERROR: no.params.experiment_mode = ", no.params.experiment_mode, "not recognized.")
+
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -120,6 +127,7 @@ def run_ppo(
     avg_rewards_tracker = []
     sliding_window_size = 10
     max_determ_avg_reward = float('-inf')
+    # new_step = no.step
 
     for j in range(num_updates):
 
@@ -181,7 +189,12 @@ def run_ppo(
                 and j % args.eval_interval == 0):
             
             obs_rms = utils.get_vec_normalize(envs).obs_rms
+            # old_step = no.step
+            # print("Steps used trainig, ", no.step - new_step)
             determ_avg_reward = evaluate(args.num_evals, actor_critic, obs_rms, args.env_name, structure, args.seed, args.num_processes, eval_log_dir, device, no)
+            # print("Steps used on evaluate: ", no.step - old_step)
+            # print("Determ_avg_reward - ", no.step, no.iteration, determ_avg_reward)
+            # new_step = no.step
 
             if verbose:
                 if saving_convention != None:
