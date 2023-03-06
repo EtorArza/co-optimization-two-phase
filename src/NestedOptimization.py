@@ -43,7 +43,7 @@ class Parameters:
     def __init__(self, framework_name, experiment_index):
 
         self.experiment_index = experiment_index
-        self.framework_name = self.framework_name
+        self.framework_name = framework_name
 
         if framework_name == "evogym":
 
@@ -79,8 +79,8 @@ class Parameters:
     def get_inner_quantity_absolute(self):
         return int(self.inner_quantity_proportion * self.default_inner_quantity)
 
-    def get_inner_quantity_absolute(self):
-        return int(self.inner_quantity_proportion * self.default_inner_quantity)
+    def get_inner_length_absolute(self):
+        return int(self.inner_length_proportion * self.default_inner_length)
 
 
     def _get_parameter_list(self):
@@ -256,4 +256,4 @@ class NestedOptimization:
         return 2
 
     def get_video_label(self):
-        return f"{self.experiment_mode}_{self.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"
+        return f"{self.params.experiment_mode}_{self.params.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"

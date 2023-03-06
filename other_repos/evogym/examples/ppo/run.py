@@ -53,7 +53,7 @@ def run_ppo(
     args = get_args()
 
     args.env_name = env_name
-    args.num_steps = 128 if test else int(128 * no.inner_length_proportion)
+    args.num_steps = no.params.default_inner_length if test else no.params.get_inner_length_absolute()
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)

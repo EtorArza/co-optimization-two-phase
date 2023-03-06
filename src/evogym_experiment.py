@@ -15,11 +15,12 @@ figpath = "results/evogym/figures"
 
 def execute_experiment_locally(experiment_index):
 
-    params = Parameters("evogym")
+    params = Parameters("evogym", experiment_index)
+    print("Total number of executions:", params.get_n_experiments())
 
 
-    random.seed(seed)
-    np.random.seed(seed)
+    random.seed(params.seed)
+    np.random.seed(params.seed)
     os.chdir("other_repos/evogym/examples")
 
     # # Parallel
@@ -41,9 +42,6 @@ if __name__ == "__main__":
             exit(1)
         experiment_index = int(sys.argv[2])
         sys.argv = sys.argv[:1]
-        seq_parameters = get_sequence_of_parameters()
-        print("Total number of executions:", len(seq_parameters))
-        print("Parameters current execution:",seq_parameters[experiment_index])
         # max_frames=32032000 is the default value if we consider 250 morphologies evaluated.
         execute_experiment_locally(experiment_index)
 
@@ -61,17 +59,11 @@ if __name__ == "__main__":
             exit(1)
         experiment_index = int(sys.argv[2])
         sys.argv = sys.argv[:1]
-        seq_parameters = get_sequence_of_parameters()
-        print("Total number of executions:", len(seq_parameters))
-        print("Parameters current execution:",seq_parameters[experiment_index])
-        seed, inner_quantity_proportion, inner_length_proportion, env_name, experiment_mode, max_frames = seq_parameters[experiment_index]
+        params = Parameters("evogym", experiment_index)
 
 
-        seed, minimum_non_resumable_param, time_grace, env_name_list, experiment_mode_list, max_frames_list
-
-
-        random.seed(seed)
-        np.random.seed(seed)
+        random.seed(params.seed)
+        np.random.seed(params.seed)
         os.chdir("other_repos/evogym/examples")
 
         from ga.run import load_visualization_data, save_robot_gif_standalone
@@ -83,9 +75,9 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "--cluster_launch":
         print("Launching evogym in cluster...")
-        n = len(get_sequence_of_parameters())
-        import subprocess
-        subprocess.call(f"sbatch --array=0-{n-1} cluster_scripts/launch_one_evogym.sl")
+        params = Parameters("evogym", 0)
+        n = len(params.get_n_experiments())
+        print(f"Run the following command: \nsbatch --array=0-{n-1} cluster_scripts/launch_one_evogym.sl\n")
 
 
 

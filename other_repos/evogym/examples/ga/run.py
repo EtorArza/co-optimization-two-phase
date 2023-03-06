@@ -103,14 +103,20 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     import numpy as np
     np.random.seed(seed)
 
-    internal_exp_files = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}")
+    try:
+        os.makedirs( os.path.join(root_dir, "saved_data"))
+        os.makedirs( os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}"))
+    except:
+        pass
+
+    internal_exp_files = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}")
     temp_path = internal_exp_files + "/metadata.txt"
 
 
 
 
-    tc = TerminationCondition(train_iters)
-    tc_default = TerminationCondition(no.params.default_train_iters)
+    tc = TerminationCondition(no.params.get_inner_quantity_absolute())
+    tc_default = TerminationCondition(no.params.default_inner_quantity)
 
     if os.path.isdir(internal_exp_files):
         print("Removing old exp. files:")
@@ -124,7 +130,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     f.write(f'POP_SIZE: {pop_size}\n')
     f.write(f'STRUCTURE_SHAPE: {structure_shape[0]} {structure_shape[1]}\n')
     f.write(f'MAX_EVALUATIONS: {max_evaluations}\n')
-    f.write(f'TRAIN_ITERS: {train_iters}\n')
+    f.write(f'TRAIN_ITERS: {no.params.get_inner_quantity_absolute()}\n')
     f.close()
 
 
@@ -157,8 +163,8 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
 
         ### MAKE GENERATION DIRECTORIES ###
-        save_path_structure = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "structure")
-        save_path_controller = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "controller")
+        save_path_structure = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation), "structure")
+        save_path_controller = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation), "controller")
         
         try:
             os.makedirs(save_path_structure)
@@ -178,9 +184,9 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
         for structure in structures:
 
             if structure.is_survivor:
-                save_path_controller_part = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation), "controller",
+                save_path_controller_part = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation), "controller",
                     "robot_" + str(structure.label) + "_controller" + ".pt")
-                save_path_controller_part_old = os.path.join(root_dir, "saved_data", f"exp{no.experiment_index}", "generation_" + str(generation-1), "controller",
+                save_path_controller_part_old = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation-1), "controller",
                     "robot_" + str(structure.prev_gen_label) + "_controller" + ".pt")
                 
                 print(f'Skipping training for {save_path_controller_part}.\n')
@@ -196,15 +202,15 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
 
                 if no.is_reevaluating:
-                    controller_path_for_animation_current = f"controller_to_generate_animation_{no.experiment_index}_current.pt"
-                    controller_path_for_animation_best = f"controller_to_generate_animation_{no.experiment_index}_best.pt"
+                    controller_path_for_animation_current = f"controller_to_generate_animation_{no.params.experiment_index}_current.pt"
+                    controller_path_for_animation_best = f"controller_to_generate_animation_{no.params.experiment_index}_best.pt"
                     no.controller_path_for_animation = controller_path_for_animation_current
                     res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                     
                     import pathlib
 
-                    dump_path_current = f"simulation_objects_{no.experiment_index}_current.pkl"
-                    dump_path_best = f"simulation_objects_{no.experiment_index}_best.pkl"
+                    dump_path_current = f"simulation_objects_{no.params.experiment_index}_current.pkl"
+                    dump_path_best = f"simulation_objects_{no.params.experiment_index}_best.pkl"
 
 
                     morphology = structure.body
@@ -231,7 +237,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
         structures = sorted(structures, key=lambda structure: structure.fitness, reverse=True)
 
         #SAVE RANKING TO FILE
-        temp_path = os.path.join(root_dir, "saved_data", no.experiment_index, "generation_" + str(generation), "output.txt")
+        temp_path = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation), "output.txt")
         f = open(temp_path, "w")
 
         out = ""
