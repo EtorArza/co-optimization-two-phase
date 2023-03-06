@@ -78,11 +78,11 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   if no is None:
     raise ValueError("NestedOptimization object should not be None.")
 
-  default_episode_len = 128
-  default_nsamples = 64
+  default_episode_len = no.params.default_inner_length
+  default_nsamples = no.params.default_inner_length
 
-  task.episode_len = default_episode_len if test else int(default_episode_len * no.inner_length_proportion)
-  nsamples = default_nsamples if test else int(default_nsamples * no.inner_quantity_proportion)
+  task.episode_len = default_episode_len if test else no.params.get_inner_length_absolute()
+  nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
 
   robot_init_pos, has_self_collision = presimulate(robot)
 
@@ -197,7 +197,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       opt_seed,
       task.taskname,
       input_sequence,
-      dump_path=f"simulation_objects_{no.experiment_index}_current.pkl",
+      dump_path=f"simulation_objects_{no.params.experiment_index}_current.pkl",
       visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_current"+".mp4"
     )
     if no.save_best_visualization_required:
@@ -206,7 +206,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
         opt_seed,
         task.taskname,
         input_sequence,
-        dump_path=f"simulation_objects_{no.experiment_index}_best.pkl",
+        dump_path=f"simulation_objects_{no.params.experiment_index}_best.pkl",
       visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_best"+".mp4"
 
       )
@@ -325,16 +325,16 @@ def set_pdb_trace(sig, frame):
   import pdb
   pdb.Pdb().set_trace(frame)
 
-def main(no, algorithm, cpus, task, seed):
+def main(no, algorithm, cpus):
   signal.signal(signal.SIGUSR1, set_pdb_trace)
 
-  args_list = ["--seed", str(seed),
+  args_list = ["--seed", str(no.params.seed),
                "-a", algorithm,
                 f"-j{cpus}", # parallel threads
                 f"-i1000000",
                 "-d40",
                 "--log_dir", "logs_mcts",
-                f"{task}", "data/designs/grammar_apr30.dot",
+                f"{no.params.env_name}", "data/designs/grammar_apr30.dot",
               ]
 
 
@@ -361,7 +361,7 @@ def main(no, algorithm, cpus, task, seed):
   args = parser.parse_args(args_list)
 
   random.seed(args.seed)
-  taskname=task
+  taskname=no.params.env_name
   task_class = getattr(tasks, taskname)
   task = task_class()
   task.taskname=taskname
@@ -375,12 +375,12 @@ def main(no, algorithm, cpus, task, seed):
   for i in range(args.iterations):
     states, actions, result = search_alg.run_iteration(no)
     if no.savenext_current:
-      dump_path = f"rule_sequence_{no.experiment_index}_current.pkl"
+      dump_path = f"rule_sequence_{no.params.experiment_index}_current.pkl"
       rule_seq = [rules.index(rule) for rule in actions]
       pickle_rule_sequence_for_video_generation(rule_seq, dump_path)
       no.savenext_current=False
     if no.savenext_best:
-      dump_path = f"rule_sequence_{no.experiment_index}_best.pkl"
+      dump_path = f"rule_sequence_{no.params.experiment_index}_best.pkl"
       rule_seq = [rules.index(rule) for rule in actions]
       pickle_rule_sequence_for_video_generation(rule_seq, dump_path)
       no.savenext_best=False

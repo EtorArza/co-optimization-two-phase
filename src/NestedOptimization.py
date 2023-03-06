@@ -40,7 +40,7 @@ class Parameters:
 
     nseeds = 20
 
-    def __init__(self, framework_name, experiment_index):
+    def __init__(self, framework_name: str, experiment_index: int):
 
         self.experiment_index = experiment_index
         self.framework_name = framework_name
@@ -59,8 +59,8 @@ class Parameters:
         elif framework_name == "robogrammar":
             self.max_frames = 5120000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
-            self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
-            self.default_inner_length = 128 # Episode length.
+            self.default_inner_quantity = 24 # The number of random samples to generate when simulating each step.
+            self.default_inner_length = 12 # Episode length.
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -115,6 +115,9 @@ class Parameters:
     def get_n_experiments(self):
         return len(self._get_parameter_list())
 
+    def print_parameters(self):
+        print("Total number of executions:", self.get_n_experiments())
+        print("Parameters current execution:",self._get_parameter_list()[self.experiment_index])
 
 
 
@@ -163,7 +166,7 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_folder_path, params: Parameters):
+    def __init__(self, result_file_folder_path: str, params: Parameters):
         self.params = params
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"

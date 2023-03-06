@@ -16,7 +16,7 @@ def get_sequence_of_parameters():
     res = [item for item in res if 1.0 in item or item[1] == item[2]]
     return res
 
-def execute_experiment_locally(seed, env_name, max_frames, inner_quantity_proportion, inner_length_proportion, experiment_index):
+def execute_experiment_locally(experiment_index):
     if sys.executable.split('/')[-3] != 'venv':
         print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
         print("\n\nOnce 'venv' has been loaded, rerun this script.")
@@ -44,10 +44,12 @@ def execute_experiment_locally(seed, env_name, max_frames, inner_quantity_propor
     sys.path.append(base_dir)
     sys.path.append(os.path.join(base_dir, 'graph_learning'))
     sys.path.append(os.path.join(base_dir, 'design_search'))
-    from NestedOptimization import NestedOptimization
+    from NestedOptimization import NestedOptimization, Parameters
     import os
-    no = NestedOptimization(resfilepath, experiment_mode, experiment_index, env_name, max_frames, inner_quantity_proportion, inner_length_proportion, seed)
-    main(no, algorithm, cpus, env_name, seed)
+    params = Parameters("robogrammar", experiment_index)
+    params.print_parameters()
+    no = NestedOptimization(resfilepath, params)
+    main(no, algorithm, cpus)
 
 
 if __name__ == "__main__":
@@ -58,18 +60,14 @@ if __name__ == "__main__":
             print("ERROR: 2 parameters are required, --local_launch and i.\n\nUsage:\npython src/robogrammar_experiment.py i")
             exit(1)
         experiment_index = int(sys.argv[2])
-        seq_parameters = get_sequence_of_parameters()
-        print("Total number of executions:", len(seq_parameters))
-        print("Parameters current execution:",seq_parameters[experiment_index])
-        seed, inner_quantity_proportion, inner_length_proportion, env_name, experiment_mode, max_frames = seq_parameters[experiment_index]
         # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
-        execute_experiment_locally(seed, env_name, max_frames, inner_quantity_proportion, inner_length_proportion, experiment_index)
+        execute_experiment_locally(experiment_index)
 
         
     elif sys.argv[1] == "--plot":
         from plot_src import *
         print("Inner learning algorithm in robogrammar is MPC.")
-        df = plot_comparison_parameters("results/robogrammar/data", figpath, "quantity")
+        df = plot_comparison_parameters("results/robogrammar/data", figpath, "length")
 
 
     elif sys.argv[1] == "--visualize":

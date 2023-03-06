@@ -18,7 +18,7 @@ def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
 
 def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
 
-    assert resumable_dimension in ("lenght", "quantity", "neither", None) 
+    assert resumable_dimension in ("length", "quantity", "neither", None) 
 
     """
     What is the parameter reusable_dimension?
