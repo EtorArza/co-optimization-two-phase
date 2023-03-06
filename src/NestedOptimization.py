@@ -1,8 +1,18 @@
 import time
 from threading import Thread, Lock
 import numpy as np
+from datetime import datetime
+
+def convert_from_seconds(seconds):
 
 
+    mins, _ = divmod(seconds, 60)
+    hours, mins = divmod(mins, 60)
+    days, hours = divmod(hours, 24)
+
+    # Format the result as a string
+    result = f"{days} d, {hours} h, {mins} min"
+    return result
 
 
 class stopwatch:
@@ -147,7 +157,7 @@ class NestedOptimization:
     ----------------------------------
 
     """
-
+    sw_print_progress = stopwatch()
     sw = stopwatch()
     sw_reeval = stopwatch()
     f_observed = float("-inf")
@@ -212,7 +222,7 @@ class NestedOptimization:
         self.evaluation += 1
         self.check_if_best(level=2)
         self.write_to_file(level=2)
-        print("next_outer()", f_observed, ", progress:", self.step / self.max_frames, ", time left:", self.sw.get_time() / (self.step / self.max_frames) )
+        self.print_progress()
 
 
     def next_reeval(self, f_reeval_observed, controller_size, controller_size2, morphology_size):
@@ -225,7 +235,6 @@ class NestedOptimization:
         self.is_reevaluating = False
         self.sw_reeval.pause()
         self.sw.resume()
-        print("next_reeval()", f_reeval_observed, ", progress:", self.step / self.max_frames, ", time left:", self.sw.get_time() / (self.step / self.max_frames) )
 
 
     def check_if_best(self, level):
@@ -277,3 +286,12 @@ class NestedOptimization:
 
     def get_video_label(self):
         return f"{self.params.experiment_mode}_{self.params.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"
+    
+    def print_progress(self):
+        print_every = 60.0*20.0 # every 20 mins
+        if self.sw_print_progress.get_time() > print_every:
+            self.sw_print_progress.reset()
+            print("Progress:", self.step / self.max_frames, ", left:", convert_from_seconds(self.sw.get_time() + self.sw_reeval.get_time() / (self.step / self.max_frames)),", time:", datetime.now(), flush=True)
+
+
+
