@@ -161,8 +161,6 @@ def run_ppo(
                  for info in infos])
             rollouts.insert(obs, recurrent_hidden_states, action,
                             action_log_prob, value, reward, masks, bad_masks)
-        if not test:
-            no.next_inner()
 
         with torch.no_grad():
             next_value = actor_critic.get_value(
@@ -177,34 +175,19 @@ def run_ppo(
 
         rollouts.after_update()
      
-        # # print status
-        # if j % args.log_interval == 0 and len(episode_rewards) > 1 and verbose:
-        #     total_num_steps = (j + 1) * args.num_processes * args.num_steps
-        #     end = time.time()
-        #     print(
-        #         "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n"
-        #             .format(j, total_num_steps,
-        #                     int(total_num_steps / (end - start)),
-        #                     len(episode_rewards), np.mean(episode_rewards),
-        #                     np.median(episode_rewards), np.min(episode_rewards),
-        #                     np.max(episode_rewards), dist_entropy, value_loss,
-        #                     action_loss))
         
         # evaluate the controller and save it if it does the best so far
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
             
             obs_rms = utils.get_vec_normalize(envs).obs_rms
-            determ_avg_reward = evaluate(args.num_evals, actor_critic, obs_rms, args.env_name, structure, args.seed,
-                     args.num_processes, eval_log_dir, device)
+            determ_avg_reward = evaluate(args.num_evals, actor_critic, obs_rms, args.env_name, structure, args.seed, args.num_processes, eval_log_dir, device, no)
 
             if verbose:
                 if saving_convention != None:
                     print(f'Evaluated {saving_convention[1]} using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / termination_condition.max_iters}\n')
                 else:
                     print(f'Evaluated using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / termination_condition.max_iters}\n')
-            if not test:
-                no.next_inner()
             if determ_avg_reward > max_determ_avg_reward:
                 max_determ_avg_reward = determ_avg_reward
 
@@ -216,6 +199,8 @@ def run_ppo(
                     print(f'Saving {temp_path} with avg reward {max_determ_avg_reward}\n')
                 torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], temp_path)
 
+            if not test:
+                no.next_inner(max_determ_avg_reward)
 
         # return upon reaching the termination condition
         if not termination_condition == None:

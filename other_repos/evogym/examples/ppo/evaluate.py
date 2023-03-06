@@ -15,7 +15,8 @@ def evaluate(
     seed, 
     num_processes, 
     eval_log_dir,
-    device):
+    device,
+    no):
 
     num_processes = min(num_processes, num_evals)
     
@@ -44,7 +45,7 @@ def evaluate(
 
         # Obser reward and next obs
         obs, _, done, infos = eval_envs.step(action)
-
+        no.next_step()
         eval_masks = torch.tensor(
             [[0.0] if done_ else [1.0] for done_ in done],
             dtype=torch.float32,

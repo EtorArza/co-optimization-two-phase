@@ -59,8 +59,8 @@ class Parameters:
         elif framework_name == "robogrammar":
             self.max_frames = 5120000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
-            self.default_inner_quantity = 24 # The number of random samples to generate when simulating each step.
-            self.default_inner_length = 12 # Episode length.
+            self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
+            self.default_inner_length = 128 # Episode length.
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -189,7 +189,7 @@ class NestedOptimization:
             self.step += 1
 
 
-    def next_inner(self):
+    def next_inner(self, f_partial=None):
         self.iteration += 1
 
 

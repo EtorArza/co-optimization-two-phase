@@ -118,7 +118,10 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
     plt.savefig(figpath + "/number_of_steps.pdf")
     plt.close()
     
-    df = df.query("level == '3'")
+    if plotname == 'no_reeval':
+        df = df.query("level == '2'")
+    else:
+        df = df.query("level == '3'")
 
     # # Print all seeds with certain parameters.
     # df = df[df["level"]=="3"]
@@ -269,6 +272,7 @@ def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
         ("controller_size", "controller_size", "step_including_reeval"),
         ("controller_size2", "controller_size2", "step_including_reeval"),
         ("morphology_size", "morphology_size", "step_including_reeval"),
+        ("no_reeval", "f_best", "step"),
         ):
 
         _plot_performance(df.copy(), figpath, plotname, score_label, resources)
