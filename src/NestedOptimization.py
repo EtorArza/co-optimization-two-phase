@@ -172,6 +172,8 @@ class NestedOptimization:
     write_header = True
     iterations_since_best_found = 0
     is_reevaluating = False
+    ESNOF_ref_objective_values = np.ones(2000, dtype=np.float64) * -1e20
+    ESNOF_observed_objective_values = np.zeros(2000, dtype=np.float64)
 
     result_file_path = None
 
@@ -291,7 +293,7 @@ class NestedOptimization:
         print_every = 60.0*20.0 # every 20 mins
         if self.sw_print_progress.get_time() > print_every:
             self.sw_print_progress.reset()
-            print("Progress:", self.step / self.max_frames, ", left:", convert_from_seconds(self.sw.get_time() + self.sw_reeval.get_time() / (self.step / self.max_frames)),", time:", datetime.now(), flush=True)
+            print("Progress:", self.step / self.max_frames, ", left:", convert_from_seconds((self.sw.get_time() + self.sw_reeval.get_time()) / self.step * (self.max_frames - self.step)),", time:", datetime.now(), flush=True)
 
 
 
