@@ -107,7 +107,7 @@ def run_ppo(
             lr=args.lr,
             eps=args.eps,
             max_grad_norm=args.max_grad_norm)
-
+    # print('args.num_steps', args.num_steps)
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
                               envs.observation_space.shape, envs.action_space,
@@ -212,20 +212,13 @@ def run_ppo(
                     print(f'Saving {temp_path} with avg reward {max_determ_avg_reward}\n')
                 torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], temp_path)
 
-            if not test:
-                no.next_inner(max_determ_avg_reward)
+            no.next_inner(max_determ_avg_reward)
 
         # return upon reaching the termination condition
-        if not termination_condition == None:
-            if termination_condition(j):
-                if test:
-                    savepath = no.controller_path_for_animation
-                    torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
-                if not test:
-                    no.next_outer(max_determ_avg_reward, controller_size, controller_size2, morphology_size)
-                if verbose:
-                    print(f'{saving_convention} has met termination condition ({j})...terminating...\n')
-                return max_determ_avg_reward
-
-#python ppo_main_test.py --env-name "roboticgamedesign-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 1 --num-steps 128 --num-mini-batch 4 --log-interval 1 --use-linear-lr-decay --entropy-coef 0.01
-#python ppo.py --env-name "roboticgamedesign-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 8 --num-steps 128 --num-mini-batch 4 --log-interval 1 --use-linear-lr-decay --entropy-coef 0.01 --log-dir "logs/"
+        if no.ESNOF_stop or (not termination_condition is None and termination_condition(j)):
+            if test or no.params.experiment_mode == "incrementalandesnof":
+                savepath = no.controller_path_for_animation
+                torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
+            if not test:
+                no.next_outer(max_determ_avg_reward, controller_size, controller_size2, morphology_size)
+            return max_determ_avg_reward

@@ -66,6 +66,8 @@ class Parameters:
             self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
             self.default_inner_length = 128 # Episode length.
             self.non_resumable_param = "length"
+            self.ESNOF_t_max = round(self.default_inner_quantity / 50)
+
 
         elif framework_name == "robogrammar":
             self.max_frames = 10240000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
@@ -84,7 +86,8 @@ class Parameters:
         if "reevaleachvsend" in params:
             self.inner_quantity_proportion, self.inner_length_proportion, self.env_name, self.experiment_mode, self.seed = params
         elif "incrementalandesnof" in params:
-            self.experiment_mode, self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name = params
+            self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode, self.seed = params
+            self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
         else:
             raise ValueError(f"params variable {params} does not contain a recognized experiment")
 
@@ -111,21 +114,23 @@ class Parameters:
 
 
 
-        # # incrementalandesnof
-        # minimum_non_resumable_param_list = [1.0, 0.2]
-        # time_grace_list = [1.0, 0.2]
-        # experiment_mode_list = ["incrementalandesnof"]
-        # params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list))
-        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
-        # res += params_with_undesired_combinations
+        # incrementalandesnof
+        minimum_non_resumable_param_list = [0.2, 1.0]
+        time_grace_list = [0.2, 1.0]
+        experiment_mode_list = ["incrementalandesnof"]
+        params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
+        res += params_with_undesired_combinations
 
         return res
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inner_quantity_proportion}_{self.inner_length_proportion}_{self.seed}"
+        if self.experiment_mode == "incrementalandesnof":
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.minimum_non_resumable_param}_{self.time_grace}_{self.seed}"
         else:
-            raise NotImplementedError("Result file name not implemented for incrementalandesnof yet.")
+            raise NotImplementedError(f"Result file name not implemented for {self.experiment_mode} yet.")
 
     def get_n_experiments(self):
         return len(self._get_parameter_list())
@@ -171,19 +176,23 @@ class NestedOptimization:
     done = False
     write_header = True
     iterations_since_best_found = 0
-    is_reevaluating = False
-    ESNOF_ref_objective_values = np.ones(2000, dtype=np.float64) * -1e20
-    ESNOF_observed_objective_values = np.zeros(2000, dtype=np.float64)
+    is_reevaluating_flag = False
+    ESNOF_ARRAY_SIZE = 2000
+    ESNOF_ref_objective_values =  np.full(ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
+    ESNOF_observed_objective_values = np.full(ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
+    ESNOF_index = 0
+    ESNOF_stop = False
 
     result_file_path = None
 
-    save_best_visualization_required = False
+    new_best_found = False
 
     SAVE_EVERY = 5
     mutex = Lock()
 
 
     def __init__(self, result_file_folder_path: str, params: Parameters):
+        print("Perhaps if we change the project to: how can we set the inner length and quantity in an online manner? BC that is what we will ultimately need to do for the CONFLOT project...")
         self.params = params
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
@@ -200,17 +209,36 @@ class NestedOptimization:
             self.mutex.release()
 
     def next_step(self):
-        if self.is_reevaluating:
+        if self.is_reevaluating_flag:
             self.reevaluating_steps += 1
         else:
             self.step += 1
 
 
     def next_inner(self, f_partial=None):
-        self.iteration += 1
+        if self.is_reevaluating_flag:
+            return
+
+        if self.params.experiment_mode == "incrementalandesnof":
+            self.ESNOF_observed_objective_values[self.ESNOF_index] = f_partial
+            # print("-")
+            # with np.printoptions(threshold=np.inf):
+            #     print(np.array([el for el in self.ESNOF_ref_objective_values if not np.isnan(el)]))
+            #     print(np.array([el for el in self.ESNOF_observed_objective_values if not np.isnan(el)]))
+            if self.ESNOF_index > self.params.ESNOF_t_grace and self.ESNOF_ref_objective_values[self.ESNOF_index - self.params.ESNOF_t_grace] > f_partial:
+                # print("--stop--")
+                self.ESNOF_stop = True
+            else:
+            #     print("--continue--")
+                pass
+            # print("-")
+            self.ESNOF_index += 1
 
 
     def next_outer(self, f_observed, controller_size, controller_size2, morphology_size):
+        if self.is_reevaluating_flag:
+            return
+
         assert not f_observed is None
         self.f_observed = f_observed
         self.controller_size = controller_size
@@ -223,28 +251,44 @@ class NestedOptimization:
 
         self.evaluation += 1
         self.check_if_best(level=2)
+        self.ESNOF_reset_for_next_solution()
         self.write_to_file(level=2)
         self.print_progress()
 
 
     def next_reeval(self, f_reeval_observed, controller_size, controller_size2, morphology_size):
+        if self.params.experiment_mode == "incrementalandesnof":
+            raise ValueError("ERROR: Experiment incrementalandesnof should have no reeval.")
         self.f_reeval_observed = f_reeval_observed
         self.controller_size = controller_size
         self.morphology_size = morphology_size
         self.controller_size2 = controller_size2
         self.check_if_best(level=3)
         self.write_to_file(level=3)
-        self.is_reevaluating = False
+        self.is_reevaluating_flag = False
         self.sw_reeval.pause()
         self.sw.resume()
 
+    def ESNOF_reset_for_next_solution(self):
+        self.ESNOF_index = 0
+        self.ESNOF_stop = False
+        self.ESNOF_observed_objective_values = np.full(self.ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
+
+
+    def ESNOF_load_new_references(self):
+        np.copyto(self.ESNOF_ref_objective_values, self.ESNOF_observed_objective_values)
+        self.ESNOF_observed_objective_values
 
     def check_if_best(self, level):
         # print("Checking for best found.")
         if level == 2:
             if self.f_observed > self.f_best:
                 self.f_best = self.f_observed
-                self.is_reevaluating = True
+                self.new_best_found = True
+                if self.params.experiment_mode == "incrementalandesnof":
+                    self.ESNOF_load_new_references()
+                if self.params.experiment_mode == "reevaleachvsend":
+                    self.is_reevaluating_flag = True
                 self.sw_reeval.resume()
                 self.sw.pause()
                 print("best_found! (level 2)")
@@ -252,7 +296,7 @@ class NestedOptimization:
             if self.f_reeval_observed > self.f_reeval_best:
                 self.f_reeval_best = self.f_reeval_observed
                 if self.step + self.reevaluating_steps <= self.max_frames:
-                    self.save_best_visualization_required = True
+                    self.new_best_found = True
                 print("best_found! (level 3)")
 
 

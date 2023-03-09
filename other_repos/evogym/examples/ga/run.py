@@ -133,7 +133,6 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     f.write(f'POP_SIZE: {pop_size}\n')
     f.write(f'STRUCTURE_SHAPE: {structure_shape[0]} {structure_shape[1]}\n')
     f.write(f'MAX_EVALUATIONS: {max_evaluations}\n')
-    f.write(f'TRAIN_ITERS: {no.params.get_inner_quantity_absolute()}\n')
     f.close()
 
 
@@ -199,38 +198,43 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
                     print(f'Error coppying controller for {save_path_controller_part}.\n')
             else:
 
+                controller_path_for_animation_current = f"controller_to_generate_animation_{no.params.experiment_index}_current.pt"
+                controller_path_for_animation_best = f"controller_to_generate_animation_{no.params.experiment_index}_best.pt"
+                no.controller_path_for_animation = controller_path_for_animation_current
+
                 # For sequential execution
                 res = run_ppo((structure.body, structure.connections), tc, (save_path_controller, structure.label), env_name, no, False)
                 structure.set_reward(res)
 
 
-                if no.is_reevaluating:
-                    controller_path_for_animation_current = f"controller_to_generate_animation_{no.params.experiment_index}_current.pt"
-                    controller_path_for_animation_best = f"controller_to_generate_animation_{no.params.experiment_index}_best.pt"
-                    no.controller_path_for_animation = controller_path_for_animation_current
-                    res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
+
+
+
                     
+
+                if no.new_best_found:
+                    if no.params.experiment_mode == "reevaleachvsend":
+                        res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
+                        morphology = structure.body
+                        controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
+                        controller_size2 = structure.connections.shape[1]
+                        morphology_size = np.sum(morphology != 0)
+                        no.next_reeval(res_reevaluated, controller_size, controller_size2, morphology_size) # no.new_best_found is updated here
+
                     import pathlib
-
                     dump_path_current = f"simulation_objects_{no.params.experiment_index}_current.pkl"
-                    dump_path_best = f"simulation_objects_{no.params.experiment_index}_best.pkl"
-
-
-                    morphology = structure.body
-                    controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
-                    controller_size2 = structure.connections.shape[1]
-                    morphology_size = np.sum(morphology != 0)
-                    no.next_reeval(res_reevaluated, controller_size, controller_size2, morphology_size)
                     out_path_gif_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_current.gif"
-                    out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_best.gif"                    
                     dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current)
 
-                    if no.save_best_visualization_required:
-                        no.save_best_visualization_required = False
-                        os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
 
-                        dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best)
-                        
+
+                if no.new_best_found:
+                    dump_path_best = f"simulation_objects_{no.params.experiment_index}_best.pkl"
+                    out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_best.gif"                    
+                    no.new_best_found = False
+                    os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
+                    dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best)
+                    
                     
 
         ### COMPUTE FITNESS, SORT, AND SAVE ###

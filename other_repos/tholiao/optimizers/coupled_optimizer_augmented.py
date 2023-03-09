@@ -71,7 +71,7 @@ class JointOptimizerAug(JointBayesOptimizer):
 
 
 
-        if self.no.is_reevaluating and not test:
+        if self.no.is_reevaluating_flag and not test:
             reeval_obj = float(self.eval_hw(x_cn, cache_walker, True))
             self.no.next_reeval(reeval_obj)
 
