@@ -11,6 +11,7 @@ import random
 import signal
 import sys
 import tasks
+from NestedOptimization import NestedOptimization
 
 def get_applicable_matches(rule, graph):
   """Generates all applicable matches for rule in graph."""
@@ -71,7 +72,7 @@ def presimulate(robot):
   temp_sim.get_robot_world_aabb(robot_idx, lower, upper)
   return [-upper[0], -lower[1], 0.0], temp_sim.robot_has_collision(robot_idx)
 
-def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test=False):
+def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOptimization=None, test=False):
   """Run trajectory optimization for the robot on the given task, and return the
   resulting input sequence and result."""
 
@@ -81,11 +82,16 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
   default_episode_len = no.params.default_inner_length
   default_nsamples = no.params.default_inner_length
 
-  task.episode_len = default_episode_len if test else no.params.get_inner_length_absolute()
-  nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
+  if no.params.experiment_mode == "incrementalandesnof":
+    task.episode_len = default_episode_len
+    nsamples = no.get_inner_non_resumable_increasing()
+
+
+  elif no.params.experiment_mode == "reevaleachvsend":
+    task.episode_len = default_episode_len if test else no.params.get_inner_length_absolute()
+    nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
 
   robot_init_pos, has_self_collision = presimulate(robot)
-
   if has_self_collision:
     return None, None
 
@@ -155,16 +161,20 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
                                    input_sequence[:,j].reshape(-1, 1))
         task.add_noise(main_sim, j * task.interval + k)
         main_sim.step()
-        rewards[j * task.interval + k] = objective_fn(main_sim)
+        reward = objective_fn(main_sim)
+        rewards[j * task.interval + k] = reward
+
+      for _ in range(nsamples):
+        no.next_step()
+      no.next_inner(np.mean(rewards[np.nonzero(rewards)]))
+      if no.ESNOF_stop:
+        break
+
     if obs.shape[0] > 0:
         value_estimator.get_observation(main_sim, obs[:,-1])
 
     main_sim.restore_state()
 
-    for _ in range(task.episode_len):
-      for _ in range(nsamples):
-        no.next_step()
-      no.next_inner()
 
 
     # Only train the value estimator if there will be another episode
@@ -180,19 +190,23 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       replay_returns = np.concatenate((replay_returns,
                                        returns[:task.episode_len]))
       value_estimator.train(replay_obs, replay_returns)
-  if not test:
-    no.next_outer(np.mean(rewards), controller_size, -1, morphology_size)
-    if no.is_reevaluating: # If new best solution found...
-      print("Reevaluating...")
-      _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True)
-    
+  
+  no.next_outer(np.mean(rewards), controller_size, -1, morphology_size)
+  
+  if test:
+    reeval_f = np.mean(rewards)
+    no.next_reeval(reeval_f, controller_size, -1, morphology_size)
 
-  if test: # test=True means that no.next_outer() found a new best solution, and simulate was called recursively.
+  
+  if not test and no.is_reevaluating_flag: # If new best solution found, reevaluate...
+    print("Reevaluating...")
+    _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True) # call recursively to reevaluate
+
+
+  if test or no.params.experiment_mode == "incrementalandesnof":
     from viewer import pickle_simulation_objects_for_video_generation
 
-    reeval_f = np.mean(rewards)
     no.savenext_current=True
-    no.next_reeval(reeval_f, controller_size, -1, morphology_size)
     pickle_simulation_objects_for_video_generation(
       opt_seed,
       task.taskname,
@@ -200,7 +214,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       dump_path=f"simulation_objects_{no.params.experiment_index}_current.pkl",
       visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_current"+".mp4"
     )
-    if no.save_best_visualization_required:
+    if no.new_best_found:
       no.savenext_best=True
       pickle_simulation_objects_for_video_generation(
         opt_seed,
@@ -210,7 +224,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no=None, test
       visualization_path="../../results/robogrammar/videos/"+f"{no.get_video_label()}_best"+".mp4"
 
       )
-      no.save_best_visualization_required = False
+      no.new_best_found = False
 
 
 

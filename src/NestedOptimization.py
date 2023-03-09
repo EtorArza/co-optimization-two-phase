@@ -75,7 +75,7 @@ class Parameters:
             self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
             self.default_inner_length = 128 # Episode length.
             self.non_resumable_param = "quantity"
-
+            self.ESNOF_t_max = self.default_inner_length
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -229,7 +229,7 @@ class NestedOptimization:
                 # print("--stop--")
                 self.ESNOF_stop = True
             else:
-            #     print("--continue--")
+                # print("--continue--")
                 pass
             # print("-")
             self.ESNOF_index += 1
@@ -250,7 +250,8 @@ class NestedOptimization:
             exit(0)
 
         self.evaluation += 1
-        self.check_if_best(level=2)
+        if self.params.experiment_mode == "reevaleachvsend" or not self.ESNOF_stop:
+            self.check_if_best(level=2)
         self.ESNOF_reset_for_next_solution()
         self.write_to_file(level=2)
         self.print_progress()
@@ -305,9 +306,9 @@ class NestedOptimization:
 
         param_proportion = self.params.minimum_non_resumable_param  + (1.0 - self.params.minimum_non_resumable_param) * (self.step / self.max_frames)
         if self.params.non_resumable_param == "length":
-            res = int(param_proportion * self.params.default_inner_length)
+            res = round(param_proportion * self.params.default_inner_length)
         if self.params.non_resumable_param == "quantity":
-            res = int(param_proportion * self.params.default_inner_quantity)
+            res = round(param_proportion * self.params.default_inner_quantity)
 
         return res
 

@@ -91,8 +91,7 @@ class HwSwDistSim(DistanceSimulation):
                 self.close_scene()
                 self.stop()
                 self.exit()
-                if not no.is_reevaluating_flag:
-                    no.next_inner()
+                no.next_inner()
 
                 return np.array([dist])
 
