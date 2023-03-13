@@ -3,19 +3,6 @@ figpath = "results/robogrammar/figures"
 
 
 
-def get_sequence_of_parameters():
-    import itertools
-    seed_list = list(range(2,22))
-    inner_quantity_proportion_list = [1.0, 0.2] # Default is 64
-    inner_length_proportion_list = [1.0, 0.2] # Default is 128
-    env_name_list = ['FlatTerrainTask']
-    experiment_mode_list = ["reevaleachvsend"]
-    max_frames_list = [5120000] # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the github.
-    res = list(itertools.product(seed_list, inner_quantity_proportion_list, inner_length_proportion_list,env_name_list, experiment_mode_list, max_frames_list))
-    # remove the combinations containining 2 different parameters != 1.0.
-    res = [item for item in res if 1.0 in item or item[1] == item[2]]
-    return res
-
 def execute_experiment_locally(experiment_index):
     if sys.executable.split('/')[-3] != 'venv':
         print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
@@ -99,9 +86,9 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "--cluster_launch":
         print("Launching evogym in cluster...")
-        n = len(get_sequence_of_parameters())
-        import subprocess
-        subprocess.call(f"sbatch --array=0-{n-1} cluster_scripts/launch_one_robogrammar.sl")
+        from NestedOptimization import Parameters
+        params = Parameters("robogrammar", 0)
+        print(f"sbatch --array=0-{params.get_n_experiments()-1} cluster_scripts/launch_one_robogrammar.sl")
 
     # elif sys.argv[1] == "--cluster_launch":
         
