@@ -150,3 +150,4 @@ other_repos/revolve/Pipfile.lock
 other_repos/revolve/thirdparty/nlopt/build/CMakeFiles/Makefile.cmake
 other_repos/revolve/thirdparty/nlopt/build/CMakeFiles/Makefile2
 other_repos/revolve/thirdparty/nlopt/build/CMakeCache.txt
+other_repos/revolve/data/default_experiment/**

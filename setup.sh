@@ -143,4 +143,15 @@ make -j4
 sudo apt-get install pkg-config
 sudo apt-get install libcairo2-dev
 
-pip install -r other_repos/revolve/requirements.txt
+deactivate
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+sudo apt-get install python3.7
+sudo apt install python3-virtualenv
+virtualenv --python python3.7 venv37
+sudo apt-get install python3.7-distutils
+sudo apt-get install python3.7-dev
+source venv37/bin/activate
+
+pip install -r requirements.txt
+pip install protobuf==3.20.*
