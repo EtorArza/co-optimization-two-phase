@@ -42,7 +42,6 @@ if __name__ == "__main__":
             exit(1)
         experiment_index = int(sys.argv[2])
         sys.argv = sys.argv[:1]
-        # max_frames=32032000 is the default value if we consider 250 morphologies evaluated.
         execute_experiment_locally(experiment_index)
 
 
