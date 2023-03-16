@@ -147,3 +147,6 @@ other_repos/revolve/Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
+other_repos/revolve/thirdparty/nlopt/build/CMakeFiles/Makefile.cmake
+other_repos/revolve/thirdparty/nlopt/build/CMakeFiles/Makefile2
+other_repos/revolve/thirdparty/nlopt/build/CMakeCache.txt
