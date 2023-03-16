@@ -140,4 +140,7 @@ mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE="Release"
 make -j4
 
+sudo apt-get install pkg-config
+sudo apt-get install libcairo2-dev
 
+pip install -r other_repos/revolve/requirements.txt
