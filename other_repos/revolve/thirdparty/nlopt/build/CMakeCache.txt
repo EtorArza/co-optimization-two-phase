@@ -328,6 +328,12 @@ Matlab_MAIN_PROGRAM:FILEPATH=Matlab_MAIN_PROGRAM-NOTFOUND
 //Extensions for the mex targets (automatically given by Matlab)
 Matlab_MEX_EXTENSION:STRING=
 
+//Path to a library.
+Matlab_MEX_LIBRARY:FILEPATH=Matlab_MEX_LIBRARY-NOTFOUND
+
+//Path to a library.
+Matlab_MX_LIBRARY:FILEPATH=Matlab_MX_LIBRARY-NOTFOUND
+
 //Matlab installation root path
 Matlab_ROOT_DIR:PATH=/usr
 
@@ -677,8 +683,12 @@ HAVE_TIME:INTERNAL=1
 HAVE_TIME_H:INTERNAL=1
 //Have include unistd.h
 HAVE_UNISTD_H:INTERNAL=1
+//internal matlab location for the discovered version
+Matlab_PROG_VERSION_STRING_AUTO_DETECT:INTERNAL=
 //last Matlab root dir location
 Matlab_ROOT_DIR_LAST_CACHED:INTERNAL=/usr
+//internal matlab location for the discovered version
+Matlab_VERSION_STRING_INTERNAL:INTERNAL=
 //ADVANCED property for variable: OCTAVE_CRUFT_LIBRARY
 OCTAVE_CRUFT_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: OCTAVE_INCLUDE_DIR
