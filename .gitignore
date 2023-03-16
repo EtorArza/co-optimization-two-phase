@@ -70,3 +70,80 @@ other_repos/tholiao/DIRresults.txt
 
 other_repos/rem/__pycache__/
 other_repos/rem/*.egg-info/
+
+
+
+other_repos/revolve/__pycache__/
+other_repos/revolve/*.py[cod]
+
+*.so
+*.dylib
+
+.Python
+other_repos/revolve/build/
+other_repos/revolve/cmake-build-*/
+other_repos/revolve/output*/
+other_repos/revolve/develop-eggs/
+other_repos/revolve/dist/
+other_repos/revolve/downloads/
+other_repos/revolve/eggs/
+other_repos/revolve/.eggs/
+other_repos/revolve/lib/
+other_repos/revolve/lib64/
+other_repos/revolve/parts/
+other_repos/revolve/sdist/
+other_repos/revolve/var/
+other_repos/revolve/*.egg-info/
+other_repos/revolve/.installed.cfg
+other_repos/revolve/*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+other_repos/revolve/*.manifest
+other_repos/revolve/*.spec
+
+# Installer logs
+other_repos/revolve/pip-log.txt
+other_repos/revolve/pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+other_repos/revolve/htmlcov/
+other_repos/revolve/.tox/
+other_repos/revolve/.coverage
+other_repos/revolve/.coverage.*
+other_repos/revolve/.cache
+other_repos/revolve/nosetests.xml
+other_repos/revolve/coverage.xml
+other_repos/revolve/*,cover
+other_repos/revolve/experiments/examples/output/
+other_repos/revolve/test.py
+
+# Translations
+other_repos/revolve/*.mo
+other_repos/revolve/*.pot
+
+# Django stuff:
+other_repos/revolve/*.log
+
+# Sphinx documentation
+other_repos/revolve/docs/_build/
+
+# PyBuilder
+other_repos/revolve/target/
+
+# PyCharm project files
+other_repos/revolve/.idea
+
+# Visual Studio Code
+other_repos/revolve/.vscode/
+
+# Virtual env
+other_repos/revolve/.venv*/
+other_repos/revolve/.python-version
+other_repos/revolve/Pipfile
+other_repos/revolve/Pipfile.lock
+
+# Revolve related
+*.sdf
+*.urdf

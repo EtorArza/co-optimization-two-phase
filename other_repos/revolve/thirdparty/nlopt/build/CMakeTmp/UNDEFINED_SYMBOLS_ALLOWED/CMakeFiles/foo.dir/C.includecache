@@ -1,0 +1,10 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/paran/Dropbox/BCAM/08_estancia_2/code/other_repos/revolve/thirdparty/nlopt/build/CMakeTmp/UNDEFINED_SYMBOLS_ALLOWED/foo.c
+

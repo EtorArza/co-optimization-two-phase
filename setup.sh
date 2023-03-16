@@ -7,6 +7,7 @@ if [[ "$#" -ne 1  ]] ; then
     exit 1
 fi
 
+root_dir=`pwd`
 
 if [[ $1 -eq "--local" ]] ; then
 # If local machine:
@@ -54,15 +55,14 @@ pip install -r requirements.txt
 cd glew-2.1.0/
 make
 make DESTDIR=destdir/ install
-cd ..
+cd $root_dir
 
 # Install evogym
 cd other_repos/evogym
 rm build -rf
 mkdir build
 python setup.py install
-cd ../..
-
+cd $root_dir
 
 # Install robogrammar
 cd other_repos/RoboGrammar
@@ -71,6 +71,73 @@ mkdir build
 cd build
 cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu -DGLEW_INCLUDE_DIR=../../../glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") -DCMAKE_PREFIX_PATH=../../../glew-2.1.0/ ..
 make -j6
-cd ../../..
+cd $root_dir
+
+
+cd ~/Downloads
+# Revolve
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-cmake/libignition-cmake-dev_0.6.1-1ubuntu1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-math4/libignition-math4_4.0.0+dfsg1-5ubuntu1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-math4/libignition-math4-dev_4.0.0+dfsg1-5ubuntu1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-transport/libignition-transport4_4.0.0+dfsg-4ubuntu1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-transport/libignition-transport4-dev_4.0.0+dfsg-4ubuntu1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-msgs/libignition-msgs_1.0.0+dfsg1-5build2_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/i/ignition-msgs/libignition-msgs-dev_1.0.0+dfsg1-5build2_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/libprotobuf17_3.6.1.3-2ubuntu5_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sdformat/libsdformat6-dev_6.2.0+dfsg-2build1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/s/simbody/libsimbody-dev_3.6.1+dfsg-7build1_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sdformat/libsdformat6-dev_6.2.0+dfsg-2build1_amd64.deb
+
+
+sudo dpkg -i *.deb
+sudo apt-get install -f
+sudo apt install libgazebo11
+sudo apt install gazebo
+sudo apt install libgazebo-dev
+
+
+              
+sudo apt install libprotoc-dev                
+sudo apt install protobuf-compiler            
+sudo apt install libboost-thread-dev          
+sudo apt install libboost-signals-dev         
+sudo apt install libboost-system-dev          
+sudo apt install libboost-filesystem-dev      
+sudo apt install libboost-program-options-dev 
+sudo apt install libboost-regex-dev           
+sudo apt install libboost-iostreams-dev       
+sudo apt install libgsl-dev                   
+sudo apt install libignition-cmake-dev        
+sudo apt install libignition-common-dev       
+sudo apt install libignition-math4-dev        
+sudo apt install libignition-msgs-dev         
+sudo apt install libignition-fuel-tools1-dev  
+sudo apt install libignition-transport4-dev   
+sudo apt install libsdformat6-dev             
+sudo apt install libsimbody-dev               
+sudo apt install libnlopt-dev                 
+sudo apt install libyaml-cpp-dev              
+sudo apt install graphviz                     
+sudo apt install libcairo2-dev                
+sudo apt install python3-cairocffi            
+sudo apt install libeigen3-dev
+
+cd $root_dir
+
+
+cd other_repos/revolve/thirdparty/nlopt/
+mkdir build
+cd build
+cmake ..
+make
+make DESTDIR=../install_dir install
+cd $root_dir
+
+
+cd other_repos/revolve
+export REV_HOME=`pwd`    
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE="Release"
+make -j4
 
 
