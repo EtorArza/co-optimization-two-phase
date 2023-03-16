@@ -4,8 +4,11 @@ import os
 from tqdm import tqdm as tqdm
 import numpy as np
 
-marker_list = ["","o","x"]
-linestyle_list = ["-","--","-."]
+# copy figures / plots to paper dir with rsync -> 
+# rsync -zarv --delete --prune-empty-dirs --include "*/"  --include="*.pdf" --exclude="*" "results" "../paper/results"
+
+marker_list = ["","o","x","s","d"]
+linestyle_list = ["-","--","-.", ":"]
 color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
 def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
@@ -74,6 +77,8 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
             experiment_name,experiment_index,env_name,inner_quantity, inner_length, seed = csv_name.removesuffix(".txt").split("_")
+            # if inner_length != '1.0':
+            #     continue
             n_df["experiment_index"] = experiment_index
             n_df["env_name"] = env_name
             n_df["inner_quantity"] = float(inner_quantity)
