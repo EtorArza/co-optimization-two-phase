@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
 
 
-    if sys.argv[1] == "--visualize":
+    elif sys.argv[1] == "--visualize":
         if len(sys.argv) != 3:
             print("ERROR: 2 parameters are required, --visualize and experiment_index.\n\nExample:\npython src/robogrammar_experiment.py --visualize 2")
             exit(1)
@@ -82,5 +82,5 @@ if __name__ == "__main__":
 
 
     else:
-        ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")
+        raise ValueError("sys.argv[1] was ", sys.argv[1], " and this is not a recognized experiment.")
   
