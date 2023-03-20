@@ -54,8 +54,9 @@ if __name__ == "__main__":
     elif sys.argv[1] == "--reindex_result_files":
         print("Reindexing results files...")
         params = Parameters("evogym", 0)
-        params.reindex_all_result_files()
-        exit(0)
+        params.reindex_all_result_files("results/evogym/data", ".txt")
+        params.reindex_all_result_files("results/evogym/videos", ".gif")
+
 
     elif sys.argv[1] == "--visualize":
         if len(sys.argv) != 3:

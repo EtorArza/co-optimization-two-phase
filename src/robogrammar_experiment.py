@@ -56,6 +56,14 @@ if __name__ == "__main__":
         print("Inner learning algorithm in robogrammar is MPC.")
         df = plot_comparison_parameters("results/robogrammar/data", figpath, "length")
 
+    elif sys.argv[1] == "--reindex_result_files":
+        print("Reindexing results files...")
+        from NestedOptimization import Parameters
+
+        params = Parameters("robogrammar", 0)
+        params.reindex_all_result_files("results/robogrammar/videos", ".mp4")
+        params.reindex_all_result_files("results/robogrammar/data", ".txt")
+
 
     elif sys.argv[1] == "--visualize":
         from viewer import generate_video, unpickle_data_for_video_generation

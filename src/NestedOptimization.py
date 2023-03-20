@@ -125,12 +125,12 @@ class Parameters:
         # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         # res += params_with_undesired_combinations
 
-        # # adaptstepspermorphology
-        # target_probability = [0.75]
-        # start_quantity_proportion = [0.1]
-        # experiment_mode_list = ["adaptstepspermorphology"]
-        # params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
-        # res += params_with_undesired_combinations
+        # adaptstepspermorphology
+        target_probability = [0.75]
+        start_quantity_proportion = [0.1]
+        experiment_mode_list = ["adaptstepspermorphology"]
+        params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        res += params_with_undesired_combinations
 
         return res
 
@@ -158,35 +158,61 @@ class Parameters:
         # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         # res += params_with_undesired_combinations
 
-        # # adaptstepspermorphology
-        # target_probability = [0.75]
-        # start_quantity_proportion = [0.1]
-        # experiment_mode_list = ["adaptstepspermorphology"]
-        # params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
-        # res += params_with_undesired_combinations
+        # adaptstepspermorphology
+        target_probability = [0.75]
+        start_quantity_proportion = [0.1]
+        experiment_mode_list = ["adaptstepspermorphology"]
+        params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        res += params_with_undesired_combinations
 
         return res
 
 
-    def reindex_all_result_files(self):
+    def reindex_all_result_files(self, directory, extension):
         old_params = self._get_parameter_list_old()
         params = self._get_parameter_list()
 
-        directory = f"results/{self.framework_name}/data"
-        # iterate over files in
-        # that directory
-        for filename in os.listdir(directory):
-            f = os.path.join(directory, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                print(f)
-
-
+        all_result_file_paths: list[str] = []
+        for filepath in os.listdir(directory):
+            f = os.path.join(directory, filepath)
+            if os.path.isfile(f) and extension in f:
+                all_result_file_paths.append(f)
+ 
+        new_index_exists = np.zeros(10000)
+        largest_new_index = 0
         for i, el in enumerate(old_params):
             old_index = i
             new_index = params.index(el)
-            print(el,old_index, "->",new_index)
-        exit(0)
+            largest_new_index = max(new_index, largest_new_index)
+            for filepath in all_result_file_paths:
+                if f"_{old_index}_" in filepath:
+                    os.rename(filepath, filepath.replace(f"_{old_index}_", f"_placeholdertext{new_index}_"))
+                    new_index_exists[new_index] = 1
+                    print(el,old_index, "->",new_index)
+
+        for filepath in os.listdir(directory):
+            f = os.path.join(directory, filepath)
+            if os.path.isfile(f) and extension in f:
+                os.rename(f, f.replace("placeholdertext", ""))                
+
+        print("Empty result indexes:")
+        previous = 1
+        for i in range(largest_new_index):
+
+            if new_index_exists[i] == previous: # if there is no change
+                continue
+
+            elif new_index_exists[i] == 0:
+                first_index_0 = i
+                previous = 0
+            
+            elif new_index_exists[i] == 1:
+                print(first_index_0, "-", i-1)
+                previous = 1
+
+
+        print("done!")
+
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
