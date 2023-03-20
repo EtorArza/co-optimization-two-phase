@@ -36,6 +36,7 @@ def execute_experiment_locally(experiment_index):
 
 
 if __name__ == "__main__":
+    print("With the new experiment, the objective value used as a reference for wether to reevaluate is generated with different inner_quantity parameter from the new solutions. This is a problem, because if the inner quantity is smaller, it means that objective funcions in general will be lower, and it would be less likely to find new best solutions. This can be solved in evogym because we generate partial objective values with different inner quantity values, but it might not be possible to do in robogrammar. A possibility is to partially reevaluate best solution and thus get a valid reference.")
     if sys.argv[1] == "--local_launch":
         if len(sys.argv) != 3:
             print("ERROR: 2 parameters are required, --local_launch and i.\n\nUsage:\npython src/robogrammar_experiment.py i")
@@ -50,7 +51,11 @@ if __name__ == "__main__":
         print("Inner learning algorithm in evogym is ppo.")
         df = plot_comparison_parameters("results/evogym/data", figpath, "quantity")
 
-
+    elif sys.argv[1] == "--reindex_result_files":
+        print("Reindexing results files...")
+        params = Parameters("evogym", 0)
+        params.reindex_all_result_files()
+        exit(0)
 
     elif sys.argv[1] == "--visualize":
         if len(sys.argv) != 3:

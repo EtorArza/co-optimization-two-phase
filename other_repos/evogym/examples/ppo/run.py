@@ -58,6 +58,8 @@ def run_ppo(
         args.num_steps = no.params.default_inner_length if test else no.params.get_inner_length_absolute()
     elif no.params.experiment_mode == "incrementalandesnof":
         args.num_steps = no.get_inner_non_resumable_increasing()
+    if no.params.experiment_mode == "adaptstepspermorphology":
+        args.num_steps = no.params.default_inner_length
     else:
         raise ValueError("ERROR: no.params.experiment_mode = ", no.params.experiment_mode, "not recognized.")
 

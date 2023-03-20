@@ -90,6 +90,12 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOpti
   elif no.params.experiment_mode == "reevaleachvsend":
     task.episode_len = default_episode_len if test else no.params.get_inner_length_absolute()
     nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
+ 
+  elif no.params.experiment_mode == "adaptstepspermorphology":
+    task.episode_len = default_episode_len
+    nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
+  
+  
 
   robot_init_pos, has_self_collision = presimulate(robot)
   if has_self_collision:

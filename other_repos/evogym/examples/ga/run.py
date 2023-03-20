@@ -113,7 +113,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     temp_path = internal_exp_files + "/metadata.txt"
 
 
-    if no.params.experiment_mode == "reevaleachvsend":
+    if no.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
         tc = TerminationCondition(no.params.get_inner_quantity_absolute())
     elif no.params.experiment_mode == "incrementalandesnof":
         tc = TerminationCondition(no.params.default_inner_quantity) # Termination is done with ESNOF
@@ -213,7 +213,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
                     
 
                 if no.new_best_found:
-                    if no.params.experiment_mode == "reevaleachvsend":
+                    if no.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
                         res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
                         morphology = structure.body
                         controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)

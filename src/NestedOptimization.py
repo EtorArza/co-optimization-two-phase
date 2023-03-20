@@ -2,6 +2,7 @@ import time
 from threading import Thread, Lock
 import numpy as np
 from datetime import datetime
+import os
 
 def convert_from_seconds(seconds):
 
@@ -48,13 +49,12 @@ class stopwatch:
 
 class Parameters:
 
-    nseeds = 20
 
     def __init__(self, framework_name: str, experiment_index: int):
 
         self.experiment_index = experiment_index
         self.framework_name = framework_name
-
+        self.reevaluated_was_new_best_flags = []
         if framework_name == "evogym":
 
             # If default_train_iters < 100 (to test stuff) it does not work. This is because the performance
@@ -88,6 +88,9 @@ class Parameters:
         elif "incrementalandesnof" in params:
             self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode, self.seed = params
             self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
+        elif "adaptstepspermorphology" in params:
+            self.target_probability, self.start_quantity_proportion, self.env_name, self.experiment_mode, self.seed = params
+            self.inner_quantity_proportion = self.start_quantity_proportion
         else:
             raise ValueError(f"params variable {params} does not contain a recognized experiment")
 
@@ -99,10 +102,11 @@ class Parameters:
         return int(self.inner_length_proportion * self.default_inner_length)
 
 
-    def _get_parameter_list(self):
+    def _get_parameter_list_old(self):
+        nseeds = 20
         import itertools
         res = []
-        seed_list = list(range(2,2 + self.nseeds))
+        seed_list = list(range(2,2 + nseeds))
 
         # reevaleachvsend
         inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
@@ -113,22 +117,84 @@ class Parameters:
         res += params_with_undesired_combinations
 
 
+        # # incrementalandesnof
+        # minimum_non_resumable_param_list = [0.2, 1.0]
+        # time_grace_list = [0.2, 1.0]
+        # experiment_mode_list = ["incrementalandesnof"]
+        # params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
+        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
+        # res += params_with_undesired_combinations
 
-        # incrementalandesnof
-        minimum_non_resumable_param_list = [0.2, 1.0]
-        time_grace_list = [0.2, 1.0]
-        experiment_mode_list = ["incrementalandesnof"]
-        params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
+        # # adaptstepspermorphology
+        # target_probability = [0.75]
+        # start_quantity_proportion = [0.1]
+        # experiment_mode_list = ["adaptstepspermorphology"]
+        # params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        # res += params_with_undesired_combinations
+
+        return res
+
+
+    def _get_parameter_list(self):
+        nseeds = 20
+        import itertools
+        res = []
+        seed_list = list(range(2,2 + nseeds))
+
+        # reevaleachvsend
+        inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
+        inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
+        experiment_mode_list = ["reevaleachvsend"]
+        params_with_undesired_combinations = list(itertools.product(inner_quantity_proportion_list, inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
         params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         res += params_with_undesired_combinations
 
+
+        # # incrementalandesnof
+        # minimum_non_resumable_param_list = [0.2, 1.0]
+        # time_grace_list = [0.2, 1.0]
+        # experiment_mode_list = ["incrementalandesnof"]
+        # params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
+        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
+        # res += params_with_undesired_combinations
+
+        # # adaptstepspermorphology
+        # target_probability = [0.75]
+        # start_quantity_proportion = [0.1]
+        # experiment_mode_list = ["adaptstepspermorphology"]
+        # params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        # res += params_with_undesired_combinations
+
         return res
+
+
+    def reindex_all_result_files(self):
+        old_params = self._get_parameter_list_old()
+        params = self._get_parameter_list()
+
+        directory = f"results/{self.framework_name}/data"
+        # iterate over files in
+        # that directory
+        for filename in os.listdir(directory):
+            f = os.path.join(directory, filename)
+            # checking if it is a file
+            if os.path.isfile(f):
+                print(f)
+
+
+        for i, el in enumerate(old_params):
+            old_index = i
+            new_index = params.index(el)
+            print(el,old_index, "->",new_index)
+        exit(0)
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inner_quantity_proportion}_{self.inner_length_proportion}_{self.seed}"
         if self.experiment_mode == "incrementalandesnof":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.minimum_non_resumable_param}_{self.time_grace}_{self.seed}"
+        if self.experiment_mode == "adaptstepspermorphology":
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.target_probability}_{self.start_quantity_proportion}_{self.seed}"
         else:
             raise NotImplementedError(f"Result file name not implemented for {self.experiment_mode} yet.")
 
@@ -160,6 +226,14 @@ class NestedOptimization:
     We apply ESNOF in the 'resumable' parameter, and we incrementally increase the other parameter throughout
     the execution. 
     ----------------------------------
+    adaptstepspermorphology
+    
+    Adapt the steps used in training each morphology such that probability of finding a new 'best' morphology 
+    that is not actually best when properly trained stays low. At the same time, we want to minimize the steps
+    used to train each morphology.
+    ----------------------------------
+    
+
 
     """
     sw_print_progress = stopwatch()
@@ -197,7 +271,7 @@ class NestedOptimization:
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
         self.max_frames = params.max_frames
-        assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof")
+        assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
 
 
     def print_to_result_file(self, msg_string):
@@ -250,7 +324,7 @@ class NestedOptimization:
             exit(0)
 
         self.evaluation += 1
-        if self.params.experiment_mode == "reevaleachvsend" or not self.ESNOF_stop:
+        if self.params.experiment_mode in ("reevaleachvsend", "adaptstepspermorphology") or not self.ESNOF_stop:
             self.check_if_best(level=2)
         self.ESNOF_reset_for_next_solution()
         self.write_to_file(level=2)
@@ -284,11 +358,12 @@ class NestedOptimization:
         # print("Checking for best found.")
         if level == 2:
             if self.f_observed > self.f_best:
+                self.prev_f_best = self.f_best
                 self.f_best = self.f_observed
                 self.new_best_found = True
                 if self.params.experiment_mode == "incrementalandesnof":
                     self.ESNOF_load_new_references()
-                if self.params.experiment_mode == "reevaleachvsend":
+                if self.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
                     self.is_reevaluating_flag = True
                 self.sw_reeval.resume()
                 self.sw.pause()
@@ -296,10 +371,23 @@ class NestedOptimization:
         if level == 3:
             if self.f_reeval_observed > self.f_reeval_best:
                 self.f_reeval_best = self.f_reeval_observed
+                self.params.reevaluated_was_new_best_flags.append(1)
                 if self.step + self.reevaluating_steps <= self.max_frames:
                     self.new_best_found = True
                 print("best_found! (level 3)")
+            else:
+                self.params.reevaluated_was_new_best_flags.append(0)
+                print("Reseting to best_f to self.prev_f_best")
+                self.f_best = self.prev_f_best
 
+            # Set current inner_quantity
+            if self.params.experiment_mode == "adaptstepspermorphology":
+                if len(self.params.reevaluated_was_new_best_flags) > 3:
+                    current_proportion = np.mean(self.params.reevaluated_was_new_best_flags)
+                    self.params.inner_quantity_proportion += 0.1 * np.sign(self.params.target_probability - current_proportion)
+                    self.params.inner_quantity_proportion = max(0.1, self.params.inner_quantity_proportion)
+                    self.params.inner_quantity_proportion = min(1.0, self.params.inner_quantity_proportion)
+                    print("New inner quantity proportion: ",self.params.inner_quantity_proportion)
 
 
     def get_inner_non_resumable_increasing(self):
