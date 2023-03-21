@@ -93,9 +93,9 @@ class Parameters:
 
 
         elif framework_name == "tholiao":
-            self.max_frames = 40902 # max_frames=327216 is the default value (total steps)
+            self.max_frames = 250000 # max_frames=2000000 is the default value (total steps)
             self.env_name_list = ["FlatTerrainTask"]
-            self._default_inner_quantity = 3208 # Steps per morphology
+            self._default_inner_quantity =  50 # The number of controllers tested per morphology
             self._default_inner_length = 400 # Steps per episode
             self.non_resumable_param = "quantity"
             self.ESNOF_t_max = self._default_inner_length
@@ -120,9 +120,6 @@ class Parameters:
 
 
     def _get_inner_quantity_absolute(self):
-        if self.framework_name == "tholiao":
-            return max(int(self._inner_quantity_proportion * self._default_inner_quantity), self._default_inner_length + 1)
-        else:
             return int(self._inner_quantity_proportion * self._default_inner_quantity)
 
     def _get_inner_length_absolute(self):

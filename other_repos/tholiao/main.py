@@ -22,7 +22,7 @@ def cli_main(no):
     init_cn = 2 # Number of initial morphology optimization loops (To initialize the gaussian process)
     uc_runs_per_cn = 6 # Ratio of morphology opt. loops to opt. control loops
     batch_size = 2 # Morphology batch size
-    total = 100 # Number of total morphology optimization loops
+    total = 100000 # Number of total morphology optimization loops
     obj_f = 0 # Switch between different objective functions
     contextual = False # Toggle contextual optimization. Contextual=False means that a new GP is initialized for each morphology evaluation.
     popsize = -1 # Only relevant for CMA-ES

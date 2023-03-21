@@ -47,12 +47,15 @@ class JointOptimizerAug(JointBayesOptimizer):
         """
         print(f"Evaluating morphology {x_cn}")
         print(self.no)
-        self.initialize_GP(self.init_uc, x_cn)
+
+        total_evaluations = self.no.get_inner_quantity()
+        initialize_evaluations = min(self.init_uc, total_evaluations)
+
+        self.initialize_GP(initialize_evaluations, x_cn)
 
         print("SW - optimizing with {} as context".format(x_cn))
 
-        for i in range(self.uc_runs_per_cn):
-
+        for i in range(total_evaluations - initialize_evaluations):
             if not test:
                 self.update_iterations()
             x_uc = self.optimize_acq_f(x_cn)
