@@ -80,7 +80,7 @@ class BayesOptimizer(object):
         :param Y:      A 2-D output vector containing objective values
         kernel: See the GPy documentation for other kernel options
         """
-        print("Training GP ", X, Y)
+        # print("Training GP ", X, Y)
         if kernel is None:
             kernel = GPy.kern.Matern52(input_dim=self.num_inputs,
                                        ARD=True)

@@ -3,6 +3,20 @@ from threading import Thread, Lock
 import numpy as np
 from datetime import datetime
 import os
+import functools
+
+
+# https://stackoverflow.com/a/32238541/13012332
+def monitor_results(func):
+    @functools.wraps(func)
+    def wrapper(*func_args, **func_kwargs):
+        print('function call ' + func.__name__ + '()')
+        retval = func(*func_args,**func_kwargs)
+        print('function ' + func.__name__ + '() returns ' + repr(retval))
+        return retval
+    return wrapper
+
+
 
 def convert_from_seconds(seconds):
 
@@ -59,23 +73,33 @@ class Parameters:
 
             # If default_train_iters < 100 (to test stuff) it does not work. This is because the performance
             # of the model is only saved every 50 iterations, and if the parameter inner 
-            # inner_quantity_proportion is 0.5, we get 50 iterations when default_train_iters = 100.
+            # _inner_quantity_proportion is 0.5, we get 50 iterations when default_train_iters = 100.
 
             self.max_frames = 8633000 # Default 34532000 considering 250 morphologies evaluated (easy tasks).
             self.env_name_list = ["Walker-v0"]
-            self.default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
-            self.default_inner_length = 128 # Episode length.
+            self._default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
+            self._default_inner_length = 128 # Episode length.
             self.non_resumable_param = "length"
-            self.ESNOF_t_max = round(self.default_inner_quantity / 50)
+            self.ESNOF_t_max = round(self._default_inner_quantity / 50)
 
 
         elif framework_name == "robogrammar":
             self.max_frames = 10240000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
-            self.default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
-            self.default_inner_length = 128 # Episode length.
+            self._default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
+            self._default_inner_length = 128 # Episode length.
             self.non_resumable_param = "quantity"
-            self.ESNOF_t_max = self.default_inner_length
+            self.ESNOF_t_max = self._default_inner_length
+
+
+        elif framework_name == "tholiao":
+            self.max_frames = 40902 # max_frames=327216 is the default value (total steps)
+            self.env_name_list = ["FlatTerrainTask"]
+            self._default_inner_quantity = 3208 # Steps per morphology
+            self._default_inner_length = 400 # Steps per episode
+            self.non_resumable_param = "quantity"
+            self.ESNOF_t_max = self._default_inner_length
+
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -84,22 +108,25 @@ class Parameters:
         params = self._get_parameter_list()[experiment_index]
 
         if "reevaleachvsend" in params:
-            self.inner_quantity_proportion, self.inner_length_proportion, self.env_name, self.experiment_mode, self.seed = params
+            self._inner_quantity_proportion, self._inner_length_proportion, self.env_name, self.experiment_mode, self.seed = params
         elif "incrementalandesnof" in params:
             self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode, self.seed = params
             self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
         elif "adaptstepspermorphology" in params:
-            self.target_probability, self.start_quantity_proportion, self.env_name, self.experiment_mode, self.seed = params
-            self.inner_quantity_proportion = self.start_quantity_proportion
+            self.target_probability, self._start_quantity_proportion, self.env_name, self.experiment_mode, self.seed = params
+            self._inner_quantity_proportion = self._start_quantity_proportion
         else:
             raise ValueError(f"params variable {params} does not contain a recognized experiment")
 
 
-    def get_inner_quantity_absolute(self):
-        return int(self.inner_quantity_proportion * self.default_inner_quantity)
+    def _get_inner_quantity_absolute(self):
+        if self.framework_name == "tholiao":
+            return max(int(self._inner_quantity_proportion * self._default_inner_quantity), self._default_inner_length + 1)
+        else:
+            return int(self._inner_quantity_proportion * self._default_inner_quantity)
 
-    def get_inner_length_absolute(self):
-        return int(self.inner_length_proportion * self.default_inner_length)
+    def _get_inner_length_absolute(self):
+        return int(self._inner_length_proportion * self._default_inner_length)
 
 
     def _get_parameter_list_old(self):
@@ -109,10 +136,10 @@ class Parameters:
         seed_list = list(range(2,2 + nseeds))
 
         # reevaleachvsend
-        inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
-        inner_length_proportion_list =   [0.25, 0.5, 0.75, 1.0]
+        _inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
+        _inner_length_proportion_list =   [0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(inner_quantity_proportion_list, inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = list(itertools.product(_inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
         params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         res += params_with_undesired_combinations
 
@@ -127,9 +154,9 @@ class Parameters:
 
         # adaptstepspermorphology
         target_probability = [0.75]
-        start_quantity_proportion = [0.1]
+        _start_quantity_proportion = [0.1]
         experiment_mode_list = ["adaptstepspermorphology"]
-        params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = list(itertools.product(target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
         res += params_with_undesired_combinations
 
         return res
@@ -142,10 +169,10 @@ class Parameters:
         seed_list = list(range(2,2 + nseeds))
 
         # reevaleachvsend
-        inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
-        inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
+        _inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
+        _inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(inner_quantity_proportion_list, inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = list(itertools.product(_inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
         params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         res += params_with_undesired_combinations
 
@@ -160,9 +187,9 @@ class Parameters:
 
         # adaptstepspermorphology
         target_probability = [0.75]
-        start_quantity_proportion = [0.1]
+        _start_quantity_proportion = [0.1]
         experiment_mode_list = ["adaptstepspermorphology"]
-        params_with_undesired_combinations = list(itertools.product(target_probability, start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = list(itertools.product(target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
         res += params_with_undesired_combinations
 
         return res
@@ -216,11 +243,11 @@ class Parameters:
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
-            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.inner_quantity_proportion}_{self.inner_length_proportion}_{self.seed}"
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self._inner_quantity_proportion}_{self._inner_length_proportion}_{self.seed}"
         if self.experiment_mode == "incrementalandesnof":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.minimum_non_resumable_param}_{self.time_grace}_{self.seed}"
         if self.experiment_mode == "adaptstepspermorphology":
-            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.target_probability}_{self.start_quantity_proportion}_{self.seed}"
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.target_probability}_{self._start_quantity_proportion}_{self.seed}"
         else:
             raise NotImplementedError(f"Result file name not implemented for {self.experiment_mode} yet.")
 
@@ -318,7 +345,7 @@ class NestedOptimization:
     def next_inner(self, f_partial=None):
         if self.is_reevaluating_flag:
             return
-
+        print("next_inner() -> ", self.step, "steps.")
         if self.params.experiment_mode == "incrementalandesnof":
             self.ESNOF_observed_objective_values[self.ESNOF_index] = f_partial
             # print("-")
@@ -410,21 +437,66 @@ class NestedOptimization:
             if self.params.experiment_mode == "adaptstepspermorphology":
                 if len(self.params.reevaluated_was_new_best_flags) > 3:
                     current_proportion = np.mean(self.params.reevaluated_was_new_best_flags)
-                    self.params.inner_quantity_proportion += 0.1 * np.sign(self.params.target_probability - current_proportion)
-                    self.params.inner_quantity_proportion = max(0.1, self.params.inner_quantity_proportion)
-                    self.params.inner_quantity_proportion = min(1.0, self.params.inner_quantity_proportion)
-                    print("New inner quantity proportion: ",self.params.inner_quantity_proportion)
+                    self.params._inner_quantity_proportion += 0.1 * np.sign(self.params.target_probability - current_proportion)
+                    self.params._inner_quantity_proportion = max(0.1, self.params._inner_quantity_proportion)
+                    self.params._inner_quantity_proportion = min(1.0, self.params._inner_quantity_proportion)
+                    print("New inner quantity proportion: ",self.params._inner_quantity_proportion)
 
 
     def get_inner_non_resumable_increasing(self):
 
         param_proportion = self.params.minimum_non_resumable_param  + (1.0 - self.params.minimum_non_resumable_param) * (self.step / self.max_frames)
         if self.params.non_resumable_param == "length":
-            res = round(param_proportion * self.params.default_inner_length)
+            res = round(param_proportion * self.params._default_inner_length)
         if self.params.non_resumable_param == "quantity":
-            res = round(param_proportion * self.params.default_inner_quantity)
+            res = round(param_proportion * self.params._default_inner_quantity)
 
         return res
+
+    @monitor_results
+    def get_inner_length(self):
+        if self.is_reevaluating_flag:
+            return self.params._default_inner_length
+        else:
+            if self.params.experiment_mode == "reevaleachvsend":
+                return int(self.params._inner_length_proportion * self.params._default_inner_length)
+            elif self.params.experiment_mode == "adaptstepspermorphology":
+                return self.params._default_inner_length
+            elif self.params.experiment_mode == "incrementalesnof":
+                if self.params.non_resumable_param == "length":
+                    return self.get_inner_non_resumable_increasing()
+                if self.params.non_resumable_param == "quantity":
+                    return self.params._default_inner_length
+            else:
+                raise ValueError("Experiment not recognized.")
+
+
+
+    @monitor_results
+    def get_inner_quantity(self):
+        if self.is_reevaluating_flag:
+            return self.params._default_inner_quantity
+        else:
+            if self.params.experiment_mode == "reevaleachvsend":
+                return int(self.params._inner_quantity_proportion * self.params._default_inner_quantity)
+            elif self.params.experiment_mode == "adaptstepspermorphology":
+                return self.params._get_inner_quantity_absolute()
+            elif self.params.experiment_mode == "incrementalesnof":
+                if self.params.non_resumable_param == "quantity":
+                    return self.get_inner_non_resumable_increasing()
+                if self.params.non_resumable_param == "length":
+                    return self.params._default_inner_quantity
+            else:
+                raise ValueError("Experiment not recognized.")
+
+
+    def log_to_file(self, log_content):
+        self.mutex.acquire()
+        try:
+            with open(self.result_file_path, "a") as f:
+                f.write(log_content)
+        finally:
+            self.mutex.release()
 
 
 

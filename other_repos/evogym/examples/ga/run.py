@@ -15,7 +15,7 @@ sys.path.insert(1, os.path.join(external_dir, 'pytorch_a2c_ppo_acktr_gail'))
 from ppo import run_ppo
 from evogym import sample_robot, hashable
 import utils.mp_group as mp
-from utils.algo_utils import get_percent_survival_evals, mutate, TerminationCondition, Structure
+from utils.algo_utils import get_percent_survival_evals, mutate, Structure
 from NestedOptimization import NestedOptimization
 
 from ppo.envs import make_vec_envs
@@ -113,14 +113,6 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
     temp_path = internal_exp_files + "/metadata.txt"
 
 
-    if no.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
-        tc = TerminationCondition(no.params.get_inner_quantity_absolute())
-    elif no.params.experiment_mode == "incrementalandesnof":
-        tc = TerminationCondition(no.params.default_inner_quantity) # Termination is done with ESNOF
-    else:
-        raise ValueError("ERROR: no.params.experiment_mode = ", no.params.experiment_mode, "not recognized.")
-    tc_default = TerminationCondition(no.params.default_inner_quantity)
-
     if os.path.isdir(internal_exp_files):
         print("Removing old exp. files:")
         import shutil
@@ -203,7 +195,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
                 no.controller_path_for_animation = controller_path_for_animation_current
 
                 # For sequential execution
-                res = run_ppo((structure.body, structure.connections), tc, (save_path_controller, structure.label), env_name, no, False)
+                res = run_ppo((structure.body, structure.connections), (save_path_controller, structure.label), env_name, no, False)
                 structure.set_reward(res)
 
 
@@ -214,7 +206,7 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
                 if no.new_best_found:
                     if no.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
-                        res_reevaluated = run_ppo((structure.body, structure.connections), tc_default, (save_path_controller, structure.label), env_name, no, True)
+                        res_reevaluated = run_ppo((structure.body, structure.connections), (save_path_controller, structure.label), env_name, no, True)
                         morphology = structure.body
                         controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
                         controller_size2 = structure.connections.shape[1]

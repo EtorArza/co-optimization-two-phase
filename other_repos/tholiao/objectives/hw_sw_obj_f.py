@@ -29,7 +29,7 @@ class HwSwDistSim(DistanceSimulation):
         self.walker.scale_vleg(leg_mapping["rear_l"], x[2])
         self.walker.scale_vleg(leg_mapping["rear_r"], x[2])
 
-    def get_obj_f(self, no, max_steps, gait=DualTripod):
+    def get_obj_f(self, no, gait=DualTripod):
 
         def objective(x, cache_walker=True):
             """
@@ -42,6 +42,9 @@ class HwSwDistSim(DistanceSimulation):
             x[6] = rear pair leg scaling [.8, 1.2]
             :return:
             """
+
+            max_steps = no.get_inner_length()
+
             self.start()
             x = np.asarray(x)[0]
             print('\nParameters: ' + str(x))

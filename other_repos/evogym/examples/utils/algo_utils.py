@@ -32,17 +32,6 @@ class Structure():
     def __repr__(self):
         return self.__str__()
 
-class TerminationCondition():
-
-    def __init__(self, max_iters):
-        self.max_iters = max_iters
-
-    def __call__(self, iters):
-        return iters >= self.max_iters
-
-    def change_target(self, max_iters):
-        self.max_iters = max_iters
-
 def mutate(child, mutation_rate=0.1, num_attempts=10):
     
     pd = get_uniform(5)  

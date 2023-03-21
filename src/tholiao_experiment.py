@@ -10,11 +10,6 @@ print(sys.path)
 
 from main import cli_main
 
-def get_sequence_of_parameters():
-    seed_list = list(range(2,22))
-    inner_quantity_proportion_list = [1.0, 0.5] # Default is 1000
-    inner_length_proportion_list = [1.0, 0.5] # Default is 64
-    return list(itertools.product(seed_list, inner_quantity_proportion_list, inner_length_proportion_list))
 
 
 if sys.argv[1] == "--local_launch":
@@ -27,10 +22,19 @@ if sys.argv[1] == "--local_launch":
 
     experiment_index = int(sys.argv[2])
     sys.argv = sys.argv[:1]
-    seq_parameters = get_sequence_of_parameters()
-    print("Total number of executions:", len(seq_parameters))
-    print("Parameters current execution:",seq_parameters[experiment_index])
-    seed, inner_quantity_proportion, inner_length_proportion = seq_parameters[experiment_index]
-    # max_frames=9999999999 is the default value.
-    max_frames = 99999999999
-    cli_main(seed, max_frames, inner_quantity_proportion, inner_length_proportion, experiment_index)
+
+    from NestedOptimization import Parameters, NestedOptimization
+
+    params = Parameters("tholiao", experiment_index)
+    params.print_parameters()
+
+    import random
+    import numpy as np
+    random.seed(params.seed)
+    np.random.seed(params.seed)
+ 
+    no = NestedOptimization("../../results/tholiao/data/", params)
+
+
+
+    cli_main(no)

@@ -67,13 +67,13 @@ class JointOptimizerAug(JointBayesOptimizer):
         objective_value_x_cn = self.select_y_to_return()
         print(x_cn, float(objective_value_x_cn))
         if not test:
-            self.no.next_outer(float(objective_value_x_cn))
+            self.no.next_outer(float(objective_value_x_cn), -1, -1, -1)
 
 
 
         if self.no.is_reevaluating_flag and not test:
             reeval_obj = float(self.eval_hw(x_cn, cache_walker, True))
-            self.no.next_reeval(reeval_obj)
+            self.no.next_reeval(reeval_obj, -1, -1, -1)
 
 
         return objective_value_x_cn

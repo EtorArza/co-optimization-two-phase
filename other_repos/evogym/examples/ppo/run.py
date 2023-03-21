@@ -22,8 +22,7 @@ import evogym.envs
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 
 def run_ppo(
-    structure, 
-    termination_condition, 
+    structure,  
     saving_convention, 
     env_name,
     no,
@@ -32,7 +31,7 @@ def run_ppo(
     verbose = False
     if verbose and test:
         print("Reevaluating...")
-    assert (structure == None) == (termination_condition == None) and (structure == None) == (saving_convention == None)
+    assert (structure == None) == (saving_convention == None)
 
     # if verbose:
     #     print(f'Starting training on \n{structure}\nat {saving_convention}...\n')
@@ -54,14 +53,7 @@ def run_ppo(
 
     args.env_name = env_name
 
-    if no.params.experiment_mode == "reevaleachvsend":
-        args.num_steps = no.params.default_inner_length if test else no.params.get_inner_length_absolute()
-    elif no.params.experiment_mode == "incrementalandesnof":
-        args.num_steps = no.get_inner_non_resumable_increasing()
-    if no.params.experiment_mode == "adaptstepspermorphology":
-        args.num_steps = no.params.default_inner_length
-    else:
-        raise ValueError("ERROR: no.params.experiment_mode = ", no.params.experiment_mode, "not recognized.")
+    args.num_steps = no.get_inner_length()
 
 
     torch.manual_seed(args.seed)
@@ -200,9 +192,9 @@ def run_ppo(
 
             if verbose:
                 if saving_convention != None:
-                    print(f'Evaluated {saving_convention[1]} using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / termination_condition.max_iters}\n')
+                    print(f'Evaluated {saving_convention[1]} using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / no.get_inner_quantity()}\n')
                 else:
-                    print(f'Evaluated using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / termination_condition.max_iters}\n')
+                    print(f'Evaluated using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / no.get_inner_quantity()}\n')
             if determ_avg_reward > max_determ_avg_reward:
                 max_determ_avg_reward = determ_avg_reward
 
@@ -217,7 +209,7 @@ def run_ppo(
             no.next_inner(max_determ_avg_reward)
 
         # return upon reaching the termination condition
-        if no.ESNOF_stop or (not termination_condition is None and termination_condition(j)):
+        if no.ESNOF_stop or (no.get_inner_quantity() <= j):
             if test or no.params.experiment_mode == "incrementalandesnof":
                 savepath = no.controller_path_for_animation
                 torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)

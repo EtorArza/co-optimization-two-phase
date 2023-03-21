@@ -37,7 +37,7 @@ class DistanceSimulation(Simulation):
             self.wait(1)
             self.cpg.update()
 
-    def get_obj_f(self, max_steps, gait=DualTripod):
+    def get_obj_f(self, no, gait=DualTripod):
         self.start()
         self.load_scene()
         self.load_walker()

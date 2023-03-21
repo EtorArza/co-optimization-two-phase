@@ -73,7 +73,7 @@ class JointObj2(DistanceSimulation):
         self.walker.scale_vleg(leg_mapping["rear_l"], x[2])
         self.walker.scale_vleg(leg_mapping["rear_r"], x[2])
 
-    def get_obj_f(self, max_steps, gait=None):
+    def get_obj_f(self, no, gait=None):
 
         def objective(x, cache_walker=True):
             """
