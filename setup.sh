@@ -152,6 +152,21 @@ virtualenv --python python3.7 venv37
 sudo apt-get install python3.7-distutils
 sudo apt-get install python3.7-dev
 source venv37/bin/activate
-
 pip install -r requirements.txt
 pip install protobuf==3.20.*
+deactivate
+
+# need to source venv37/bin/activate to execute
+ 
+
+
+# Tholiao
+# python3 -m venv venv 
+source venv/bin/activate
+cd other_repos/tholiao
+pip install -r requirements.txt
+cwd=`pwd`
+cd ~/Downloads
+pip install wheel
+pip install git+https://github.com/SheffieldML/GPy.git
+deactivate

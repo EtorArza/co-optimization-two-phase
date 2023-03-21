@@ -1,8 +1,8 @@
-numpy == 1.11
-scipy == 0.18
-GPy == 1.6.1
+scipy
 dotmap
 direct
 click
 deap
 cma
+numpy
+matplotlib
