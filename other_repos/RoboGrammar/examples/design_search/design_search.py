@@ -79,23 +79,9 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOpti
   if no is None:
     raise ValueError("NestedOptimization object should not be None.")
 
-  default_episode_len = no.params.default_inner_length
-  default_nsamples = no.params.default_inner_length
 
-  if no.params.experiment_mode == "incrementalandesnof":
-    task.episode_len = default_episode_len
-    nsamples = no.get_inner_non_resumable_increasing()
-
-
-  elif no.params.experiment_mode == "reevaleachvsend":
-    task.episode_len = default_episode_len if test else no.params.get_inner_length_absolute()
-    nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
- 
-  elif no.params.experiment_mode == "adaptstepspermorphology":
-    task.episode_len = default_episode_len
-    nsamples = default_nsamples if test else no.params.get_inner_quantity_absolute()
-  
-  
+  task.episode_len = no.get_inner_length()
+  nsamples = no.get_inner_quantity()
 
   robot_init_pos, has_self_collision = presimulate(robot)
   if has_self_collision:
