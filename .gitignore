@@ -7,7 +7,7 @@ __pycache__
 connet_napier_hpc.sh
 copy_files_to_napier_hpc.sh
 CoppeliaSim*
-V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
+V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/*
 CoppeliaSim_Edu_V4_3_0_Ubuntu18_04
 results/data/**
 remove_exp_with_less_lines_than.sh

@@ -170,7 +170,7 @@ class Parameters:
         _inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
         params_with_undesired_combinations = list(itertools.product(_inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item] # remove the combinations in which one of the parameters is not 1.0.
         res += params_with_undesired_combinations
 
 
@@ -206,6 +206,14 @@ class Parameters:
         largest_new_index = 0
         for i, el in enumerate(old_params):
             old_index = i
+
+            if el not in params:
+                for filepath in all_result_file_paths:
+                    if f"_{old_index}_" in filepath:
+                        os.rename(filepath, filepath.replace(f"_{old_index}_", f"_legacyfile{old_index}_"))
+                        continue
+                continue
+
             new_index = params.index(el)
             largest_new_index = max(new_index, largest_new_index)
             for filepath in all_result_file_paths:
@@ -236,6 +244,7 @@ class Parameters:
 
 
         print("done!")
+        print("Run \n\nfind results | grep legacyfile | xargs rm\n\n to remove old experiment files.")
 
 
     def get_result_file_name(self):
