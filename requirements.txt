@@ -1,40 +1,38 @@
-numpy==1.24.1
-pandas==1.5.3
-matplotlib==3.5.1
+numpy
+pandas
+matplotlib
 
-pybind11==2.10.0
-pybind11-global==2.10.0
-pythran==0.11.0
-scipy==1.9.1
-Cython==0.29.32
-MarkupSafe==2.1.1
-numpy-quaternion==2022.4.2
+pybind11
+pybind11-global
+pythran
+scipy
+Cython
+MarkupSafe
+numpy-quaternion
 torch-scatter -f https://pytorch-geometric.com/whl/torch-1.12.0+cpu.html
 torch-sparse -f https://pytorch-geometric.com/whl/torch-1.12.0+cpu.html
-torch-geometric==2.1.0
+torch-geometric
 -e other_repos/RoboGrammar/examples/design_search
--e other_repos/RoboGrammar/build/examples/python_bindings
-glfw==2.5.0
-GPy==1.10.0
+GPy
 GPyOpt @ git+https://github.com/yunshengtian/GPyOpt@5fc1188ffdefea9a3bc7964a9414d4922603e904
-gym==0.19.0
-h5py==3.6.0
-imageio==2.14.1
+gym
+h5py
+imageio
 neat-python @ git+https://github.com/yunshengtian/neat-python@2762ab630838520ca6c03a866e8a158f592b0370
-opencv-python==4.5.5.62
-Pillow==9.0.0
-pygifsicle==1.0.5
-PyOpenGL==3.1.6
-PyOpenGL-accelerate==3.1.6
-stable-baselines3==1.4.0
-torch==1.12.0
-ttkbootstrap==1.5.1
-typing==3.7.4.3
-xvfbwrapper==0.2.9
-f90nml==1.4.3
-GPy == 1.6.1
+opencv-python
+Pillow
+pygifsicle
+PyOpenGL
+PyOpenGL-accelerate
+stable-baselines3
+torch
+ttkbootstrap
+typing
+xvfbwrapper
+f90nml
 dotmap
 direct
 click
 deap
 cma
+protobuf<=3.20.*

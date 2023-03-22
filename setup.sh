@@ -44,7 +44,13 @@ sudo apt install python3-tk -y
 
 
 # Setup python environment
-python3 -m venv venv
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+sudo apt-get install python3.7
+sudo apt-get install python3.7-dev
+sudo apt install python3-virtualenv
+virtualenv --python python3.7 venv
+sudo apt-get install python3.7-distutils
 source venv/bin/activate
 pip install -U pip
 pip install torch==1.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
@@ -57,6 +63,22 @@ make
 make DESTDIR=destdir/ install
 cd $root_dir
 
+
+
+# Install robogrammar
+cd $root_dir/other_repos/RoboGrammar
+rm build -rf
+mkdir build
+cd build
+cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu -DGLEW_INCLUDE_DIR=../../../glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") -DCMAKE_PREFIX_PATH=../../../glew-2.1.0/ ..
+make -j6
+cd $root_dir/other_repos/RoboGrammar
+pip install -e examples/design_search
+python build/examples/python_bindings/setup.py install
+cd $root_dir
+
+
+
 # Install evogym
 cd other_repos/evogym
 rm build -rf
@@ -64,14 +86,6 @@ mkdir build
 python setup.py install
 cd $root_dir
 
-# Install robogrammar
-cd other_repos/RoboGrammar
-rm build -rf
-mkdir build
-cd build
-cmake  -DCMAKE_BUILD_TYPE=RelWithDebInfo -D CMAKE_LIBRARY_ARCHITECTURE=x86_64-linux-gnu -DGLEW_INCLUDE_DIR=../../../glew-2.1.0/include/ -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") -DCMAKE_PREFIX_PATH=../../../glew-2.1.0/ ..
-make -j6
-cd $root_dir
 
 
 cd ~/Downloads
@@ -164,6 +178,7 @@ deactivate
 # python3 -m venv venv 
 source venv/bin/activate
 cd other_repos/tholiao
+python -m ensurepip 
 pip install -r requirements.txt
 cwd=`pwd`
 cd ~/Downloads

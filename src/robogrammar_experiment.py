@@ -4,6 +4,9 @@ figpath = "results/robogrammar/figures"
 
 
 def execute_experiment_locally(experiment_index):
+
+
+
     if sys.executable.split('/')[-3] != 'venv':
         print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
         print("\n\nOnce 'venv' has been loaded, rerun this script.")
@@ -11,6 +14,7 @@ def execute_experiment_locally(experiment_index):
 
     import torch
     import os
+    sys.path.insert(0,os.path.abspath('other_repos/RoboGrammar/build/examples/python_bindings'))
 
     os.chdir("other_repos/RoboGrammar")
     # sys.path.append("./other_repos/RoboGrammar/examples/graph_learning")
@@ -66,6 +70,9 @@ if __name__ == "__main__":
 
 
     elif sys.argv[1] == "--visualize":
+        import os
+        sys.path.insert(0,os.path.abspath('other_repos/RoboGrammar/build/examples/python_bindings'))
+
         from viewer import generate_video, unpickle_data_for_video_generation
         if sys.executable.split('/')[-3] != 'venv':
             print("This script requires that conda is deactivated and the python environment in other_repos/RoboGrammar/venv/bin/activate is activated. To achieve this, run the following: \n\nconda deactivate\nsource other_repos/RoboGrammar/venv/bin/activate")
