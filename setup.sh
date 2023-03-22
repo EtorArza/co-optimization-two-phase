@@ -49,8 +49,8 @@ sudo apt-get update
 sudo apt-get install python3.7
 sudo apt-get install python3.7-dev
 sudo apt install python3-virtualenv
+sudo apt install python3.7-distutils
 virtualenv --python python3.7 venv
-sudo apt-get install python3.7-distutils
 source venv/bin/activate
 pip install -U pip
 pip install torch==1.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html

@@ -1,4 +1,3 @@
-# https://aweirdimagination.net/2020/06/28/kill-child-jobs-on-script-exit/
 import sys
 import os
 import time
@@ -18,6 +17,7 @@ def local_launch_one(experiment_index):
     os.system("killall -9 vrep.sh")
     os.system("killall -9 vrep")
     time.sleep(5)
+    # https://aweirdimagination.net/2020/06/28/kill-child-jobs-on-script-exit/
     os.system("cd ../../V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/ &&  ./vrep.sh -h &")
     time.sleep(5)
 
@@ -45,7 +45,7 @@ if sys.argv[1] == "--local_launch":
     local_launch_one(experiment_index)
 
 
-if sys.argv[1] == "--sequential_launch":
+elif sys.argv[1] == "--sequential_launch":
     import time
     from NestedOptimization import convert_from_seconds
     ref = time.time()
