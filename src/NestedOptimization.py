@@ -521,7 +521,7 @@ class NestedOptimization:
             self.mutex.release()
 
     def get_seed(self):
-        return 2
+        return self.params.seed
 
     def get_video_label(self):
         return f"{self.params.experiment_mode}_{self.params.experiment_index}_{self.step}_{self.f_reeval_best}_{self.f_reeval_observed}"
