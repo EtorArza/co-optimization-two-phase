@@ -52,9 +52,13 @@ elif sys.argv[1] == "--sequential_launch":
     m = 279
     with open("tholiao_progress_report.txt","w") as f:
         f.write("start.\n")
-    for i in range(m):
+    for i in range(4,m):
         os.system(f"python src/tholiao_experiment.py --local_launch {i}")
         elapsed_time = time.time() - ref
         time_left = elapsed_time / (i+1) * m - elapsed_time
         with open("tholiao_progress_report.txt","a") as f:
             f.write(f"{i/m}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
+        os.system("rm other_repos/tholiao/logs/*.npy -f")
+        os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
+
+
