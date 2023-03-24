@@ -87,6 +87,14 @@ python setup.py install
 cd $root_dir
 
 
+# gymrem2d
+sudo apt-get install swig
+pip install https://github.com/pybox2d/pybox2d/archive/refs/tags/2.3.10.tar.gz
+pip install box2d-py
+pip install -r other_repos/gymrem2d/requirements.txt
+pip install opencv-python
+
+
 
 cd ~/Downloads
 # Revolve
