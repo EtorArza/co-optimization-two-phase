@@ -50,7 +50,7 @@ elif sys.argv[1] == "--sequential_launch":
     from NestedOptimization import convert_from_seconds
     ref = time.time()
     m = 279
-    with open("progress_report.txt","w") as f:
+    with open("tholiao_progress_report.txt","w") as f:
         f.write("start.\n")
     for i in range(m):
         os.system(f"python src/tholiao_experiment.py --local_launch {i}")
