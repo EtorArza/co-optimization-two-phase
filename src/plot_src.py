@@ -15,6 +15,29 @@ def removesuffix(txt:str, suffix:str)-> str:
         return txt
 
 
+def translate_to_plot_labels(param, experiment_name):
+
+    assert experiment_name in ("reevaleachvsend", "adaptstepspermorphology")
+
+    if param == "innerquantity_or_targetprob":
+        if experiment_name == "reevaleachvsend":
+            return "Controllers per morphology (wr to default params)"
+        elif experiment_name == "adaptstepspermorphology":
+            return "Target probability that best candidate is still best after reeval"
+        else:
+            raise ValueError("experiment_name=",experiment_name,"not recognized.")
+
+    elif param == "innerlength_or_startquantity":
+        if experiment_name == "reevaleachvsend":
+            return "Episode length (wr to default params)"
+        elif experiment_name == "adaptstepspermorphology":
+            return "Initial and minimum 'Controllers per morphology' param"
+        else:
+            raise ValueError("experiment_name=",experiment_name,"not recognized.")
+    else:
+        raise ValueError(f"param={param} not found.")
+
+
 marker_list = ["","o","x","s","d","2","^","*"]
 linestyle_list = ["-","--","-.", ":",(0, (3, 5, 1, 5, 1, 5)),(5, (10, 3)), (0, (3, 1, 1, 1))]
 color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
@@ -27,9 +50,9 @@ def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
     return np.mean(data),np.quantile(mean_list, 0.05),np.quantile(mean_list, 0.95)
 
 
-def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
+def read_comparison_parameter_csvs(csv_folder_path):
 
-    assert resumable_dimension in ("length", "quantity", "neither", None) 
+    # assert resumable_dimension in ("length", "quantity", "neither", None) 
 
     """
     What is the parameter reusable_dimension?
@@ -52,7 +75,7 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     reevaluate at all.
     """
 
-    print(f"Reading csv_folder_path with resumable_dimension {resumable_dimension}...")
+    print(f"Reading csv_folder_path...")
     dtypes={
         "level":object,
         "evaluation": np.int64,
@@ -95,28 +118,32 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
             n_df["seed"] = int(seed)
             df = pd.concat([df, n_df], ignore_index=True)
     
-    # Adjust runtimes based on resumable dimension:
-    if resumable_dimension == 'quantity':
-        sub_df = df.query("innerlength_or_startquantity == 1.0 & level == '3'")
-        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerquantity_or_targetprob"]
-        cols = list(df.columns) 
-        df.loc[sub_df.index, cols] = sub_df[cols]
-    elif resumable_dimension == 'length':
-        sub_df = df.query("innerquantity_or_targetprob == 1.0 & level == '3'")
-        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerlength_or_startquantity"]
-        cols = list(df.columns) 
-        df.loc[sub_df.index, cols] = sub_df[cols]
-    elif resumable_dimension == 'neither':
-        sub_df = df.query("innerquantity_or_targetprob == 1.0 & innerquantity_or_targetprob == 1.0 & level == '3'")
-        sub_df["step_including_reeval"] = sub_df["step"]
-        cols = list(df.columns) 
-        df.loc[sub_df.index, cols] = sub_df[cols]
+    # # Adjust runtimes based on resumable dimension:
+    # if resumable_dimension == 'quantity':
+    #     sub_df = df.query("innerlength_or_startquantity == 1.0 & level == '3'")
+    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerquantity_or_targetprob"]
+    #     cols = list(df.columns) 
+    #     df.loc[sub_df.index, cols] = sub_df[cols]
+    # elif resumable_dimension == 'length':
+    #     sub_df = df.query("innerquantity_or_targetprob == 1.0 & level == '3'")
+    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerlength_or_startquantity"]
+    #     cols = list(df.columns) 
+    #     df.loc[sub_df.index, cols] = sub_df[cols]
+    # elif resumable_dimension == 'neither':
+    #     sub_df = df.query("innerquantity_or_targetprob == 1.0 & innerquantity_or_targetprob == 1.0 & level == '3'")
+    #     sub_df["step_including_reeval"] = sub_df["step"]
+    #     cols = list(df.columns) 
+    #     df.loc[sub_df.index, cols] = sub_df[cols]
 
-    print(df[["step", "step_including_reeval", "innerquantity_or_targetprob", "innerlength_or_startquantity"]].iloc[1014:,])
     return df
 
 
-def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label="f", resources="step"):
+def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
+
+    print(param)
+    assert param in ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    assert scorelevel in ["reeval", "no_reeval"]
+
 
     max_steps = max(df["step"])
     n_seeds = len(df["seed"].unique())
@@ -125,17 +152,25 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
     indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
     max_only_df = df.loc[indices_with_highest_step,]
 
-    ax = max_only_df.boxplot(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"], column="step")
+    ax = max_only_df.boxplot(by=[param], column="step")
 
     ax.set_title("")
     ax.set_ylabel("step")
-    plt.savefig(figpath + "/number_of_steps.pdf")
+    plt.savefig(figpath + f"/number_of_steps_{param}.pdf")
     plt.close()
     
-    if plotname == 'no_reeval':
+    if scorelevel == 'reeval':
+        df = df.query("level == '3'")
+    elif scorelevel == 'no_reeval':
         df = df.query("level == '2'")
     else:
-        df = df.query("level == '3'")
+        raise ValueError(f"scorelevel {scorelevel} not valid.")
+
+    # Remove all ocurrences in which param_equal_1 parameter is not 1.0
+    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1.remove(param)
+    param_equal_1 = param_equal_1[0]
+    df = df[df[param_equal_1]==1.0]
 
     # # Print all seeds with certain parameters.
     # df = df[df["level"]=="3"]
@@ -198,7 +233,7 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
         plt.plot([],[],label=f"innerlength_or_startquantity = {innerlength_or_startquantity}", linestyle=linestyle,color="black")
     # plt.xscale("log")
     plt.legend()
-    plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
+    plt.savefig(figpath + f"/performance_{plotname}.pdf")
     plt.close()
 
 
@@ -277,19 +312,17 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     plt.close()
 
 
-def plot_comparison_parameters(csv_folder_path, figpath, resumable_dimension):
-    df = read_comparison_parameter_csvs(csv_folder_path, resumable_dimension)
+def plot_comparison_parameters(csv_folder_path, figpath):
+    df = read_comparison_parameter_csvs(csv_folder_path)
 
-    for plotname, score_label, resources in (
-        ("reeval_end", "f", "step"), 
-        ("reeval_best", "f_best", "step_including_reeval"),
-        ("controller_size", "controller_size", "step_including_reeval"),
-        ("controller_size2", "controller_size2", "step_including_reeval"),
-        ("morphology_size", "morphology_size", "step_including_reeval"),
-        ("no_reeval", "f_best", "step"),
-        ):
+    for param, param_preffix in zip(["innerquantity_or_targetprob", "innerlength_or_startquantity"], ["quantity", "length"]):
+        _plot_performance(f"{param_preffix}_reevalend",      df.copy(), figpath, "reeval",    param, "f", "step")
+        _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), figpath, "reeval",    param, "f_best", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_noreeval",       df.copy(), figpath, "no_reeval", param, "f_best", "step")
+        _plot_performance(f"{param_preffix}_controllersize", df.copy(), figpath, "reeval",    param, "controller_size", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_controllersize2",df.copy(), figpath, "reeval",    param, "controller_size2", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_morphologysize", df.copy(), figpath, "reeval",    param, "morphology_size", "step_including_reeval")
 
-        _plot_performance(df.copy(), figpath, plotname, score_label, resources)
     _plot_stability(df.copy(), figpath)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
         _plot_complexity(df.copy(), figpath, complexity_metric)
