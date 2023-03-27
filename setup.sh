@@ -43,13 +43,14 @@ fi
 sudo apt install python3-tk -y  
 
 
-# Setup python environment
+# Setup python environment (Revolve only works with python 3.7)
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
 sudo apt-get install python3.7
 sudo apt-get install python3.7-dev
 sudo apt install python3-virtualenv
 sudo apt install python3.7-distutils
+sudo apt-get install python3.7-tk
 virtualenv --python python3.7 venv
 source venv/bin/activate
 pip install -U pip

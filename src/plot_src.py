@@ -42,7 +42,7 @@ marker_list = ["","o","x","s","d","2","^","*"]
 linestyle_list = ["-","--","-.", ":",(0, (3, 5, 1, 5, 1, 5)),(5, (10, 3)), (0, (3, 1, 1, 1))]
 color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
-def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
+def bootstrap_mean_and_confiance_interval(data,bootstrap_iterations=2000):
     mean_list=[]
     for i in range(bootstrap_iterations):
         sample = np.random.choice(data, len(data), replace=True) 
@@ -138,15 +138,78 @@ def read_comparison_parameter_csvs(csv_folder_path):
     return df
 
 
+# Compare reevaluating every best solution vs reevaluating at the end.
+def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
+
+    from NestedOptimization import Parameters
+    max_steps = Parameters("evogym",0).max_frames
+    nseeds = Parameters("evogym",0).nseeds
+
+    param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
+
+    df = df.query("level == '3'")
+
+
+    # Remove all ocurrences in which param_equal_1 parameter is not 1.0
+    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1.remove(param)
+    param_equal_1 = param_equal_1[0]
+
+
+
+
+    for param_idx, param_value in enumerate(sorted(df[param].unique(), reverse=True)):
+
+
+
+        step_slices = 100
+        x = np.linspace(0,max_steps,step_slices)
+        y = np.ones((nseeds,step_slices))
+        y *= np.nan
+        for seed in range(2,2+nseeds):
+            df_reeval_end   = df.query(f"step < {max_steps}                  and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+            df_reeval_every = df.query(f"step_including_reeval < {max_steps} and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+
+            for i, step in enumerate(x):
+                if df_reeval_end[df_reeval_end["step"] < step]["step"].size == 0:
+                    continue
+                if df_reeval_every[df_reeval_every["step_including_reeval"] < step]["step_including_reeval"].size == 0:
+                    continue
+                
+
+
+                idx_end = df_reeval_end[df_reeval_end["step"] < step]["step"].idxmax()
+                idx_every = df_reeval_every[df_reeval_every["step_including_reeval"] < step]["step_including_reeval"].idxmax()
+
+                y[(seed-2,i)] = df_reeval_every.loc[idx_every,]["f_best"] - df_reeval_end.loc[idx_end,]["f"]
+
+        y = np.nan_to_num(y,copy=True,nan=0)
+        y_mean, y_lower, y_upper = np.apply_along_axis(bootstrap_mean_and_confiance_interval, 0, y)
+        
+        marker = marker_list[param_idx]
+        color = color_list[param_idx]
+
+        plt.plot(x, y_mean, color=color, marker=marker, markevery=1/10, label=f"{param_value}")
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color)
+    plt.axhline(0, color="black", linestyle="--")
+    plt.ylabel("- reevaluate_end      +    reevaluate_every")
+    plt.xlabel("steps")
+    plt.legend(title=param_name)
+    plt.title(plotname)
+    plt.text(1,-3,"quantity = 1.0 is in the negative side, because with \n reevaluate every we waste time\n reevaluating with no benefit.")
+    plt.savefig(figpath + f"/{plotname}.pdf")
+    plt.close()
+
 def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
 
     print(param)
     assert param in ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
     assert scorelevel in ["reeval", "no_reeval"]
 
+    from NestedOptimization import Parameters
+    max_steps = Parameters("evogym",0).max_frames
+    nseeds = Parameters("evogym",0).nseeds
 
-    max_steps = max(df["step"])
-    n_seeds = len(df["seed"].unique())
 
     # Check how many steps where computed.
     indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
@@ -172,17 +235,6 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     param_equal_1 = param_equal_1[0]
     df = df[df[param_equal_1]==1.0]
 
-    # # Print all seeds with certain parameters.
-    # df = df[df["level"]=="3"]
-    # df = df[df["innerquantity_or_targetprob"]==0.5]
-    # df = df[df["innerlength_or_startquantity"]==0.5]
-    # for seed in range(2,19):
-    #     # print(df[df["seed"]==seed])
-    #     # print(df.query(f"seed == {seed}"))
-    #     plt.plot(df.query(f"seed == {seed}")["step"], df[(df["seed"]==seed)]["f"], label=seed)
-    # plt.legend()
-    # plt.show()
-    # exit(1)
     
     # Get the parameter values such that 1.0 is the first
     innerquantity_or_targetprob_values = sorted(list(df["innerquantity_or_targetprob"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
@@ -215,15 +267,15 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
             step = int(step)
             selected_indices = df_group[df_group[resources] < step].groupby("seed")[resources].idxmax()
             scores = np.array(df_group.loc[selected_indices,][score_label])
-            if len(scores) < 0.75*n_seeds:
+            if len(scores) < 0.75*nseeds:
                 continue
             x.append(step)
-            mean, lower, upper = bootstrap_median_and_confiance_interval(scores)
+            mean, lower, upper = bootstrap_mean_and_confiance_interval(scores)
             y_mean.append(mean)
             y_lower.append(lower)
             y_upper.append(upper)
 
-        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10)
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
     for innerquantity_or_targetprob, marker in zip(innerquantity_or_targetprob_values[1:], marker_list[1:]):
@@ -314,6 +366,10 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
 
 def plot_comparison_parameters(csv_folder_path, figpath):
     df = read_comparison_parameter_csvs(csv_folder_path)
+
+    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
+
+
 
     for param, param_preffix in zip(["innerquantity_or_targetprob", "innerlength_or_startquantity"], ["quantity", "length"]):
         _plot_performance(f"{param_preffix}_reevalend",      df.copy(), figpath, "reeval",    param, "f", "step")

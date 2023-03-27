@@ -62,7 +62,7 @@ class stopwatch:
         return "{:.4f}".format(self.get_time())
 
 class Parameters:
-
+    nseeds = 20
 
     def __init__(self, framework_name: str, experiment_index: int):
 
@@ -135,10 +135,10 @@ class Parameters:
 
 
     def _get_parameter_list_old(self):
-        nseeds = 20
+        nseeds_old = 20
         import itertools
         res = []
-        seed_list = list(range(2,2 + nseeds))
+        seed_list = list(range(2,2 + nseeds_old))
 
         # reevaleachvsend
         _inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
@@ -168,10 +168,9 @@ class Parameters:
 
 
     def _get_parameter_list(self):
-        nseeds = 20
         import itertools
         res = []
-        seed_list = list(range(2,2 + nseeds))
+        seed_list = list(range(2,2 + self.nseeds))
 
         # reevaleachvsend
         _inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
