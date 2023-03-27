@@ -7,8 +7,16 @@ import numpy as np
 # copy figures / plots to paper dir with rsync -> 
 # rsync -zarv --delete --prune-empty-dirs --include "*/"  --include="*.pdf" --exclude="*" "results" "../paper/results"
 
-marker_list = ["","o","x","s","d"]
-linestyle_list = ["-","--","-.", ":"]
+
+def removesuffix(txt:str, suffix:str)-> str: 
+    if len(txt) >= len(suffix) and txt[-len(suffix):] == suffix:
+        return txt[:-len(suffix)]
+    else:
+        return txt
+
+
+marker_list = ["","o","x","s","d","2","^","*"]
+linestyle_list = ["-","--","-.", ":",(0, (3, 5, 1, 5, 1, 5)),(5, (10, 3)), (0, (3, 1, 1, 1))]
 color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
 def bootstrap_median_and_confiance_interval(data,bootstrap_iterations=2000):
@@ -26,10 +34,10 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     """
     What is the parameter reusable_dimension?
 
-    Computation time can be saved in special cases when either inner_length or inner_quantity are 1.0
+    Computation time can be saved in special cases when either innerlength_or_startquantity or innerquantity_or_targetprob are 1.0
     For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
-    inner_quantity = 0.5 during training, it will only train for 500 iterations. If we have considered 
-    the default episode length (with inner_length = 1.0), then, when reevaluating, we only need to finish
+    innerquantity_or_targetprob = 0.5 during training, it will only train for 500 iterations. If we have considered 
+    the default episode length (with innerlength_or_startquantity = 1.0), then, when reevaluating, we only need to finish
     the next 500 iterations. In this case, the resumable dimension would be quantity.  
 
     quantity -> number of controllers tested
@@ -40,7 +48,7 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
     evogym      -> resumable_dimension = quantity
     RoboGrammar -> resumable_dimension = length
 
-    When resumable == "neither", only inner_length == inner_quantity == 1.0 gets a bonus of not having to
+    When resumable == "neither", only innerlength_or_startquantity == innerquantity_or_targetprob == 1.0 gets a bonus of not having to
     reevaluate at all.
     """
 
@@ -59,13 +67,13 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
         "step_including_reeval": np.int64,
         "experiment_index": object,
         "env_name": object,
-        "inner_quantity": object,
-        "inner_length": object,
+        "innerquantity_or_targetprob": object,
+        "innerlength_or_startquantity": object,
         "seed": int,
     }
 
 
-    df = pd.DataFrame(columns=["level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","experiment_index","env_name","inner_quantity","inner_length","seed"])
+    df = pd.DataFrame(columns=["env_name","experiment_index","experiment_name","level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","innerquantity_or_targetprob","innerlength_or_startquantity","seed"])
     df = df.astype(dtype=dtypes)
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
@@ -76,34 +84,35 @@ def read_comparison_parameter_csvs(csv_folder_path, resumable_dimension = None):
 
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
-            experiment_name,experiment_index,env_name,inner_quantity, inner_length, seed = csv_name.removesuffix(".txt").split("_")
-            # if inner_length != '1.0':
+            experiment_name,experiment_index,env_name,innerquantity_or_targetprob, innerlength_or_startquantity, seed = removesuffix(csv_name,".txt").split("_")
+            # if innerlength_or_startquantity != '1.0':
             #     continue
+            n_df["experiment_name"] = experiment_name
             n_df["experiment_index"] = experiment_index
             n_df["env_name"] = env_name
-            n_df["inner_quantity"] = float(inner_quantity)
-            n_df["inner_length"] = float(inner_length)
+            n_df["innerquantity_or_targetprob"] = float(innerquantity_or_targetprob)
+            n_df["innerlength_or_startquantity"] = float(innerlength_or_startquantity)
             n_df["seed"] = int(seed)
             df = pd.concat([df, n_df], ignore_index=True)
     
     # Adjust runtimes based on resumable dimension:
     if resumable_dimension == 'quantity':
-        sub_df = df.query("inner_length == 1.0 & level == '3'")
-        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["inner_quantity"]
+        sub_df = df.query("innerlength_or_startquantity == 1.0 & level == '3'")
+        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerquantity_or_targetprob"]
         cols = list(df.columns) 
         df.loc[sub_df.index, cols] = sub_df[cols]
     elif resumable_dimension == 'length':
-        sub_df = df.query("inner_quantity == 1.0 & level == '3'")
-        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["inner_length"]
+        sub_df = df.query("innerquantity_or_targetprob == 1.0 & level == '3'")
+        sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerlength_or_startquantity"]
         cols = list(df.columns) 
         df.loc[sub_df.index, cols] = sub_df[cols]
     elif resumable_dimension == 'neither':
-        sub_df = df.query("inner_quantity == 1.0 & inner_quantity == 1.0 & level == '3'")
+        sub_df = df.query("innerquantity_or_targetprob == 1.0 & innerquantity_or_targetprob == 1.0 & level == '3'")
         sub_df["step_including_reeval"] = sub_df["step"]
         cols = list(df.columns) 
         df.loc[sub_df.index, cols] = sub_df[cols]
 
-    print(df[["step", "step_including_reeval", "inner_quantity", "inner_length"]].iloc[1014:,])
+    print(df[["step", "step_including_reeval", "innerquantity_or_targetprob", "innerlength_or_startquantity"]].iloc[1014:,])
     return df
 
 
@@ -116,7 +125,7 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
     indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
     max_only_df = df.loc[indices_with_highest_step,]
 
-    ax = max_only_df.boxplot(by=["inner_quantity", "inner_length"], column="step")
+    ax = max_only_df.boxplot(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"], column="step")
 
     ax.set_title("")
     ax.set_ylabel("step")
@@ -130,8 +139,8 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
 
     # # Print all seeds with certain parameters.
     # df = df[df["level"]=="3"]
-    # df = df[df["inner_quantity"]==0.5]
-    # df = df[df["inner_length"]==0.5]
+    # df = df[df["innerquantity_or_targetprob"]==0.5]
+    # df = df[df["innerlength_or_startquantity"]==0.5]
     # for seed in range(2,19):
     #     # print(df[df["seed"]==seed])
     #     # print(df.query(f"seed == {seed}"))
@@ -141,12 +150,12 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
     # exit(1)
     
     # Get the parameter values such that 1.0 is the first
-    inner_quantity_values = sorted(list(df["inner_quantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
-    inner_length_values = sorted(list(df["inner_length"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    innerquantity_or_targetprob_values = sorted(list(df["innerquantity_or_targetprob"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    innerlength_or_startquantity_values = sorted(list(df["innerlength_or_startquantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
     step_slices = 100
     i=-1
-    for group_name, df_group in tqdm(df.groupby(["inner_quantity", "inner_length"])):
+    for group_name, df_group in tqdm(df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])):
         i+=1
 
         x = []
@@ -155,8 +164,8 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
         y_upper = []
 
 
-        marker = marker_list[inner_quantity_values.index(group_name[0])]
-        linestyle = linestyle_list[inner_length_values.index(group_name[1])]
+        marker = marker_list[innerquantity_or_targetprob_values.index(group_name[0])]
+        linestyle = linestyle_list[innerlength_or_startquantity_values.index(group_name[1])]
         color = color_list[i]
 
         df_group = df_group.reset_index()
@@ -182,11 +191,11 @@ def _plot_performance(df: pd.DataFrame, figpath, plotname="default", score_label
         plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/5)
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
-    for inner_quantity, marker in zip(inner_quantity_values[1:], marker_list[1:]):
-        plt.plot([],[],label=f"inner_quantity = {inner_quantity}", marker=marker, color="black")
+    for innerquantity_or_targetprob, marker in zip(innerquantity_or_targetprob_values[1:], marker_list[1:]):
+        plt.plot([],[],label=f"innerquantity_or_targetprob = {innerquantity_or_targetprob}", marker=marker, color="black")
 
-    for inner_length, linestyle in zip(inner_length_values[1:], linestyle_list[1:]):
-        plt.plot([],[],label=f"inner_length = {inner_length}", linestyle=linestyle,color="black")
+    for innerlength_or_startquantity, linestyle in zip(innerlength_or_startquantity_values[1:], linestyle_list[1:]):
+        plt.plot([],[],label=f"innerlength_or_startquantity = {innerlength_or_startquantity}", linestyle=linestyle,color="black")
     # plt.xscale("log")
     plt.legend()
     plt.savefig(figpath + f"/comparison_cutting_controller_budget_{plotname}.pdf")
@@ -211,7 +220,7 @@ def _plot_stability(df: pd.DataFrame, figpath):
         labels = []
         dfs = []
         index_of_lowest_each_group = []
-        for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+        for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
             labels.append(group_name)
             dfs.append(np.array(df_group[fitness_metric]))
             index_of_lowest_each_group.append(df_group[fitness_metric].idxmin())
@@ -226,10 +235,10 @@ def _plot_stability(df: pd.DataFrame, figpath):
             text_label = max_only_df.loc[idx, "experiment_index"]
             plt.text(x_text, y_text, text_label)
 
-        # for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+        # for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
         #     plt.text()
 
-        plt.xlabel("(inner_quantity, inner_length)")
+        plt.xlabel("(innerquantity_or_targetprob, innerlength_or_startquantity)")
         plt.title("")
         plt.ylim((0,11))
         plt.ylabel("objective value")
@@ -251,7 +260,7 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     labels = []
     dfs = []
     index_of_lowest_each_group = []
-    for group_name, df_group in sorted(list(max_only_df.groupby(["inner_quantity", "inner_length"])), key=lambda x: (x[0][1], x[0][0])):
+    for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
         labels.append(group_name)
         dfs.append(np.array(df_group[complexity_metric]))
 
@@ -260,7 +269,7 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     
     plt.figure(figsize=(6.5,3))
     plt.boxplot(dfs, labels=labels)    
-    plt.xlabel("(inner_quantity, inner_length)")
+    plt.xlabel("(innerquantity_or_targetprob, innerlength_or_startquantity)")
     plt.title("")
     plt.ylabel(f"sol. complexity as {complexity_metric}")
     plt.tight_layout()
