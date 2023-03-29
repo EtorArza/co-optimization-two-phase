@@ -138,6 +138,60 @@ def read_comparison_parameter_csvs(csv_folder_path):
     return df
 
 
+def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, figpath, param):
+    from NestedOptimization import Parameters
+    max_steps = Parameters("evogym",0).max_frames
+    nseeds = Parameters("evogym",0).nseeds
+
+    param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
+
+    df = df.query("level == '3'")
+
+
+    # Remove all ocurrences in which param_equal_1 parameter is not 1.0
+    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1.remove(param)
+    param_equal_1 = param_equal_1[0]
+
+
+    param_values_list = list(sorted(df[param].unique(), reverse=True))
+    for param_idx, param_value in enumerate(tqdm(param_values_list)):
+
+
+
+        step_slices = 100
+        x = np.linspace(0,max_steps,step_slices)
+        y = np.ones((nseeds,step_slices))
+        y *= np.nan
+        for seed in range(2,2+nseeds):
+            df_reeval_end   = df.query(f"step < {max_steps}                  and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+
+            best_correctly_identified = 0
+            for i, step in enumerate(x):
+                if df_reeval_end[df_reeval_end["step"] < step]["step"].size == 0:
+                    continue
+                idx_end = int(df_reeval_end[df_reeval_end["step"] < step]["step"].idxmax())
+                row = df_reeval_end.loc[int(idx_end),][["step","f_best","f"]]
+                y[(seed-2,i)] = int(row["f"] == row["f_best"])
+        y = np.nan_to_num(y,copy=True,nan=0)
+        y_mean, y_lower, y_upper = np.apply_along_axis(bootstrap_mean_and_confiance_interval, 0, y)
+        
+        marker = marker_list[param_idx]
+        color = color_list[param_idx]
+
+        plt.plot(x, y_mean, color=color, marker=marker, markevery=1/10, label=f"{param_value}")
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color)
+    plt.axhline(0, color="black", linestyle="--")
+    plt.ylabel("Probability of identifying best")
+    plt.xlabel("steps")
+    plt.legend(title=param_name)
+    plt.title(plotname)
+    plt.text(1,-3,"Explaination")
+    plt.savefig(figpath + f"/{plotname}.pdf")
+    plt.close()
+
+
+
 # Compare reevaluating every best solution vs reevaluating at the end.
 def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
 
@@ -366,6 +420,8 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
 
 def plot_comparison_parameters(csv_folder_path, figpath):
     df = read_comparison_parameter_csvs(csv_folder_path)
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), figpath, "innerlength_or_startquantity")
 
     _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
 
