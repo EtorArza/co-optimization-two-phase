@@ -366,14 +366,14 @@ def main(no, algorithm, cpus):
                       help="Existing log file, for resuming a previous run")
   args = parser.parse_args(args_list)
 
-  random.seed(args.seed)
+  random.seed(args.seed+200)
   taskname=no.params.env_name
   task_class = getattr(tasks, taskname)
   task = task_class()
   task.taskname=taskname
   graphs = rd.load_graphs(args.grammar_file)
   rules = [rd.create_rule_from_graph(g) for g in graphs]
-  env = RobotDesignEnv(task, rules, args.seed, args.jobs, args.depth)
+  env = RobotDesignEnv(task, rules, args.seed+200, args.jobs, args.depth)
   search_alg = algorithms[args.algorithm](env, max_tries=1000)
   no.savenext_current=False
   no.savenext_best=False

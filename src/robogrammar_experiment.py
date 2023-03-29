@@ -25,7 +25,7 @@ def execute_experiment_locally(experiment_index):
     sys.argv.pop()
     sys.argv.pop()
     algorithm = ["mcts", "random"][0]
-    cpus = 8
+    cpus = 32
 
     resfilepath = f"../../results/robogrammar/data"
 
