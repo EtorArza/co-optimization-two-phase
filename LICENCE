@@ -1,4 +1,6 @@
-This licence does NOT apply to the files in 'other_repos/', instead check the repos of the authors for their licences.
+This licence does NOT apply to the files in 'other_repos/' and 'glew-2.1.0/', instead check the repos of the authors for their licences. ALl the files in 'other_repos/' are from other authors and have possibly been modified by me. I also included glew-2.1.0 in the repo (some of the environments need glew to compile in the cluster). I won't be bothered to waste more time than this with the licence. I don't care enough.
+
+
 
 This is free and unencumbered software released into the public domain.
 
