@@ -52,9 +52,9 @@ from termcolor import colored, cprint
 import DataAnalysis as da
 
 from Experiments import configuration_maker
+import cma
 
-
-
+RENDER_ANIMATION = False
 
 
 # singleton equivalent
@@ -79,6 +79,70 @@ def get_module_list():
         module_list.append(circular_module.Circular2D())
     return module_list
 
+class ind_controller:
+    def __init__(self, ind):
+        self.ind = ind
+        self.MAX_AMP = 1.0
+        self.MAX_OFFSET = 3.14159265358979
+        self.MAX_FREQUENCY = 0.1
+        self.MAX_PHASE = 1.0
+        self.params_array = np.random.uniform(size=len(ind.genome.moduleList)*4)
+
+
+
+    # def load_params_from_ind(self, ind):
+    #     for idx, m in enumerate(ind.genome.moduleList):
+    #         self.params_matrix[idx, 0] = m.amplitude / self.MAX_AMP
+    #         self.params_matrix[idx, 1] = m.offset / self.MAX_OFFSET
+    #         self.params_matrix[idx, 2] = m.frequency / self.MAX_FREQUENCY 
+    #         self.params_matrix[idx, 3] = m.phase / self.MAX_PHASE
+
+    def _write_params_to_ind(self, ind):
+        assert self.params_array.size / 4 == len(ind.genome.moduleList)
+        for idx, m in enumerate(ind.genome.moduleList):
+            m.controller.amplitude = self.params_array[idx*4+ 0] * self.MAX_AMP
+            m.controller.offset = self.params_array[idx*4+ 1] * self.MAX_OFFSET
+            m.controller.frequency = self.params_array[idx*4+ 2] * self.MAX_FREQUENCY 
+            m.controller.phase = self.params_array[idx*4+ 3] * self.MAX_PHASE
+
+        for idx, m in enumerate(ind.genome.tree.moduleList):
+            m.controller.amplitude = self.params_array[idx*4+ 0] * self.MAX_AMP
+            m.controller.offset = self.params_array[idx*4+ 1] * self.MAX_OFFSET
+            m.controller.frequency = self.params_array[idx*4+ 2] * self.MAX_FREQUENCY 
+            m.controller.phase = self.params_array[idx*4+ 3] * self.MAX_PHASE
+
+
+
+
+    def _new_gen_cmaes(self):
+        self.cmaes_pending_solutions = self.cmaes.ask()
+        self.cmaes_evaluated_solutions = []
+        self.cmaes_fitness_list = []
+
+
+    def initialize_cma_es(self):
+        self.cmaes = cma.CMAEvolutionStrategy(self.params_array, 0.33, inopts={'bounds': [0, 1],'seed':np.random.randint(2,200000),'maxiter':1e9, 'maxfevals':1e9})
+        self._new_gen_cmaes()
+
+
+    def load_next_solution_to_ind(self, ind):
+        self.params_array = self.cmaes_pending_solutions.pop()
+        self._write_params_to_ind(ind)
+
+    def load_best_solution_to_ind(self, ind):
+        self.params_array = self.cmaes.best.x
+        self._write_params_to_ind(ind)
+
+
+    def get_solution_fitness_cmaes(self, fitness):
+        self.cmaes_evaluated_solutions += [self.params_array.copy()]
+        self.cmaes_fitness_list += [fitness]
+        if len(self.cmaes_pending_solutions) == 0:
+            self.cmaes.tell(self.cmaes_evaluated_solutions, self.cmaes_fitness_list)
+            self._new_gen_cmaes()
+
+
+
 class Encoding_Type(Enum):
     DIRECT = 0
     LSYSTEM = 1
@@ -91,7 +155,7 @@ class Individual:
         self.fitness = 0
 
     @staticmethod
-    def random(moduleList=None,config=None, encoding = 'lsystem'):
+    def random(moduleList=None,config=None, encoding = 'direct'):
         # creates a random individual based on the encoding type
         self = Individual()
         if moduleList is None:
@@ -239,6 +303,25 @@ class run2D():
             print("Note: visualization of the tree structure was set to true, this is not functional in this version." )
             self.PLOT_TREE = False
 
+    def train_controller(self, ind):
+        ctr = ind_controller(ind)
+        ctr.initialize_cma_es()
+        for i in range(self.no.get_inner_quantity()):
+            ctr.load_next_solution_to_ind(ind)
+            f = evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH)
+            self.no.next_inner(f)
+            ctr.get_solution_fitness_cmaes(-f) # CMA-ES wants to minimize!
+        
+        ctr.load_best_solution_to_ind(ind)
+        evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH)
+
+        
+        # best_genome = ctr.cmaes.best.x
+
+        return ctr.cmaes.best.f
+
+
+
     def run_deap(self, config, population = None, useTQDM = True):
         '''
         This function initializes and runs an EA from DEAP. You can find more information on how you can use DEAP
@@ -269,13 +352,12 @@ class run2D():
             population = toolbox.population(n=self.POPULATION_SIZE)
             fitnesses = []
             for ind in population:
-                fitnesses.append(evaluate(ind, self.no,  TestMode=False, HEADLESS = self.headless, TREE_DEPTH = self.TREE_DEPTH))
+                f = self.train_controller(ind)
+                fitnesses.append(evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH))
             for ind, fit in zip(population, fitnesses):
                 ind.fitness = fit
         
         gen = 0 # keep track of generations simulated
-        print("headless mode:", self.headless)
-        
         if not useTQDM:
             writer = sys.stdout
             range_ = range(N_GENERATIONS)
@@ -294,7 +376,7 @@ class run2D():
                 # Implement DEAP built in functionality
                 o.fitness = 0
 
-            fitnesses = [evaluate(individual, self.no, TestMode=False, HEADLESS = self.headless, TREE_DEPTH = self.TREE_DEPTH) for individual in offspring]
+            fitnesses = [evaluate(individual, self.no, TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH) for individual in offspring]
 
             fitness_values = []
             for ind, fit in zip(offspring, fitnesses):
@@ -335,7 +417,7 @@ class run2D():
     def callback_end_of_gen(self):
         raise NotImplementedError()
 
-def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, INTERVAL=100, ENV_LENGTH=100, TREE_DEPTH = None, CONTROLLER = None):
+def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, INTERVAL=1, ENV_LENGTH=100, TREE_DEPTH = None, CONTROLLER = None):
 
     env = getEnv()
     if TREE_DEPTH is None:
@@ -344,13 +426,22 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, I
         except:
             raise Exception("Tree depth not defined in evaluation")
     tree = individual.genome.create(TREE_DEPTH)
+
     env.seed(4)
+
     env.reset(tree=tree, module_list=individual.genome.moduleList)
+
+    for ctr_src, ctr_dst in zip(individual.genome.moduleList,env.tree_morphology.nodes):
+        ctr_dst.controller.amplitude = ctr_src.controller.amplitude
+        ctr_dst.controller.offset = ctr_src.controller.offset
+        ctr_dst.controller.frequency = ctr_src.controller.frequency
+        ctr_dst.controller.phase = ctr_src.controller.phase
+
     env.unwrapped.TestMode = TestMode
     env.wod.change_wall_speed(no.get_inner_length())
 
 
-    # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
+    # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
     assert not TestMode
 
     fitness = 0
@@ -360,7 +451,7 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, I
 
         if i % INTERVAL == 0:
             if not HEADLESS:
-                print("rendering")
+                # print("rendering")
                 env.render()
 
         action = np.ones_like(env.action_space.sample())
@@ -394,16 +485,15 @@ def setup(no):
     unique_number = str(datetime.datetime.now()).replace("-","").replace(".","").replace(" ","").replace(":","")
 
     
-    exp_dir = "/tmp/test" + unique_number  + "/"
+    exp_dir = "/tmp/test" + unique_number
 
     parser = argparse.ArgumentParser(description='Process arguments for configurations.')
-    parser.add_argument('--file',type = str, help='config file', default="other_repos/gym_rem2D/ModularER_2D/0.cfg")
+    parser.add_argument('--file',type = str, help='config file', default="other_repos/gymrem2d/ModularER_2D/0.cfg")
     parser.add_argument('--headless',type = int, help='headless mode', default=0)
     parser.add_argument('--n_processes',type = int, help='number of processes to use', default=1)
     parser.add_argument('--output',type = str, help='output directory', default=exp_dir)
 
     
-    exp_dir = "/tmp/test" + unique_number  + "/"
 
     args, unknown = parser.parse_known_args()
     random.seed(no.get_seed())

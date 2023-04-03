@@ -101,9 +101,9 @@ class Parameters:
             self.ESNOF_t_max = self._default_inner_length
 
         elif framework_name == "gymrem2d":
-            self.max_frames = 4000000 # max_frames=4000000 is the default value on average
+            self.max_frames = 500000 # max_frames=4000000 is the default value on average
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  50 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  500 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage
             self.non_resumable_param = "quantity"
             self.ESNOF_t_max = self._default_inner_length

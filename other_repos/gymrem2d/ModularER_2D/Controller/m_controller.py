@@ -15,6 +15,8 @@ class Controller:
 		self.frequency = random.uniform(-self.MAX_FREQ,self.MAX_FREQ)
 		self.offset = random.uniform(-self.MAX_OFFSET,self.MAX_OFFSET)
 	def update(self, input):
+		# print("paf =",self.phase,self.amplitude,self.frequency)
+		# exit(0)
 		self.phase+=input
 		self.i_state += self.frequency
 		self.output = (self.amplitude * (math.sin(self.i_state + self.phase)))+self.offset

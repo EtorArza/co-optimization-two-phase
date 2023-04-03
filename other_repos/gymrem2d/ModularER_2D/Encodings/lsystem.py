@@ -169,6 +169,9 @@ class LSystem(enc.Encoding):
 		# transform the string into a usable tree structure
 		tree = tree_structure.Tree(self.moduleList)
 		self.recursiveNodeGen(-1,base,tree,0)
+
+		# import code; code.interact(local=locals()) # Start interactive mode for debug debugging
+		# print(tree.nodes[0].controller.frequency)
 		return tree
 	
 	def mutate(self, MORPH_MUTATIONRATE,MUTATION_RATE,MUT_SIGMA):

@@ -631,6 +631,7 @@ class Modular2D(gym.Env, EzPickle):
 		done = 0
 		info = {}
 
+		# print("paf =",self.tree_morphology.nodes[0].controller.phase,self.tree_morphology.nodes[0].controller.amplitude,self.tree_morphology.nodes[0].controller.frequency)
 
 
 		if self.wod:
@@ -640,15 +641,15 @@ class Modular2D(gym.Env, EzPickle):
 		c_values = []
 		particles = []
 		if self.tree_morphology is not None:
-			for n in self.tree_morphology.nodes:
-				if n.controller != None:
-					if n.expressed and n.component is not None:
-						c_values.append(n.controller.update(0))
+			for node in self.tree_morphology.nodes:
+				if node.controller != None:
+					if node.expressed and node.component is not None:
+						c_values.append(node.controller.update(0))
 					if (COLOR_CONTROL):
 						cmap = plt.get_cmap('viridis')
 						color = cmap(c_values[-1])
-						if n.expressed and n.component is not None:
-							n.component[0].color2 = (color[0],color[1],color[2])
+						if node.expressed and node.component is not None:
+							node.component[0].color2 = (color[0],color[1],color[2])
 			# controller values should be 1 less than the total number of joints (root node does not have a joint)
 			assert len(c_values)-1 ==  len(self.robot.joints)
 			for i,j in enumerate(self.robot.joints):
