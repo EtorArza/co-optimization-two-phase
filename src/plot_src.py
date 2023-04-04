@@ -1,4 +1,6 @@
 import pandas as pd
+pd.set_option('mode.chained_assignment','raise')
+
 from matplotlib import pyplot as plt
 import os
 from tqdm import tqdm as tqdm
@@ -50,30 +52,11 @@ def bootstrap_mean_and_confiance_interval(data,bootstrap_iterations=2000):
     return np.mean(data),np.quantile(mean_list, 0.05),np.quantile(mean_list, 0.95)
 
 
-def read_comparison_parameter_csvs(csv_folder_path):
+def read_comparison_parameter_csvs(csv_folder_path, best_monotone_increasing):
 
-    # assert resumable_dimension in ("length", "quantity", "neither", None) 
-
-    """
-    What is the parameter reusable_dimension?
-
-    Computation time can be saved in special cases when either innerlength_or_startquantity or innerquantity_or_targetprob are 1.0
-    For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
-    innerquantity_or_targetprob = 0.5 during training, it will only train for 500 iterations. If we have considered 
-    the default episode length (with innerlength_or_startquantity = 1.0), then, when reevaluating, we only need to finish
-    the next 500 iterations. In this case, the resumable dimension would be quantity.  
-
-    quantity -> number of controllers tested
-    length   -> the length of the episode
-
-    With the current frameworks, the resumable dimensions are as follows:
-
-    evogym      -> resumable_dimension = quantity
-    RoboGrammar -> resumable_dimension = length
-
-    When resumable == "neither", only innerlength_or_startquantity == innerquantity_or_targetprob == 1.0 gets a bonus of not having to
-    reevaluate at all.
-    """
+    # If best_monotone_increasing, then f_best (without reeval) is forced to be monotone increasing.
+    # When recording the data, if when reevaluating we don't beat f_best_reeval, we roll back the 
+    # the non reevaluated f_best to the previous value.
 
     print(f"Reading csv_folder_path...")
     dtypes={
@@ -116,9 +99,71 @@ def read_comparison_parameter_csvs(csv_folder_path):
             n_df["innerquantity_or_targetprob"] = float(innerquantity_or_targetprob)
             n_df["innerlength_or_startquantity"] = float(innerlength_or_startquantity)
             n_df["seed"] = int(seed)
-            df = pd.concat([df, n_df], ignore_index=True)
-    
+            if best_monotone_increasing:
+                
+                # Get previous line to that in which reevals happen
+                reeval_rows = n_df.iloc[np.where(n_df["level"]=="3")[0]-1]
+
+                # See in which lines the unworthy reevals happen (unworthy means reeval was made even though it was not new best)
+                # This happens because if when reevaluating we don't improve best known, we dont update f_best that is not reevaluated.
+                unworthy_reeval_rows = np.array(reeval_rows.index[np.where(reeval_rows.f_best.cummax() != reeval_rows.f_best)[0]])
+                unworthy_reeval_rows+=1
+
+                for column in ["step_including_reeval", "time_including_reeval"]:
+
+                    # Compute in total how much extra step_including_reeval are computed
+                    extra_step_reeval = n_df[[column]].diff(periods=1).iloc[unworthy_reeval_rows].cumsum()
+
+                    # Add 0 value at index 0
+                    extra_step_reeval.loc[0] = 0.0
+                    extra_step_reeval.sort_index(inplace=True) 
+                    
+                    # Fill values with no index with the previous value
+                    extra_step_reeval = extra_step_reeval.reindex(index=n_df.index, method="ffill", copy=True)
+                    
+                    # substract extra steps from n_df
+                    n_df[column] -= extra_step_reeval[column]
+                
+                # Remove undesirable reeval rows
+                n_df.drop(unworthy_reeval_rows, inplace=True)
+                n_df.reset_index(drop=True,inplace=True)
+
+                # Make f_best monotone increasing
+                n_df.loc[n_df["level"] == '2', "f_best"] = n_df.loc[n_df["level"] == '2', "f_best"].cummax()
+
+                # The same in with reevals, but use f as reference. Otherwise "f_best" contains reevals of unworthy individuals!
+                n_df.loc[n_df["level"] == '3', "f_best"] = n_df.loc[n_df["level"] == '3', "f"].cummax()    
+
+                # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
+                # import tabloo; tabloo.show(n_df) # View pandas dataframe or table in browser
+
+            df = pd.concat([df, n_df.copy()], ignore_index=True)
+
+
+
     # # Adjust runtimes based on resumable dimension:
+    # assert resumable_dimension in ("length", "quantity", "neither", None) 
+    
+    # """
+    # What is the parameter reusable_dimension?
+
+    # Computation time can be saved in special cases when either innerlength_or_startquantity or innerquantity_or_targetprob are 1.0
+    # For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
+    # innerquantity_or_targetprob = 0.5 during training, it will only train for 500 iterations. If we have considered 
+    # the default episode length (with innerlength_or_startquantity = 1.0), then, when reevaluating, we only need to finish
+    # the next 500 iterations. In this case, the resumable dimension would be quantity.  
+
+    # quantity -> number of controllers tested
+    # length   -> the length of the episode
+
+    # With the current frameworks, the resumable dimensions are as follows:
+
+    # evogym      -> resumable_dimension = quantity
+    # RoboGrammar -> resumable_dimension = length
+
+    # When resumable == "neither", only innerlength_or_startquantity == innerquantity_or_targetprob == 1.0 gets a bonus of not having to
+    # reevaluate at all.
+    # """
     # if resumable_dimension == 'quantity':
     #     sub_df = df.query("innerlength_or_startquantity == 1.0 & level == '3'")
     #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerquantity_or_targetprob"]
@@ -419,25 +464,30 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
 
 
 def plot_comparison_parameters(csv_folder_path, figpath):
-    df = read_comparison_parameter_csvs(csv_folder_path)
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), figpath, "innerlength_or_startquantity")
 
-    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
+    # No rollbacks. non_reevaluated_best_known monotone increasing.
+    df_best_monotone = read_comparison_parameter_csvs(csv_folder_path, True)
+    
+    # Data as recorded. If when reevaluating we dont get new best, then roll back non_reevaluated_best_known to previous best 
+    df_rollback_best = read_comparison_parameter_csvs(csv_folder_path, False)
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df_best_monotone.copy(), figpath, "innerquantity_or_targetprob")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df_best_monotone.copy(), figpath, "innerlength_or_startquantity")
+
+    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df_best_monotone.copy(), figpath, "innerquantity_or_targetprob")
 
 
 
     for param, param_preffix in zip(["innerquantity_or_targetprob", "innerlength_or_startquantity"], ["quantity", "length"]):
-        _plot_performance(f"{param_preffix}_reevalend",      df.copy(), figpath, "reeval",    param, "f", "step")
-        _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), figpath, "reeval",    param, "f_best", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_noreeval",       df.copy(), figpath, "no_reeval", param, "f_best", "step")
-        _plot_performance(f"{param_preffix}_controllersize", df.copy(), figpath, "reeval",    param, "controller_size", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_controllersize2",df.copy(), figpath, "reeval",    param, "controller_size2", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_morphologysize", df.copy(), figpath, "reeval",    param, "morphology_size", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_reevalend",      df_best_monotone.copy(), figpath, "reeval",    param, "f", "step")
+        _plot_performance(f"{param_preffix}_reevalbest",     df_best_monotone.copy(), figpath, "reeval",    param, "f_best", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_noreeval",       df_best_monotone.copy(), figpath, "no_reeval", param, "f_best", "step")
+        _plot_performance(f"{param_preffix}_controllersize", df_best_monotone.copy(), figpath, "reeval",    param, "controller_size", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_controllersize2",df_best_monotone.copy(), figpath, "reeval",    param, "controller_size2", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_morphologysize", df_best_monotone.copy(), figpath, "reeval",    param, "morphology_size", "step_including_reeval")
 
-    _plot_stability(df.copy(), figpath)
+    _plot_stability(df_best_monotone.copy(), figpath)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
-        _plot_complexity(df.copy(), figpath, complexity_metric)
+        _plot_complexity(df_best_monotone.copy(), figpath, complexity_metric)
 
 
 
