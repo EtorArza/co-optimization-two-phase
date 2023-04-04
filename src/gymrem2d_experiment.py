@@ -20,7 +20,7 @@ def launch_one(experiment_index):
     params = Parameters("gymrem2d", experiment_index)
     params.print_parameters()
 
-    no = NestedOptimization("results/gymrem2d/data", params)
+    no = NestedOptimization("../../../results/gymrem2d/data", params)
     sys.path.append(sys.path[0]+"/../other_repos/gymrem2d/ModularER_2D/")
     print(sys.path)
     import REM2D_main

@@ -103,7 +103,7 @@ class Parameters:
         elif framework_name == "gymrem2d":
             self.max_frames = 500000 # max_frames=4000000 is the default value on average
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  500 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  50 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage
             self.non_resumable_param = "quantity"
             self.ESNOF_t_max = self._default_inner_length
@@ -443,6 +443,7 @@ class NestedOptimization:
                 print("best_found! (level 3)")
             else:
                 self.params.reevaluated_was_new_best_flags.append(0)
+                # By reseting the best found, we can recreate reseting and not reseting the best found in the results 
                 print("Reseting to best_f to self.prev_f_best")
                 self.f_best = self.prev_f_best
 
@@ -516,6 +517,8 @@ class NestedOptimization:
     def write_to_file(self, level):
         self.mutex.acquire()
         try:
+            assert os.path.isdir(os.path.dirname(os.path.abspath(self.result_file_path)))
+
             with open(self.result_file_path, "a") as f:
                 if self.write_header:
                     f.write("level,evaluation,f_best,f,controller_size,controller_size2,morphology_size,time,time_including_reeval,step,step_including_reeval\n")
@@ -524,6 +527,10 @@ class NestedOptimization:
                     f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
                 elif level == 3:
                     f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+        except AssertionError:
+            print(f"ERROR: directory {os.path.dirname(os.path.abspath(self.result_file_path))} does not exist, can't save results. Exit...")
+            exit(1)
+
         finally:
             self.mutex.release()
 

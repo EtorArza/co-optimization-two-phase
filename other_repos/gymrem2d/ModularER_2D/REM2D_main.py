@@ -80,13 +80,16 @@ def get_module_list():
     return module_list
 
 class ind_controller:
-    def __init__(self, ind):
+    def __init__(self, ind, seed):
+        self.seed = seed
         self.ind = ind
         self.MAX_AMP = 1.0
         self.MAX_OFFSET = 3.14159265358979
         self.MAX_FREQUENCY = 0.1
         self.MAX_PHASE = 1.0
         self.params_array = np.random.uniform(size=len(ind.genome.moduleList)*4)
+        self.best_f = -1e9
+        self.best_x = None
 
 
 
@@ -121,27 +124,70 @@ class ind_controller:
 
 
     def initialize_cma_es(self):
-        self.cmaes = cma.CMAEvolutionStrategy(self.params_array, 0.33, inopts={'bounds': [0, 1],'seed':np.random.randint(2,200000),'maxiter':1e9, 'maxfevals':1e9})
+        self.cmaes = cma.CMAEvolutionStrategy(self.params_array, 0.33, inopts={'bounds': [0, 1],'seed': self.seed,'maxiter':1e9, 'maxfevals':1e9})
         self._new_gen_cmaes()
 
 
     def load_next_solution_to_ind(self, ind):
+        assert len(self.cmaes_pending_solutions) > 0
         self.params_array = self.cmaes_pending_solutions.pop()
         self._write_params_to_ind(ind)
 
     def load_best_solution_to_ind(self, ind):
-        self.params_array = self.cmaes.best.x
+        self.params_array = self.best_x.copy()
         self._write_params_to_ind(ind)
 
 
     def get_solution_fitness_cmaes(self, fitness):
         self.cmaes_evaluated_solutions += [self.params_array.copy()]
         self.cmaes_fitness_list += [fitness]
+        if fitness > self.best_f:
+            self.best_f = fitness
+            self.best_x = self.params_array.copy()
         if len(self.cmaes_pending_solutions) == 0:
-            self.cmaes.tell(self.cmaes_evaluated_solutions, self.cmaes_fitness_list)
+            self.cmaes.tell(self.cmaes_evaluated_solutions, [-el for el in self.cmaes_fitness_list]) # CMA-ES is minimizing.
             self._new_gen_cmaes()
 
 
+from matplotlib import animation
+import matplotlib.pyplot as plt
+import gym 
+
+def save_data_animation(dump_path, no, ind, tree_dpth):
+    import pickle
+    with open(dump_path, "wb") as f:
+        pickle.dump((ind,no,tree_dpth), file=f)
+
+def animate_from_dump(dump_path):
+    with open ("dump.wb", "rb") as f:
+        read_ind, read_no, tree_dpth = pickle.load(f)
+    evaluate(read_ind, read_no, TestMode=False, save_animation = True, TREE_DEPTH = tree_dpth, save_animation_path = "new_animation.gif")
+
+
+
+
+"""
+Ensure you have imagemagick installed with 
+sudo apt-get install imagemagick
+Open file in CLI with:
+xgd-open <filelname>
+"""
+def save_frames_as_gif(frames, save_animation_path):
+
+    print("saving animation...", end="")
+
+    #Mess with this to change frame size
+    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
+
+    patch = plt.imshow(frames[0])
+    plt.axis('off')
+
+    def animate(i):
+        patch.set_data(frames[i])
+
+    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
+    anim.save(save_animation_path, writer='imagemagick', fps=30)
+    print("saved.")
 
 class Encoding_Type(Enum):
     DIRECT = 0
@@ -233,7 +279,7 @@ class run2D():
         print("Loading best")
         STOPWATCH.pause()
         individual = pickle.load(open(self.SAVE_FILE_DIRECTORY + self.BEST_INDIVIDUAL_FILE,"rb"))
-        best_f_test = evaluate(individual, self.no, TestMode=True, global_vars=global_vars, HEADLESS = True, )
+        best_f_test = evaluate(individual, self.no, TestMode=True, global_vars=global_vars, save_animation = True, )
         print("best",best_f_test)
         STOPWATCH.resume()
         return best_f_test
@@ -303,22 +349,29 @@ class run2D():
             print("Note: visualization of the tree structure was set to true, this is not functional in this version." )
             self.PLOT_TREE = False
 
-    def train_controller(self, ind):
-        ctr = ind_controller(ind)
+    def train_controller(self, ind, seed): # Train controller in ind and return f
+        ctr = ind_controller(ind, seed)
         ctr.initialize_cma_es()
         for i in range(self.no.get_inner_quantity()):
             ctr.load_next_solution_to_ind(ind)
-            f = evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH)
+            f = evaluate(ind, self.no,  TestMode=False, save_animation = False, TREE_DEPTH = self.TREE_DEPTH)
             self.no.next_inner(f)
-            ctr.get_solution_fitness_cmaes(-f) # CMA-ES wants to minimize!
-        
+            ctr.get_solution_fitness_cmaes(f)
         ctr.load_best_solution_to_ind(ind)
-        evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH)
+        self.no.next_outer(f, len(ind.genome.moduleList), -1, ind.genome.n_modules)
+        return ctr.best_f
 
-        
-        # best_genome = ctr.cmaes.best.x
 
-        return ctr.cmaes.best.f
+    def train_and_reeval_if_required(self, ind):
+        seed = np.random.randint(2,200000)
+        f = self.train_controller(ind, seed)
+        if self.no.is_reevaluating_flag:
+            f_reeval = self.train_controller(ind, seed)
+            self.no.next_reeval(f_reeval, len(ind.genome.moduleList), -1, ind.genome.n_modules)
+            if self.no.new_best_found:
+                print(f"Save animation with f_reeval={f_reeval}!")
+                self.no.new_best_found = False
+        return f
 
 
 
@@ -350,12 +403,9 @@ class run2D():
         # create population when none is given as an argument
         if population is None:
             population = toolbox.population(n=self.POPULATION_SIZE)
-            fitnesses = []
             for ind in population:
-                f = self.train_controller(ind)
-                fitnesses.append(evaluate(ind, self.no,  TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH))
-            for ind, fit in zip(population, fitnesses):
-                ind.fitness = fit
+                f_observed = self.train_and_reeval_if_required(ind)
+                ind.fitness = f_observed
         
         gen = 0 # keep track of generations simulated
         if not useTQDM:
@@ -376,12 +426,13 @@ class run2D():
                 # Implement DEAP built in functionality
                 o.fitness = 0
 
-            fitnesses = [evaluate(individual, self.no, TestMode=False, HEADLESS = not RENDER_ANIMATION, TREE_DEPTH = self.TREE_DEPTH) for individual in offspring]
-
             fitness_values = []
-            for ind, fit in zip(offspring, fitnesses):
-                ind.fitness = fit
-                fitness_values.append(fit)
+            for ind in offspring:
+                f_observed = self.train_and_reeval_if_required(ind)
+                fitness_values.append(f_observed)
+                ind.fitness = f_observed
+
+
 
             population = offspring
             min = np.min(fitness_values)
@@ -417,7 +468,7 @@ class run2D():
     def callback_end_of_gen(self):
         raise NotImplementedError()
 
-def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, INTERVAL=1, ENV_LENGTH=100, TREE_DEPTH = None, CONTROLLER = None):
+def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, save_animation=False, INTERVAL=1, ENV_LENGTH=100, TREE_DEPTH = None, CONTROLLER = None, save_animation_path=None):
 
     env = getEnv()
     if TREE_DEPTH is None:
@@ -447,12 +498,13 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, I
     fitness = 0
     break_this_it = False
     currentBestfTest = -1e6
+
+    frames=[]
     for i in range(EVALUATION_STEPS):
 
-        if i % INTERVAL == 0:
-            if not HEADLESS:
-                # print("rendering")
-                env.render()
+        if save_animation:
+            # print("rendering")
+            frames.append(env.render("rgb_array"))
 
         action = np.ones_like(env.action_space.sample())
         observation, reward, done, info  = env.step(action)
@@ -475,7 +527,8 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, HEADLESS=True, I
 
         if break_this_it or done:
             break
-
+    if save_animation:
+        save_frames_as_gif(frames, save_animation_path=save_animation_path)
 
     return fitness
 

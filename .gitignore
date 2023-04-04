@@ -32,6 +32,13 @@ results/tholiao/videos/*
 !results/tholiao/data/.gitkeep
 !results/tholiao/figures/.gitkeep
 !results/tholiao/videos/.gitkeep
+results/gymrem2d/data/*
+results/gymrem2d/figures/*
+results/gymrem2d/videos/*
+!results/gymrem2d/data/.gitkeep
+!results/gymrem2d/figures/.gitkeep
+!results/gymrem2d/videos/.gitkeep
+
 venv
 other_repos/evogym/examples/saved_data*
 other_repos/RoboGrammar/*_tmp
@@ -153,3 +160,4 @@ other_repos/revolve/thirdparty/nlopt/build/CMakeCache.txt
 other_repos/revolve/data/default_experiment/**
 progress_report.txt
 tholiao_progress_report.txt
+*.wb
