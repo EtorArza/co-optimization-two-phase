@@ -19,8 +19,7 @@ gym
 h5py
 imageio
 neat-python @ git+https://github.com/yunshengtian/neat-python@2762ab630838520ca6c03a866e8a158f592b0370
-opencv-python
-Pillow
+opencv-python<=4.2.0.34 # Matplotlib doesn't work with newer versions
 pygifsicle
 PyOpenGL
 PyOpenGL-accelerate

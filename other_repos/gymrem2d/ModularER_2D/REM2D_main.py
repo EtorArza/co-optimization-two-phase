@@ -153,15 +153,15 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 import gym 
 
-def save_data_animation(dump_path, no, ind, tree_dpth):
+def save_data_animation(dump_path, no, ind, tree_dpth, video_label):
     import pickle
     with open(dump_path, "wb") as f:
-        pickle.dump((ind,no,tree_dpth), file=f)
+        pickle.dump((ind,no,tree_dpth, video_label), file=f)
 
 def animate_from_dump(dump_path):
-    with open ("dump.wb", "rb") as f:
-        read_ind, read_no, tree_dpth = pickle.load(f)
-    evaluate(read_ind, read_no, TestMode=False, save_animation = True, TREE_DEPTH = tree_dpth, save_animation_path = "new_animation.gif")
+    with open (dump_path, "rb") as f:
+        read_ind, read_no, tree_dpth, video_label = pickle.load(f)
+    evaluate(read_ind, read_no, TestMode=False, save_animation = True, TREE_DEPTH = tree_dpth, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
 
 
 
@@ -368,8 +368,12 @@ class run2D():
         if self.no.is_reevaluating_flag:
             f_reeval = self.train_controller(ind, seed)
             self.no.next_reeval(f_reeval, len(ind.genome.moduleList), -1, ind.genome.n_modules)
+            print(f"Save current animation with f_reeval={f_reeval}!")
+            save_data_animation(f"../dumps_for_animation/animation_dump_current{self.no.params.experiment_index}.wb", self.no, ind, self.TREE_DEPTH, f"vid_{self.no.get_video_label()}_current")
+
             if self.no.new_best_found:
-                print(f"Save animation with f_reeval={f_reeval}!")
+                print(f"Save best animation with f_reeval={f_reeval}!")
+                save_data_animation(f"../dumps_for_animation/animation_dump_best{self.no.params.experiment_index}.wb", self.no, ind, self.TREE_DEPTH, f"vid_{self.no.get_video_label()}_best")
                 self.no.new_best_found = False
         return f
 
