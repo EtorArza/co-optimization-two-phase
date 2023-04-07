@@ -179,15 +179,8 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
             if structure.is_survivor:
                 save_path_controller_part = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation), "controller",
-                    "robot_" + str(structure.label) + "_controller" + ".pt")
-                save_path_controller_part_old = os.path.join(root_dir, "saved_data", f"exp{no.params.experiment_index}", "generation_" + str(generation-1), "controller",
-                    "robot_" + str(structure.prev_gen_label) + "_controller" + ".pt")
-                
+                    "robot_" + str(structure.label) + "_controller" + ".pt")                
                 print(f'Skipping training for {save_path_controller_part}.\n')
-                try:
-                    shutil.copy(save_path_controller_part_old, save_path_controller_part)
-                except:
-                    print(f'Error coppying controller for {save_path_controller_part}.\n')
             else:
 
                 controller_path_for_animation_current = f"controller_to_generate_animation_{no.params.experiment_index}_current.pt"
@@ -204,30 +197,20 @@ def run_ga(pop_size, structure_shape, no: NestedOptimization):
 
                     
 
-                if no.new_best_found:
-                    if no.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
-                        res_reevaluated = run_ppo((structure.body, structure.connections), (save_path_controller, structure.label), env_name, no, True)
-                        morphology = structure.body
-                        controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
-                        controller_size2 = structure.connections.shape[1]
-                        morphology_size = np.sum(morphology != 0)
-                        no.next_reeval(res_reevaluated, controller_size, controller_size2, morphology_size) # no.new_best_found is updated here
-
+                if no.is_reevaluating_flag:
+                    _ = run_ppo((structure.body, structure.connections), (save_path_controller, structure.label), env_name, no, True)  # no.new_best_found is updated here
                     import pathlib
                     dump_path_current = f"simulation_objects_{no.params.experiment_index}_current.pkl"
                     out_path_gif_current = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_current.gif"
                     dump_visualization_data(dump_path_current, out_path_gif_current, env_name, (structure.body, structure.connections), controller_path_for_animation_current)
 
+                    if no.new_best_found:
+                        dump_path_best = f"simulation_objects_{no.params.experiment_index}_best.pkl"
+                        out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_best.gif"                    
+                        os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
+                        dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best)
+                        no.new_best_found = False
 
-
-                if no.new_best_found:
-                    dump_path_best = f"simulation_objects_{no.params.experiment_index}_best.pkl"
-                    out_path_gif_best = pathlib.Path().resolve().as_posix() + f"../../../../results/evogym/videos/vid_{no.get_video_label()}_best.gif"                    
-                    no.new_best_found = False
-                    os.system(f"cp {controller_path_for_animation_current} {controller_path_for_animation_best}")
-                    dump_visualization_data(dump_path_best, out_path_gif_best, env_name, (structure.body, structure.connections), controller_path_for_animation_best)
-                    
-                    
 
         ### COMPUTE FITNESS, SORT, AND SAVE ###
         for structure in structures:

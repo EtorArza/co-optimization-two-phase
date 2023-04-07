@@ -44,6 +44,8 @@ def run_ppo(
     # 2 -> Grey flexible
     # 3 -> Orange (controllable)
     # 4 -> Blue (controllable)
+    import copy
+    best_structure = copy.deepcopy(structure)
 
     controller_size = np.sum(morphology == 3) + np.sum(morphology == 4)
     controller_size2 = structure[1].shape[1]
@@ -190,29 +192,19 @@ def run_ppo(
             # print("Determ_avg_reward - ", no.step, no.iteration, determ_avg_reward)
             # new_step = no.step
 
-            if verbose:
-                if saving_convention != None:
-                    print(f'Evaluated {saving_convention[1]} using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / no.get_inner_quantity()}\n')
-                else:
-                    print(f'Evaluated using {args.num_evals} episodes. Mean reward: {np.mean(determ_avg_reward)}. Progress: {j / no.get_inner_quantity()}\n')
             if determ_avg_reward > max_determ_avg_reward:
                 max_determ_avg_reward = determ_avg_reward
-
-                temp_path = os.path.join(args.save_dir, args.algo, args.env_name + ".pt")
-                if saving_convention != None:
-                    temp_path = os.path.join(saving_convention[0], "robot_" + str(saving_convention[1]) + "_controller" + ".pt")
-                
-                if verbose:
-                    print(f'Saving {temp_path} with avg reward {max_determ_avg_reward}\n')
-                torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], temp_path)
+                best_structure = copy.deepcopy(structure)
+                if test or no.params.experiment_mode == "incrementalandesnof":
+                    torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], no.controller_path_for_animation)
 
             no.next_inner(max_determ_avg_reward)
 
         # return upon reaching the termination condition
         if no.ESNOF_stop or (no.get_inner_quantity() <= j):
-            if test or no.params.experiment_mode == "incrementalandesnof":
-                savepath = no.controller_path_for_animation
-                torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], savepath)
+            structure = copy.deepcopy(best_structure)
             if not test:
                 no.next_outer(max_determ_avg_reward, controller_size, controller_size2, morphology_size)
+            elif no.is_reevaluating_flag:
+                no.next_reeval(max_determ_avg_reward, controller_size, controller_size2, morphology_size)
             return max_determ_avg_reward

@@ -121,6 +121,9 @@ class Parameters:
             self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode, self.seed = params
             self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
         elif "adaptstepspermorphology" in params:
+            print("With the new experiment, the objective value used as a reference for wether to reevaluate is generated with different inner_quantity parameter from the new solutions. This is a problem, because if the inner quantity is smaller, it means that objective funcions in general will be lower, and it would be less likely to find new best solutions. This can be solved in evogym because we generate partial objective values with different inner quantity values, but it might not be possible to do in robogrammar. A possibility is to partially reevaluate best solution and thus get a valid reference.")
+            print("Exiting...")
+            exit(0)
             self.target_probability, self._start_quantity_proportion, self.env_name, self.experiment_mode, self.seed = params
             self._inner_quantity_proportion = self._start_quantity_proportion
         else:
@@ -426,7 +429,6 @@ class NestedOptimization:
             if self.f_observed > self.f_best:
                 self.prev_f_best = self.f_best
                 self.f_best = self.f_observed
-                self.new_best_found = True
                 if self.params.experiment_mode == "incrementalandesnof":
                     self.ESNOF_load_new_references()
                 if self.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
