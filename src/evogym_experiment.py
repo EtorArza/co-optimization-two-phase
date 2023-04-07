@@ -1,4 +1,25 @@
 import sys
+import os
+
+if sys.argv[1] == "--clean":    
+    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -fv")
+    os.system("rm other_repos/evogym/examples/simulation_objects_* -fv")
+    exit(0)
+elif sys.argv[1] == "--cleanall":    
+    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -fv")
+    os.system("rm other_repos/evogym/examples/simulation_objects_* -fv")
+    os.system("rm results/evogym/data/*.txt -fv")
+    os.system("rm results/evogym/videos/*.gif -fv")
+    os.system("rm results/evogym/figures/*.pdf -fv")
+    exit(0)
+
+elif sys.argv[1] == "--cleanfigs":    
+    os.system("rm results/evogym/figures/*.pdf -fv")
+    exit(0)
+
+
+
+
 sys.path.append("./other_repos/evogym/examples") 
 import random
 import numpy as np
@@ -36,7 +57,6 @@ def execute_experiment_locally(experiment_index):
 
 
 if __name__ == "__main__":
-    print("With the new experiment, the objective value used as a reference for wether to reevaluate is generated with different inner_quantity parameter from the new solutions. This is a problem, because if the inner quantity is smaller, it means that objective funcions in general will be lower, and it would be less likely to find new best solutions. This can be solved in evogym because we generate partial objective values with different inner quantity values, but it might not be possible to do in robogrammar. A possibility is to partially reevaluate best solution and thus get a valid reference.")
     if sys.argv[1] == "--local_launch":
         if len(sys.argv) != 3:
             print("ERROR: 2 parameters are required, --local_launch and i.\n\nUsage:\npython src/robogrammar_experiment.py i")

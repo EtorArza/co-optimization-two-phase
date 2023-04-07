@@ -1,5 +1,22 @@
 import sys
+import os
 figpath = "results/robogrammar/figures"
+
+if sys.argv[1] == "--clean":    
+    os.system("rm other_repos/RoboGrammar/rule_sequence_* -fv")
+    os.system("rm other_repos/RoboGrammar/simulation_objects_* -fv")
+    exit(0)
+elif sys.argv[1] == "--cleanall":    
+    os.system("rm other_repos/RoboGrammar/rule_sequence_* -fv")
+    os.system("rm other_repos/RoboGrammar/simulation_objects_* -fv")
+    os.system("rm results/robogrammar/data/*.txt -fv")
+    os.system("rm results/robogrammar/videos/*.gif -fv")
+    os.system("rm results/robogrammar/figures/*.pdf -fv")
+    exit(0)
+
+elif sys.argv[1] == "--cleanfigs":    
+    os.system("rm results/robogrammar/figures/*.pdf -fv")
+    exit(0)
 
 
 
