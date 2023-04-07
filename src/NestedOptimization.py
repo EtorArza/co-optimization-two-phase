@@ -445,9 +445,12 @@ class NestedOptimization:
                 print("best_found! (level 3)")
             else:
                 self.params.reevaluated_was_new_best_flags.append(0)
-                # By reseting the best found, we can recreate reseting and not reseting the best found in the results 
-                print("Reseting to best_f to self.prev_f_best")
-                self.f_best = self.prev_f_best
+                # What I previously believed -> # By reseting the best found, we can recreate reseting and not reseting the best found in the results. 
+                # What I believe now -> If we do this, there are two problems even with reestructuring results.
+                #   1) The best found reevaluated could be found thanks to a lower level to best_f, hence the saved animations don't represent reality
+                #   2) Running with this is extremely slow, because a lot of reevaluations are made, specially with low parameters such as inner_length_proportion = 0.1 
+                # print("Reseting to best_f to self.prev_f_best")
+                # self.f_best = self.prev_f_best
 
             # Set current inner_quantity
             if self.params.experiment_mode == "adaptstepspermorphology":
