@@ -2,12 +2,12 @@
 ###   s b a t c h --array=1-$runs:1 $SL_FILE_NAME
 #SBATCH --ntasks=1 # number of tasks
 #SBATCH --ntasks-per-node=1 #number of tasks per node
-#SBATCH --mem=4G
+#SBATCH --mem=6G
 #SBATCH --cpus-per-task=1 # number of CPUs
 #SBATCH --output=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_out.txt
 #SBATCH --error=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_err.txt
-#SBATCH --time=15-00:00:00 #Walltime
-#SBATCH -p xlarge
+#SBATCH --time=5-00:00:00 #Walltime
+#SBATCH -p large
 #SBATCH --exclude=n[001-004]
 
 echo "--"

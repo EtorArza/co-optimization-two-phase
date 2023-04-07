@@ -6,8 +6,8 @@
 #SBATCH --cpus-per-task=32 # number of CPUs
 #SBATCH --output=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_out.txt
 #SBATCH --error=/workspace/scratch/jobs/earza/slurm_logs/slurm_%A_%a_%x_err.txt
-#SBATCH --time=15-00:00:00 #Walltime
-#SBATCH -p xlarge
+#SBATCH --time=5-00:00:00 #Walltime
+#SBATCH -p large
 #SBATCH --exclude=n[001-004]
 
 echo "--"
