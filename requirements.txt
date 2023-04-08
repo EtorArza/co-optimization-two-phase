@@ -35,4 +35,4 @@ click
 deap
 cma
 protobuf<=3.20.*
-scipy==1.4.1
+scipy==1.4.1 # Tholiao wont work with a later version
