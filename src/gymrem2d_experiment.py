@@ -115,14 +115,28 @@ elif sys.argv[1] == "--plot_tune":
     import os
     import pandas as pd
     import numpy as np
+    from matplotlib import pyplot as plt
+
+    def find_between(s, start, end): # find substring between two strings
+        return (s.split(start))[1].split(end)[0]
 
     exp_dir = "results/gymrem2d/data"
 
-    for csv_name in tqdm(os.listdir(exp_dir)):
+    rows = []
+    for csv_name in os.listdir(exp_dir):
         if ".txt" in csv_name and "paramtuning" in csv_name:
-         df = pd.read_csv(exp_dir + "/" + csv_name)
-         print(df)
-         exit(0)
+            print(csv_name)
+            df = pd.read_csv(exp_dir + "/" + csv_name)
+            f = df.query("level == 3")["f_best"].iloc[-1]
+            nrows = df.query("level == 2").shape[0]
+            innerquantity = int(find_between(csv_name, "paramtuning_","_"))
+            seed = int(find_between(csv_name, "_",".txt"))
+            rows.append([innerquantity, seed, f, nrows])
+            print(rows)
+    df = pd.DataFrame(rows, columns=["innerquantity", "seed", "f", "nrows"])
+    df.boxplot(column="f", by="seed")
+    plt.show()
+    plt.close()
 
 else:
     raise ValueError(f"Argument {sys.argv[1]} not recognized.")
