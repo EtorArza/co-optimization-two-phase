@@ -83,7 +83,7 @@ elif sys.argv[1] == "--tune":
     from NestedOptimization import convert_from_seconds
     import joblib
 
-    parameter_combs = list(product(seeds, [20, 80, 320, 1280]))
+    parameter_combs = list(product(seeds, [1, 8, 64, 512]))
     n = len(parameter_combs)
     ref = time.time()
 
