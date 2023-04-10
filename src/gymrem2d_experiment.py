@@ -61,6 +61,11 @@ if sys.argv[1] == "--local_launch":
     import time
     launch_one(int(sys.argv[2]))
 
+if sys.argv[1] == "--local_launch_tuning":
+    import itertools
+    import time
+    assert len(sys.argv) == 4
+    launch_one_parameter_tuning(int(sys.argv[2]), int(sys.argv[3]))
 
 elif sys.argv[1] == "--visualize":
     from NestedOptimization import Parameters, NestedOptimization
@@ -91,27 +96,14 @@ elif sys.argv[1] == "--tune":
         f.write("start.\n")
 
 
-    def launch_one_tune(i):
-        seed,default_inner_quantity = parameter_combs[i]
-        print("COMBS",seed,default_inner_quantity)
-        orig_cwd = os.getcwd()
-        print("original CWD:", orig_cwd)
-        try:
-            launch_one_parameter_tuning(seed, default_inner_quantity)
-        except SystemExit:
-            pass
-        os.chdir(orig_cwd)
-
+    for i in range(n):
+        seed, default_inner_quantity = parameter_combs[i]
+        os.system(f"python src/gymrem2d_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
         elapsed_time = time.time() - ref
         time_left = elapsed_time / (i+1) * n - elapsed_time
         with open("gymrem2d_progress_report.txt","a") as f:
             f.write(f"{i/n}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
 
-    for i in range(n):
-        import psutil
-        with open("mem_usage.txt", "a") as f:
-            print(i, psutil.virtual_memory(), file=f)
-        launch_one_tune(i)
 
 
 elif sys.argv[1] == "--plot_tune":
