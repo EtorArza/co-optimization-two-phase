@@ -163,3 +163,5 @@ tholiao_progress_report.txt
 *.wb
 pivottablejs.html
 gymrem2d_progress_report.txt
+other_repos/gymrem2d/ModularER_2D/mem_usage_intra.txt
+mem_usage.txt
