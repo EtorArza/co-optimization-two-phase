@@ -391,15 +391,12 @@ class run2D():
         toolbox.register("mutate", Individual.mutate, self.MORPH_MUTATION_RATE,self.MUTATION_RATE,self.MUT_SIGMA)
         toolbox.register("select",tools.selTournament, tournsize = 4)
 
-        N_GENERATIONS = 1+ int(int(config['ea']['n_evaluations'])/self.POPULATION_SIZE)
-        N_GENERATIONS -= len(self.fitnessData.avg)
 
         parallel=False
 
         if config["ea"]["headless"] == "1":
             n_cores = int(self.config["ea"]["n_cores"])
             print("Starting deap in headless mode using " , n_cores , " cores")
-            print("Evolution will run for ", N_GENERATIONS, " generations, with a population size of ", self.POPULATION_SIZE)
             pool = multiprocessing.Pool(n_cores)
             cs = int(np.ceil(float(self.POPULATION_SIZE)/float(n_cores)))
             toolbox.register("map", pool.map, chunksize=cs)
@@ -412,13 +409,7 @@ class run2D():
                 ind.fitness = f_observed
         
         gen = 0 # keep track of generations simulated
-        if not useTQDM:
-            writer = sys.stdout
-            range_ = range(N_GENERATIONS)
-        else:
-            writer = range_ = tqdm.trange(N_GENERATIONS, file=sys.stdout)
-
-        for i in range_:
+        for i in range(1e10):
             gen+=1
             offspring = toolbox.select(population, len(population))
 
