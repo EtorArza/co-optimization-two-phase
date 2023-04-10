@@ -116,9 +116,9 @@ class Parameters:
         params = self._get_parameter_list()[experiment_index]
 
         if "reevaleachvsend" in params:
-            self._inner_quantity_proportion, self._inner_length_proportion, self.env_name, self.experiment_mode, self.seed = params
+            self.seed, self._inner_quantity_proportion, self._inner_length_proportion, self.env_name, self.experiment_mode = params
         elif "incrementalandesnof" in params:
-            self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode, self.seed = params
+            self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode = params
             self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
         elif "adaptstepspermorphology" in params:
             print("With the new experiment, the objective value used as a reference for wether to reevaluate is generated with different inner_quantity parameter from the new solutions. This is a problem, because if the inner quantity is smaller, it means that objective funcions in general will be lower, and it would be less likely to find new best solutions. This can be solved in evogym because we generate partial objective values with different inner quantity values, but it might not be possible to do in robogrammar. A possibility is to partially reevaluate best solution and thus get a valid reference.")
@@ -156,15 +156,15 @@ class Parameters:
         # minimum_non_resumable_param_list = [0.2, 1.0]
         # time_grace_list = [0.2, 1.0]
         # experiment_mode_list = ["incrementalandesnof"]
-        # params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
-        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
+        # params_with_undesired_combinations = list(itertools.product(seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list))
+        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
         # res += params_with_undesired_combinations
 
         # adaptstepspermorphology
         target_probability = [0.75]
         _start_quantity_proportion = [0.1]
         experiment_mode_list = ["adaptstepspermorphology"]
-        params_with_undesired_combinations = list(itertools.product(target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        params_with_undesired_combinations = list(itertools.product(seed_list, target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list))
         res += params_with_undesired_combinations
 
         return res
@@ -179,8 +179,8 @@ class Parameters:
         _inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
         _inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(_inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item] # remove the combinations in which one of the parameters is not 1.0.
+        params_with_undesired_combinations = list(itertools.product(seed_list, _inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item[1:3]] # remove the combinations in which one of the parameters is not 1.0.
         res += params_with_undesired_combinations
 
 
@@ -192,12 +192,12 @@ class Parameters:
         # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
         # res += params_with_undesired_combinations
 
-        # adaptstepspermorphology
-        target_probability = [0.75]
-        _start_quantity_proportion = [0.1]
-        experiment_mode_list = ["adaptstepspermorphology"]
-        params_with_undesired_combinations = list(itertools.product(target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
-        res += params_with_undesired_combinations
+        # # adaptstepspermorphology
+        # target_probability = [0.75]
+        # _start_quantity_proportion = [0.1]
+        # experiment_mode_list = ["adaptstepspermorphology"]
+        # params_with_undesired_combinations = list(itertools.product(target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list, seed_list))
+        # res += params_with_undesired_combinations
 
         return res
 

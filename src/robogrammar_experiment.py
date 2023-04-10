@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
 
     elif sys.argv[1] == "--cluster_launch":
-        print("Launching evogym in cluster...")
+        print("Command to launch evogym in cluster...")
         from NestedOptimization import Parameters
         params = Parameters("robogrammar", 0)
         print(f"sbatch --array=0-{params.get_n_experiments()-1} cluster_scripts/launch_one_robogrammar.sl")

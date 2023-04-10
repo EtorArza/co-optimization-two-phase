@@ -49,15 +49,16 @@ elif sys.argv[1] == "--sequential_launch":
     import time
     from NestedOptimization import convert_from_seconds
     ref = time.time()
-    m = 279
+    m_start = 0
+    m_end = 180 # in total there are 540 for 60 seeds
     with open("tholiao_progress_report.txt","w") as f:
         f.write("start.\n")
-    for i in range(4,m):
+    for i in range(m_start,m_end):
         os.system(f"python src/tholiao_experiment.py --local_launch {i}")
         elapsed_time = time.time() - ref
-        time_left = elapsed_time / (i+1) * m - elapsed_time
+        time_left = elapsed_time / (i+1) * m_end - elapsed_time
         with open("tholiao_progress_report.txt","a") as f:
-            f.write(f"{i/m}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
+            f.write(f" Workging on {m_start}-{m_end}, {i/m_end}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
         os.system("rm other_repos/tholiao/logs/*.npy -f")
         os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
 
