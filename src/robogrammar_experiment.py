@@ -10,7 +10,7 @@ elif sys.argv[1] == "--cleanall":
     os.system("rm other_repos/RoboGrammar/rule_sequence_* -fv")
     os.system("rm other_repos/RoboGrammar/simulation_objects_* -fv")
     os.system("rm results/robogrammar/data/*.txt -fv")
-    os.system("rm results/robogrammar/videos/*.gif -fv")
+    os.system("rm results/robogrammar/videos/*.mp4 -fv")
     os.system("rm results/robogrammar/figures/*.pdf -fv")
     exit(0)
 
