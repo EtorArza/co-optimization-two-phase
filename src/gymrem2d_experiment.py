@@ -108,6 +108,9 @@ elif sys.argv[1] == "--tune":
             f.write(f"{i/n}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
 
     for i in range(n):
+        import psutil
+        with open("mem_usage.txt", "a") as f:
+            print(i, psutil.virtual_memory(), file=f)
         launch_one_tune(i)
 
 

@@ -409,7 +409,14 @@ class run2D():
                 ind.fitness = f_observed
         
         gen = 0 # keep track of generations simulated
-        for i in range(1e10):
+        while True:
+
+            if gen % 100 == 0:
+                with open("mem_usage_intra.txt", "a") as f:
+                    import psutil
+                    print(gen, psutil.virtual_memory(), file=f)
+
+
             gen+=1
             offspring = toolbox.select(population, len(population))
 
@@ -437,11 +444,6 @@ class run2D():
 
             #print(float(self.EVALUATION_NR)/ float(self.TOTAL_EVALUATIONS) * float(100), "%")
             self.fitnessData.addFitnessData(fitness_values,gen)
-            if self.SAVEDATA:
-                if (i % self.CHECKPOINT_FREQUENCY == 0 or i == N_GENERATIONS):
-                    #self.fitnessData.save(self.SAVE_FILE_DIRECTORY)
-                    self.fitnessData.save(self.SAVE_FILE_DIRECTORY)
-                    pickle.dump(population,open(self.SAVE_FILE_DIRECTORY + self.POPULATION_FILE + str(i), "wb"))
 
             if self.PLOT_FITNESS:
                 self.plotter.plotFitnessProgress(self.fitnessData)
@@ -455,7 +457,7 @@ class run2D():
                 if o.fitness > bestfit:
                     bestfit = o.fitness
                     bestOffspring = o
-                    pickle.dump(o,open(self.SAVE_FILE_DIRECTORY + self.BEST_INDIVIDUAL_FILE + str(i), "wb"))
+                    pickle.dump(o,open(self.SAVE_FILE_DIRECTORY + self.BEST_INDIVIDUAL_FILE + str(gen-1), "wb"))
                     pickle.dump(o,open(self.SAVE_FILE_DIRECTORY + self.BEST_INDIVIDUAL_FILE, "wb"))
             print("Callback end gen.")
 
