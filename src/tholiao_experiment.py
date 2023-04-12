@@ -50,10 +50,20 @@ elif sys.argv[1] == "--sequential_launch":
     from NestedOptimization import convert_from_seconds
     ref = time.time()
     m_start = 0
-    m_end = 180 # in total there are 540 for 60 seeds
+
+
+    with open("donete_tholiao.txt","r") as f:
+        m_start = int(f.readlines()[-1].strip()) + 1
+    
+    
+
+    m_end = 540 # in total there are 540 for 60 seeds
     with open("tholiao_progress_report.txt","w") as f:
         f.write("start.\n")
     for i in range(m_start,m_end):
+        print(f"Working on index {i}...")
+        ref_current = time.time()
+
         os.system(f"python src/tholiao_experiment.py --local_launch {i}")
         elapsed_time = time.time() - ref
         time_left = elapsed_time / (i+1) * m_end - elapsed_time
@@ -61,5 +71,7 @@ elif sys.argv[1] == "--sequential_launch":
             f.write(f" Workging on {m_start}-{m_end}, {i/m_end}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
         os.system("rm other_repos/tholiao/logs/*.npy -f")
         os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
-
+        if time.time() - ref_current > 30.0:
+            with open("donete_tholiao.txt","a") as f:
+                print(i,file=f)
 
