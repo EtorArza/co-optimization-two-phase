@@ -22,11 +22,11 @@ from evaluation_functions import *
 
 POSSIBLE_LINKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
-THREADS = mp.cpu_count()
+THREADS = 1
 
 RUN_TYPE = 1
-RUN_ID = random.randint(0,sys.maxsize)
-PATH = "results_5/"+str(RUN_ID)+"_"
+RUN_ID = int(time.time() * 10000.0)
+PATH = "tmp/"+str(RUN_ID)+"_"
 AUTOENCODER = False
 STRUCTURE = False
 AE_MAP_FUNCTION = map_coords_aurora
@@ -146,8 +146,8 @@ def run():
     time_now = time.time()
     
     g = 0
-    while time_now-time_start < MINUTES*60:
-    #for g in range(0, ITERATIONS):
+
+    for g in range(0, ITERATIONS):
         if g == 150 and FITNESS_SWITCH:
             FITNESS_FUNCTION = fitness_spline_2
             parameters = []
@@ -278,8 +278,7 @@ def run_nsga2():
     front.update(pop)
     
     g = 0
-    while time_now-time_start < MINUTES*60:
-        #for g in range(0, ITERATIONS):
+    for g in range(0, ITERATIONS):
         #time_1 = time.time()
         if g == 150 and FITNESS_SWITCH:
             FITNESS_FUNCTION = multifitness_spline_2
@@ -606,8 +605,7 @@ def run_map():
     time_now = time.time()
     
     g = 0
-    while time_now-time_start < MINUTES*60:
-    #for g in range(0, ITERATIONS):
+    for g in range(0, ITERATIONS):
         if g == 150 and FITNESS_SWITCH:
             FITNESS_FUNCTION = fitness_spline_2
             pop = []

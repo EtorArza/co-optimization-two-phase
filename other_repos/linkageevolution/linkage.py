@@ -284,7 +284,6 @@ class Linkage:
     def plot(self, show_path=False):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
-        import seaborn as sns
         import cycler
         n = 14
         color = plt.cm.viridis(np.linspace(0, 1, n))
