@@ -97,7 +97,7 @@ class Parameters:
             self.env_name_list = ["FlatTerrainTask"]
             self._default_inner_quantity =  50 # The number of controllers tested per morphology
             self._default_inner_length = 400 # Steps per episode
-            self.non_resumable_param = "quantity"
+            self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length
 
         elif framework_name == "gymrem2d":
@@ -105,9 +105,17 @@ class Parameters:
             self.env_name_list = ["default"]
             self._default_inner_quantity =  50 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage
-            self.non_resumable_param = "quantity"
+            self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length
 
+
+        elif framework_name == "jorgenrem":
+            self.max_frames = 480000000 # max_frames=480000000 is the default value
+            self.env_name_list = ["default"]
+            self._default_inner_quantity =  3 # <- Need to do some parameter search!!!
+            self._default_inner_length = 4800 # Represents the number of steps per controller tested
+            self.non_resumable_param = "length"
+            self.ESNOF_t_max = self._default_inner_length
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")

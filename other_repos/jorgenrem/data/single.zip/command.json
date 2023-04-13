@@ -1,0 +1,1 @@
+{"command_line": "run.py --file configs/single.cfg", "args": {"quiet": false, "shared": "configs/shared.cfg", "seed": 1234, "output": null, "population": null, "parallel": null, "processes": null, "chunksize": 1}}
