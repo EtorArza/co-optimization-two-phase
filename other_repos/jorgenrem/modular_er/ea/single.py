@@ -87,8 +87,8 @@ def run(toolbox, settings, initial=None, no=None):
     toolbox.history_register(0, population)
     record = multi_stat.compile(population)
     logbook.record(gen=0, evals=num_evals, **record)
-    toolbox.checkpoint(0, num_evals, {'log': logbook,
-                                      'population': population})
+    # toolbox.checkpoint(0, num_evals, {'log': logbook,
+    #                                   'population': population})
     # Extract EA settings
     cxpb = settings.getfloat('ea', 'crossover_prob')
     mutpb = settings.getfloat('ea', 'mutation_prob')
@@ -126,8 +126,8 @@ def run(toolbox, settings, initial=None, no=None):
             logbook.record(gen=gen,
                            evals=len(invalid),
                            **record)
-            toolbox.checkpoint(gen, num_evals, {'log': logbook,
-                                                'population': population})
+            # toolbox.checkpoint(gen, num_evals, {'log': logbook,
+            #                                     'population': population})
     except KeyboardInterrupt:
         # Catch and ignore so that we can return values for storage
         pass

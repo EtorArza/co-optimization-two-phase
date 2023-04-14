@@ -40,6 +40,7 @@ def _checkpoint(generation, evals, result, path, seed, store_freq=-1, profiler=N
 
 
 def _load_initial(fil, match=""):
+    raise ValueError("This funcion is used to resume evaluations, and should not be called.")
     """Load initial population from file"""
     # Check if the load stems from a zip archive
     if os.path.splitext(fil)[-1] == '.zip':
@@ -130,20 +131,10 @@ def main(no):
     elif 'output' not in config['experiment']:
         # If no path is supplied we use the current directory as path
         config['experiment']['output'] = '.'
-    # Store experiment configuration and data in ZIP
-    path = config.get('experiment', 'output')
-    if path and not os.path.exists(path):
-        os.makedirs(path)
-    # Write configuration file to archive
-    with open(os.path.join(path, 'experiment.ini'), 'w') as cfg_file:
-        config.write(cfg_file)
-    # Store command line invocation and additional
-    with open(os.path.join(path, 'command.json'), 'w') as cmd_file:
-        cfg = {}
-        cfg['command_line'] = ' '.join(sys.argv)
-        cfg['args'] = vars(args)
-        del cfg['args']['file']
-        json.dump(cfg, cmd_file)
+    # # Store experiment configuration and data in ZIP
+    # path = config.get('experiment', 'output')
+    # if path and not os.path.exists(path):
+    #     os.makedirs(path)
     # Based on configuration run desired experiment
     ea = ea.load(config)
     # Setup DEAP toolbox
@@ -159,10 +150,10 @@ def main(no):
         toolbox.register('map', pool.map, chunksize=args.chunksize)
     # If initial population is None, we try to load the population for seeding
     # of the run
-    if args.population is not None:
-        # If given a zip with multiple seeds inside we assume the users wants
-        # to restart with the same seed
-        args.population = _load_initial(args.population, str(args.seed))
+    # if args.population is not None:
+    #     # If given a zip with multiple seeds inside we assume the users wants
+    #     # to restart with the same seed
+    #     args.population = _load_initial(args.population, str(args.seed))
     # Run actual evolution taking care to set seed
     seed = args.seed
     # Setup random state
@@ -176,9 +167,9 @@ def main(no):
     toolbox.register('history', history.update)
     toolbox.register('history_register', history.register)
     # Setup storage function in toolbox
-    toolbox.register('checkpoint', _checkpoint, path=path, seed=seed,
-                     store_freq=config.getint('experiment', 'checkpoint_frequency'),
-                     profiler=profiler)
+    # toolbox.register('checkpoint', _checkpoint, path=path, seed=seed,
+    #                  store_freq=config.getint('experiment', 'checkpoint_frequency'),
+    #                  profiler=profiler)
     # Perform experiment
     import sys
     here = os.path.dirname(os.path.abspath(__file__))
@@ -196,10 +187,6 @@ def main(no):
                 del result[black.strip()]
             except KeyError:
                 pass
-    # Explicit write so that results are always stored
-    _write_result(result, path, str(seed))
-    _write_result({'profile': profiler.traces()}, path, str(seed))
-    _write_result({'history': history}, path, str(seed))
 
 
 if __name__ == '__main__':
