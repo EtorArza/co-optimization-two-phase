@@ -39,6 +39,12 @@ results/gymrem2d/videos/*
 !results/gymrem2d/data/.gitkeep
 !results/gymrem2d/figures/.gitkeep
 !results/gymrem2d/videos/.gitkeep
+results/jorgenrem/data/*
+results/jorgenrem/figures/*
+results/jorgenrem/videos/*
+!results/jorgenrem/data/.gitkeep
+!results/jorgenrem/figures/.gitkeep
+!results/jorgenrem/videos/.gitkeep
 
 venv
 other_repos/evogym/examples/saved_data*
