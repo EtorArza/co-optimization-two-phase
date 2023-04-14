@@ -60,12 +60,34 @@ def _load_initial(fil, match=""):
             return pickle.load(population)
 
 
-if __name__ == '__main__':
+
+def main(no):
+
+
+    from deap import base
+    from modular_er import ea
+    from modular_er.history import History
+    from modular_er.profiler import Profiler
+    from termcolor import cprint
+    import argparse
+    import configparser
+    import json
+    import numpy
+    import os.path
+    import pickle
+    import random
+    import sys
+    import zipfile
+
+
+
+
+
     # Create command line parser and options
     parser = argparse.ArgumentParser(description="Experiment runner")
     parser.add_argument('--quiet', '-q', action='store_true',
                         help="Do not print output")
-    parser.add_argument('--file', type=argparse.FileType(), required=True,
+    parser.add_argument('--file', type=argparse.FileType(), default="configs/single.cfg",
                         help="Experiment configuration to execute")
     parser.add_argument('--shared', default="configs/shared.cfg",
                         help="Shared configuration for all experiments")
@@ -81,8 +103,14 @@ if __name__ == '__main__':
                         help="Number of processes to use")
     parser.add_argument('--chunksize', type=int, default=1,
                         help="Chunksize for parallelization")
+
+    
+
     # Parse arguments and execute experiment
     args = parser.parse_args()
+
+    print(args)
+
     # Parse configuration file
     config = configparser.ConfigParser()
     # First read shared definitions
@@ -158,9 +186,6 @@ if __name__ == '__main__':
     sys.path.append(srcpath)
 
 
-    from NestedOptimization import Parameters, NestedOptimization
-    params = Parameters("jorgenrem", 6)
-    no = NestedOptimization("./", params)
 
     result = ea(toolbox, config, args.population, no)
 
@@ -175,3 +200,12 @@ if __name__ == '__main__':
     _write_result(result, path, str(seed))
     _write_result({'profile': profiler.traces()}, path, str(seed))
     _write_result({'history': history}, path, str(seed))
+
+
+if __name__ == '__main__':
+    from NestedOptimization import Parameters, NestedOptimization
+    params = Parameters("jorgenrem", 4)
+    no = NestedOptimization("../../../results/jorgenrem/data", params)
+    params.print_parameters()
+    sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
+    main(no)

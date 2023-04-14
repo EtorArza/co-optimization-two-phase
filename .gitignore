@@ -179,3 +179,5 @@ other_repos/linkageevolution/tmp/*
 
 other_repos/jorgenrem/dumps_for_animation/*
 !other_repos/jorgenrem/dumps_for_animation/.gitkeep
+other_repos/jorgenrem/data/*
+!other_repos/jorgenrem/data/.gitkeep

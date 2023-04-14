@@ -89,13 +89,6 @@ def run(toolbox, settings, initial=None, no=None):
     logbook.record(gen=0, evals=num_evals, **record)
     toolbox.checkpoint(0, num_evals, {'log': logbook,
                                       'population': population})
-    # Setup progress bar
-    total_evals = settings.getint('ea', 'evaluations')
-    prog = tqdm(total=total_evals,
-                initial=num_evals,
-                desc="Single objective",
-                disable=settings.getboolean('experiment', 'quiet'),
-                unit='evaluation')
     # Extract EA settings
     cxpb = settings.getfloat('ea', 'crossover_prob')
     mutpb = settings.getfloat('ea', 'mutation_prob')
@@ -104,7 +97,7 @@ def run(toolbox, settings, initial=None, no=None):
     pop_size = len(population) - num_elites
     try:
         gen = 0
-        while num_evals < total_evals:
+        while True:
             offspring = algorithms.varAnd(population, toolbox,
                                           cxpb=cxpb, mutpb=mutpb)
             # Extract all individuals that don't have a valid fitness for
@@ -128,7 +121,6 @@ def run(toolbox, settings, initial=None, no=None):
             # Update history and statistics
             gen += 1
             num_evals += len(invalid)
-            prog.update(n=len(invalid))
             toolbox.history_register(gen, population)
             record = multi_stat.compile(population)
             logbook.record(gen=gen,
@@ -141,6 +133,6 @@ def run(toolbox, settings, initial=None, no=None):
         pass
     except Exception as e:
         import traceback
-        prog.write(colored("Caught exception: {!s}".format(e), 'red'))
-        prog.write(colored(traceback.format_exc(), 'yellow'))
+        print(colored("Caught exception: {!s}".format(e), 'red'))
+        print(colored(traceback.format_exc(), 'yellow'))
     return {'log': logbook, 'population': population}

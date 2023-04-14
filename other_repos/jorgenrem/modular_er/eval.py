@@ -85,25 +85,27 @@ def from_array_to_ctrls(array, ctrls):
         ctrls[idx].offset = from_01_to_range(array[idx*4+ 1], offset_range)
 
 
-def train_individual(individual, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0'):
+def train_individual(individual, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0', test=False):
     assert not no is None
     env = _get_env(env)
     warm_up = int(warm_up / env.dt)
     # Create copy to spawn in simulation
     obs = env.reset(morphology=individual.morphology, max_size=max_size)
     ctrls = [m.ctrl for m in env.morphology if m.joint is not None]
-    # There is no need to simulated a morphology without joints
-    if not ctrls:
-        return 0.0, env.morphology
-    
+
     n = len(from_ctrls_to_array(ctrls))
 
+    # There is no need to simulated a morphology without joints
+    if not ctrls:
+        return 0.0, env.morphology, None, n, len(individual.morphology)
 
 
     episode_budget = no.get_inner_quantity()
+    import warnings
+    warnings.filterwarnings("ignore", message="DE algorithms are inefficient with budget < 60")
     parametrization = ng.p.Array(shape=(n,), lower=0.0, upper=1.0)
     parametrization.random_state.seed(no.get_seed())
-    optimizer = ng.optimizers.NGOpt(parametrization=parametrization, budget=episode_budget, num_workers=1)
+    optimizer = ng.optimizers.TwoPointsDE(parametrization=parametrization, budget=episode_budget, num_workers=1)
 
     f_best = -1e100
     controler_best = None
@@ -118,19 +120,29 @@ def train_individual(individual, no=None, seconds=10.0, max_size=None, warm_up=0
         loss = -f
         optimizer.tell(cand, loss)
 
-
-    no.next_outer(f, len(controller), -1, len(individual.morphology))
-    return f_best, env.morphology
+    return f_best, env.morphology, controler_best, len(controller), len(individual.morphology)
 
 
+def save_data_animation(dump_path, video_label, individual, controller, no, seconds, max_size, warmup, env):
+    import pickle
+    with open(dump_path, "wb") as f:
+        pickle.dump((video_label, individual,controller,no, seconds, max_size, warmup, env), file=f)
 
 
 
+def animate_from_dump(dump_path):
+    import pickle
+    with open (dump_path, "rb") as f:
+        video_label, individual,controller,no, seconds, max_size, warmup, env = pickle.load(f)
+    _evaluate_individual(individual, controller,no, seconds, max_size, warmup, env, save_animation = True, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
 
-def _evaluate_individual(individual, controller, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0'):
+
+def _evaluate_individual(individual, controller, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0', save_animation=False, save_animation_path=None):
     """Evaluate the morphology in simulation"""
     assert not no is None
 
+    if save_animation:
+        assert not save_animation_path is None
     warm_up = 0.0
 
     env = _get_env(env)
@@ -159,13 +171,41 @@ def _evaluate_individual(individual, controller, no=None, seconds=10.0, max_size
         if i <= warm_up:
             warm_up_rew = rew
         no.next_step()
+        # env.render("rgb_array")
 
     f = rew - warm_up_rew
     no.next_inner(f_partial=f)
-    print(ctrls, f)
 
     return rew - warm_up_rew, env.morphology
 
 
 def evaluate(individual, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0'):
-    return train_individual(individual, no, seconds, max_size, warm_up, env)
+    
+    seed = np.random.randint(2,200000)
+
+    f_og, morph_og, _, controller_len, morph_size = train_individual(individual, no, seconds, max_size, warm_up, env, test=False)
+
+    no.next_outer(f_og, controller_len, -1, morph_size)
+    if no.is_reevaluating_flag:
+        f_reeval, _, controller_best,  _, _ = train_individual(individual, no, seconds, max_size, warm_up, env, test=True)
+        no.next_reeval(f_reeval, controller_len, -1, morph_size)
+        print(f"Save current animation with f_reeval={f_reeval}!")
+        save_data_animation(f"dumps_for_animation/animation_dump_current{no.params.experiment_index}.wb", f"vid_{no.get_video_label()}_current", individual, controller_best, no, seconds, max_size, warm_up, env)
+
+        if no.new_best_found:
+            print(f"Save best animation with f_reeval={f_reeval}!")
+            save_data_animation(f"dumps_for_animation/animation_dump_best{no.params.experiment_index}.wb", f"vid_{no.get_video_label()}_best", individual, controller_best, no, seconds, max_size, warm_up, env)
+            no.new_best_found = False
+    return f_og, morph_og
+
+
+
+
+
+
+
+
+
+
+    print("Training individual", individual)
+    return f_og, morph_og
