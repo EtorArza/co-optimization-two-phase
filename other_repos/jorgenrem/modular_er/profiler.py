@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Timing/profiling support for DEAP

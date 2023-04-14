@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Non-movable Rectangle module

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Genome/Phenotype individual encoding module

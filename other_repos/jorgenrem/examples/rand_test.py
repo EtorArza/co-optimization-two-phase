@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Example code to create random morphologies

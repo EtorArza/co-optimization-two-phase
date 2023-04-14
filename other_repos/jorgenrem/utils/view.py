@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 """
 Command line utility to extract individuals from stored data and simulate
 """

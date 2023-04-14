@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 3D Gym environment with ripples going outwards

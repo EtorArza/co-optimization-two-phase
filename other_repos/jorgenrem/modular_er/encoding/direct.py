@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Direct encoding individual

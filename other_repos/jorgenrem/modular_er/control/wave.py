@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Simple wave generator controller

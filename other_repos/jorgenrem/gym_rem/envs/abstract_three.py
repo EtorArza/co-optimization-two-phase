@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Default 3D modular environment

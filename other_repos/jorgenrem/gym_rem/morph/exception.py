@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Exception module for morphologies

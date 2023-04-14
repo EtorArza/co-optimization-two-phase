@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Simple example to show of how to use a different terrain based on heightfields

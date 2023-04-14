@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Abstract controller to illustrate all necessary functions that should be

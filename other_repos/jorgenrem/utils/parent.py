@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Command line utility to parse and output parent network from DEAP history

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Utility to fuse individual models into a 'MultiBody' in PyBullet

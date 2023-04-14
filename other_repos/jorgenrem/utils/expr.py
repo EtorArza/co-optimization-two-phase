@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Command line utility to run several experiments with different configurations

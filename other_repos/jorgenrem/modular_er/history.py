@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 History decorator for DEAP with addition of `summary_function` support

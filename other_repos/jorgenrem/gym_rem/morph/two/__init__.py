@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 2D module for modular robotics gym environments

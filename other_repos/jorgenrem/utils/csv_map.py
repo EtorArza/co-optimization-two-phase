@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 """
 Command line utility to create CSV maps from result ZIPs
 """

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Robotic controller definitions

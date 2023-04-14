@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Tool to load morphology from 'pickle' file and inspect in GUI

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 MAP-Elites implementation for DEAP and modular robots

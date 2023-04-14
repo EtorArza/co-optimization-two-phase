@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 3D modules for modular gym environments

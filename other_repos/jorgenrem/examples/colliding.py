@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Simple example to show of the return value when modules are colliding

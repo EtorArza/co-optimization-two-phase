@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Deceptive 3D Gym environment based on ditches

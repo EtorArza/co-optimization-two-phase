@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 OpenAI Gym environment registration

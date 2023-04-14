@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Multi-objective EA using NSGAII

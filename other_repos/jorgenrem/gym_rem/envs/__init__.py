@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 try:
     from .abstract_three import ModularEnv as Env3D
     from .three.colosseum import ColosseumEnv

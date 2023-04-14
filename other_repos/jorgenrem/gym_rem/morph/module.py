@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Abstract module which all morphological modules must extend

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Helper file to benchmark PyBullet and modular robotics

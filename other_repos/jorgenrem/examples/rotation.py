@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Example to test rotation of modules

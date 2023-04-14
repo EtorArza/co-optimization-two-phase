@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 3D Gym environment with a Colosseum like heightmap

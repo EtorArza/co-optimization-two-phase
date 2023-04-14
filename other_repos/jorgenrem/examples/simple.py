@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Simple example to show of how to start and simulate a modular robot

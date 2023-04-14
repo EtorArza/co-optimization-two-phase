@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Simple example to easy play with morphologies interactively

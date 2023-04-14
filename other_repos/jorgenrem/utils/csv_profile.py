@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Command line utility to extract profiling data from experiments into CSV files

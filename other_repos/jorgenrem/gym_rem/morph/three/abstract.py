@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 """
 Abstract 3D module
