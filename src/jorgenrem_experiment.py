@@ -15,38 +15,29 @@ def launch_one(experiment_index):
     main(no)
     os.chdir(previousDir)
 
-launch_one(6)
-
-
-
-exit(0)
 
 def launch_one_parameter_tuning(seed, default_inner_quantity):
     from NestedOptimization import Parameters, NestedOptimization
     previousDir = os.getcwd()
     os.chdir("other_repos/jorgenrem")
-    params = Parameters("gymrem2d", 1)
+    params = Parameters("jorgenrem", 1)
     params.seed = seed
     def return_filename():
         return f"paramtuning_{default_inner_quantity}_{seed}"
     params.get_result_file_name=return_filename
     params._default_inner_quantity = default_inner_quantity
-    params._default_inner_length = 100
     params._inner_quantity_proportion = 1.0 
     params._inner_length_proportion = 1.0
 
     params.print_parameters()
-    no = NestedOptimization("../../../results/gymrem2d/data", params)
-    sys.path.append(sys.path[0]+"/../other_repos/gymrem2d/ModularER_2D/")
+    no = NestedOptimization("../../results/jorgenrem/data", params)
+    sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
     print(sys.path)
-    import REM2D_main
-    from REM2D_main import setup, run2D
-    REM2D_main.save_data_animation = lambda dump_path, no, ind, tree_dpth, video_label: None
-    
-
-    config, dir = setup(no)
-    experiment = run2D(no,config,dir)
-    experiment.run(config)
+    from run import main
+    import modular_er.eval
+    modular_er.eval.save_data_animation = lambda dump_path, video_label, individual, controller, no, seconds, max_size, warmup, env: None
+    main(no)
+    os.chdir(previousDir)
 
 
 
@@ -64,17 +55,17 @@ if sys.argv[1] == "--local_launch_tuning":
 elif sys.argv[1] == "--visualize":
     from NestedOptimization import Parameters, NestedOptimization
 
-    params = Parameters("gymrem2d", int(sys.argv[2]))
+    params = Parameters("jorgenrem", int(sys.argv[2]))
     params.print_parameters()
 
-    no = NestedOptimization("../../../results/gymrem2d/data", params)
-    sys.path.append(sys.path[0]+"/../other_repos/gymrem2d/ModularER_2D/")
+    no = NestedOptimization("../../results/jorgenrem/data", params)
+    sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
     print(sys.path)
-    import REM2D_main
-    from REM2D_main import animate_from_dump
+    from modular_er.eval import animate_from_dump
 
-    animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
-    animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
+
+    animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
+    animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--tune":
     seeds = list(range(60))

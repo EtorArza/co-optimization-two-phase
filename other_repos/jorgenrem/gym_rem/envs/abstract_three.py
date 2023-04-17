@@ -40,7 +40,7 @@ class ArrayTerrain(object):
 class ModularEnv(gym.Env):
     """Abstract modular environment"""
 
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human','rgb_array']}
 
     def __init__(self, terrain=None):
         # Create pybullet interfaces
@@ -50,6 +50,8 @@ class ModularEnv(gym.Env):
         self.dt = 1. / 240.
         self.client.setAdditionalSearchPath(ASSET_PATH)
         self.terrain_type = terrain
+        self.render_first_call_done=False
+
         # Stored for user interactions
         self.morphology = None
         self.multi_id = None
@@ -117,12 +119,16 @@ class ModularEnv(gym.Env):
 
     def close(self):
         self.client.disconnect()
+        self.render_first_call_done=False
+
 
     def reset(self, morphology=None, max_size=None):
         # Disable rendering during spawning
         self.client.configureDebugVisualizer(pyb.COV_ENABLE_RENDERING, 0)
         # Reset the environment by running all setup code again
         self.setup()
+        self.render_first_call_done=False
+
         # Reset internal state
         self.morphology = None
         self.multi_id = None
@@ -276,24 +282,64 @@ class ModularEnv(gym.Env):
 
     def render(self, mode="human"):
         info = self.client.getConnectionInfo()
-        if info['connectionMethod'] != pyb.GUI and mode == 'human':
-            # Close current simulation and start new with GUI
-            self.close()
-            self.client = BulletClient(connection_mode=pyb.GUI)
-            # Disable rendering during spawning
-            self.client.configureDebugVisualizer(pyb.COV_ENABLE_RENDERING, 0)
-            # Reset if morphology is set
-            if self.morphology is not None:
-                self.reset(self.morphology)
+        if mode == "rgb_array":
+
+            RENDER_HEIGHT = 200
+            RENDER_WIDTH = 300
+            if not self.render_first_call_done:
+                self.close()
+                self.client = BulletClient(connection_mode=pyb.DIRECT)
+                if self.morphology is not None:
+                    self.reset(self.morphology)
+                self.render_first_call_done=True
+                self.view_matrix = self.client.computeViewMatrixFromYawPitchRoll(
+                    cameraTargetPosition=[0, 0, 0],
+                    distance=1,
+                    yaw=45,
+                    pitch=-30,
+                    roll=0,
+                    upAxisIndex=2
+                )
+                self.projection_matrix = self.client.computeProjectionMatrixFOV(
+                    fov=60, aspect=float(RENDER_WIDTH)/RENDER_HEIGHT,
+                    nearVal=0.1, farVal=100.0
+                )
+                self.client.getDebugVisualizerCamera()
+                self.client.resetDebugVisualizerCamera(
+                    cameraDistance=1, cameraYaw=45, cameraPitch=-30, cameraTargetPosition=[0, 0, 0]
+                )
             else:
-                self.setup()
-            # Configure viewport
-            self.client.configureDebugVisualizer(pyb.COV_ENABLE_GUI, 0)
-            self.client.configureDebugVisualizer(pyb.COV_ENABLE_PLANAR_REFLECTION, 1)
-            self.client.resetDebugVisualizerCamera(0.5, 50.0, -35.0, (0, 0, 0))
-            # Setup timing for correct sleeping when rendering
-            self._last_render = time.time()
-        elif info['connectionMethod'] == pyb.GUI:
+
+                robot_id = self.client.getBodyUniqueId(1)
+                robot_position, _ = self.client.getBasePositionAndOrientation(robot_id)
+                self.view_matrix = self.client.computeViewMatrixFromYawPitchRoll(
+                    cameraTargetPosition=robot_position,
+                    distance=1,
+                    yaw=45,
+                    pitch=-30,
+                    roll=0,
+                    upAxisIndex=2
+                )
+                self.projection_matrix = self.client.computeProjectionMatrixFOV(
+                    fov=60, aspect=float(RENDER_WIDTH)/RENDER_HEIGHT,
+                    nearVal=0.1, farVal=100.0
+                )
+                self.client.resetDebugVisualizerCamera(
+                    cameraDistance=1, cameraYaw=45, cameraPitch=-30, cameraTargetPosition=robot_position
+                )
+
+            # Get the camera information
+            
+
+            # Print the camera position
+            (_, _, rgbPixels, _, _) = self.client.getCameraImage(
+                width=RENDER_WIDTH,
+                height=RENDER_HEIGHT,
+                viewMatrix=self.view_matrix,
+                projectionMatrix=self.projection_matrix,
+                renderer=self.client.ER_TINY_RENDERER
+            )
+
             # Handle interaction with simulation
             self.handle_interaction()
             # Calculate time to sleep
@@ -303,6 +349,12 @@ class ModularEnv(gym.Env):
             if to_sleep > 0:
                 time.sleep(to_sleep)
             self._last_render = now
+            rgb = rgbPixels[:, :, :3]
+            
+
+
+            return rgb
+
         else:
             raise RuntimeError("Unknown pybullet mode ({}) or render mode ({})"
                                .format(info['connectionMethod'], mode))

@@ -112,7 +112,7 @@ class Parameters:
         elif framework_name == "jorgenrem":
             self.max_frames = 480000000 # max_frames=480000000 is the default value
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  3 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  10 # <- Need to do some parameter search!!!
             self._default_inner_length = 4800 # Represents the number of steps per controller tested
             self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length

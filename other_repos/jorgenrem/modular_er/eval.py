@@ -7,7 +7,8 @@ import gym
 import gym_rem
 import numpy as np
 import nevergrad as ng
-
+from matplotlib import animation
+from matplotlib import pyplot as plt
 
 def load(toolbox, settings, no):
     """Load evaluation function into toolbox"""
@@ -85,6 +86,25 @@ def from_array_to_ctrls(array, ctrls):
         ctrls[idx].offset = from_01_to_range(array[idx*4+ 1], offset_range)
 
 
+def save_frames_as_gif(frames, save_animation_path):
+    from matplotlib import pyplot as plt
+    print("saving animation...", end="")
+
+
+    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
+   
+
+    patch = plt.imshow(frames[0])
+    
+    plt.axis('off')
+
+    def animate(i):
+        patch.set_data(frames[i])
+
+    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=200)
+    anim.save(save_animation_path, writer='imagemagick', fps=30)
+    print("saved.")
+
 def train_individual(individual, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0', test=False):
     assert not no is None
     env = _get_env(env)
@@ -101,6 +121,7 @@ def train_individual(individual, no=None, seconds=10.0, max_size=None, warm_up=0
 
 
     episode_budget = no.get_inner_quantity()
+    assert episode_budget > 0 
     import warnings
     warnings.filterwarnings("ignore", message="DE algorithms are inefficient with budget < 60")
     parametrization = ng.p.Array(shape=(n,), lower=0.0, upper=1.0)
@@ -134,19 +155,27 @@ def animate_from_dump(dump_path):
     import pickle
     with open (dump_path, "rb") as f:
         video_label, individual,controller,no, seconds, max_size, warmup, env = pickle.load(f)
-    _evaluate_individual(individual, controller,no, seconds, max_size, warmup, env, save_animation = True, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
+    no.params._inner_length_proportion = 1.0
+    no.params._inner_quantity_proportion = 1.0
+
+    _evaluate_individual(individual, controller,no, seconds, max_size, warmup, env, save_animation = True, save_animation_path = f"results/jorgenrem/videos/{video_label}.gif")
 
 
 def _evaluate_individual(individual, controller, no=None, seconds=10.0, max_size=None, warm_up=0.0, env='ModularLocomotion3D-v0', save_animation=False, save_animation_path=None):
     """Evaluate the morphology in simulation"""
     assert not no is None
 
-    if save_animation:
-        assert not save_animation_path is None
+
     warm_up = 0.0
 
     env = _get_env(env)
     steps = no.get_inner_length()
+
+    if save_animation:
+        assert not save_animation_path is None
+        from tqdm import tqdm as tqdm
+        pbar = tqdm(total=steps/4)
+
     warm_up = int(warm_up / env.dt)
     # Create copy to spawn in simulation
     obs = env.reset(morphology=individual.morphology, max_size=max_size)
@@ -164,17 +193,29 @@ def _evaluate_individual(individual, controller, no=None, seconds=10.0, max_size
     rew = 0.0
     warm_up_rew = 0.0
     # Step simulation until done
+    frames = []
     for i in range(steps):
         obs = zip(*np.split(obs, 3))
         ctrl = np.array([ctrl(ob, i * env.dt) for ctrl, ob in zip(ctrls, obs)])
         obs, rew, _, _ = env.step(ctrl)
+
         if i <= warm_up:
             warm_up_rew = rew
         no.next_step()
-        # env.render("rgb_array")
+        if save_animation and i % 4 == 0:
+            pbar.update(1)
+            frame = env.render("rgb_array")
+            frames.append(frame)
+
+
+
 
     f = rew - warm_up_rew
     no.next_inner(f_partial=f)
+
+    if save_animation:
+        save_frames_as_gif(frames, save_animation_path=save_animation_path)
+
 
     return rew - warm_up_rew, env.morphology
 
