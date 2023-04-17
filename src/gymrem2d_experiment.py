@@ -42,7 +42,7 @@ def launch_one_parameter_tuning(seed, default_inner_quantity):
     params._inner_length_proportion = 1.0
 
     params.print_parameters()
-    no = NestedOptimization("../../../results/gymrem2d/data", params)
+    no = NestedOptimization("../../../results/gymrem2d/data", params, deletePreviousResults=True)
     sys.path.append(sys.path[0]+"/../other_repos/gymrem2d/ModularER_2D/")
     print(sys.path)
     import REM2D_main
@@ -83,26 +83,26 @@ elif sys.argv[1] == "--visualize":
     animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--tune":
-    seeds = list(range(60))
+    seeds = list(range(20))
     from itertools import product
-    from NestedOptimization import convert_from_seconds
+    from NestedOptimization import convert_from_seconds, experimentProgressTracker
     import joblib
 
-    parameter_combs = list(product(seeds, [1, 8, 16, 32, 64, 512]))
-    n = len(parameter_combs)
-    ref = time.time()
 
-    with open("gymrem2d_progress_report.txt","w") as f:
-        f.write("start.\n")
-
-
-    for i in range(n):
+    parameter_combs = list(product(seeds, [1, 8, 32, 128, 512]))
+    progress_filename = "gymrem2d_progress_report.txt"
+    start_index = 0
+    prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
+    while not prog.done:
+        i = prog.get_next_index()
         seed, default_inner_quantity = parameter_combs[i]
-        os.system(f"python src/gymrem2d_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
-        elapsed_time = time.time() - ref
-        time_left = elapsed_time / (i+1) * n - elapsed_time
-        with open("gymrem2d_progress_report.txt","a") as f:
-            f.write(f"{i/n}, {convert_from_seconds(time_left)} | {i}, {convert_from_seconds(elapsed_time)}\n")
+        print("seed, default_inner_quantity = ", seed, default_inner_quantity)
+        exit_status = os.system(f"python src/gymrem2d_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
+        if exit_status == 0:
+            prog.mark_index_done(i)
+        else:
+            print(exit_status)
+            exit(1)
 
 
 

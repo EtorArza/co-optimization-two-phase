@@ -342,11 +342,16 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_folder_path: str, params: Parameters):
+    def __init__(self, result_file_folder_path: str, params: Parameters, deletePreviousResults=False):
         print("Perhaps if we change the project to: how can we set the inner length and quantity in an online manner? BC that is what we will ultimately need to do for the CONFLOT project...")
         self.params = params
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
+        if deletePreviousResults:
+            if os.path.isfile(self.result_file_path):
+                os.remove(self.result_file_path)
+        else: 
+            assert not os.path.isfile(self.result_file_path), f"File {self.result_file_path} already exists. You can udse deletePreviousResults=True to delete previous results."
         self.max_frames = params.max_frames
         assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
 
@@ -560,4 +565,54 @@ class NestedOptimization:
             print("Progress:", self.step / self.max_frames, ", left:", convert_from_seconds((self.sw.get_time() + self.sw_reeval.get_time()) / self.step * (self.max_frames - self.step)),", time:", datetime.now(), flush=True)
 
 
+class experimentProgressTracker:
 
+    def __init__(self, progress_filename, start_index, max_index):
+
+        from pathlib import Path
+        import pandas as pd
+        import time
+        self.progress_filename, self.start_index, self.max_index = progress_filename, start_index, max_index
+        self.n_experiments_done_this_session = 0
+
+        self.start_ref = time.time()
+        self.last_ref = dict()
+        self.done = False
+        
+        path = Path('./'+ progress_filename)
+        if not path.is_file():
+            with open(progress_filename,"a") as f:
+                print("idx", file=f)
+
+        df = pd.read_csv(progress_filename)
+        self.done_idx_list = []
+        if df.shape[0] > 0:
+            self.done_idx_list = list(df["idx"])
+
+
+        self.done_idx_list += [i for i in range(start_index) if i not in self.done_idx_list]
+        self.done_idx_list.sort()
+
+        print(self.done_idx_list)
+    
+    def get_next_index(self):
+        for i in range(self.max_index):
+            if not i in self.done_idx_list:
+                self.last_ref[i] = time.time()
+                self.done_idx_list.append(i)
+                return i
+        self.done = True
+        print("No more experiments left.")
+        return None
+    
+    def mark_index_done(self, i):
+        assert time.time() - self.last_ref[i] > 7.0
+        self.n_experiments_done_this_session += 1
+        n_experiments_left = self.max_index - len(self.done_idx_list)
+        elapsed_time = time.time() - self.start_ref
+        time_left = elapsed_time / self.n_experiments_done_this_session * n_experiments_left
+
+        with open(self.progress_filename+"_log.txt","a") as f:
+            f.write(f"{i},{n_experiments_left},{convert_from_seconds(time_left)}, {convert_from_seconds(elapsed_time)}\n")
+        with open(self.progress_filename,"a") as f:
+            print(i, file=f)
