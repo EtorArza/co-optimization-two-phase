@@ -600,6 +600,7 @@ class experimentProgressTracker:
             if not i in self.done_idx_list:
                 self.last_ref[i] = time.time()
                 self.done_idx_list.append(i)
+                print("------------\nWorking on experiment",i,"\n--------------")
                 return i
         self.done = True
         print("No more experiments left.")
