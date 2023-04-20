@@ -17,8 +17,16 @@ def launch_one(experiment_index):
     os.chdir(previousDir)
 
 
-def launch_one_parameter_tuning(seed, default_inner_quantity):
+def launch_one_parameter_tuning(i):
+    from itertools import product
     from NestedOptimization import Parameters, NestedOptimization
+
+    seeds_tune = list(range(20))
+    tuning_parameter_combs = list(product(seeds_tune, [1, 8, 32, 128, 512]))
+
+    seed, default_inner_quantity = tuning_parameter_combs[i]
+    print("seed, default_inner_quantity = ", seed, default_inner_quantity)
+
     previousDir = os.getcwd()
     os.chdir("other_repos/jorgenrem")
     params = Parameters("jorgenrem", 1)
@@ -48,11 +56,11 @@ if sys.argv[1] == "--local_launch":
     import time
     launch_one(int(sys.argv[2]))
 
-if sys.argv[1] == "--local_launch_tuning":
+if sys.argv[1] == "--local_launch_tune":
     import itertools
     import time
-    assert len(sys.argv) == 4
-    launch_one_parameter_tuning(int(sys.argv[2]), int(sys.argv[3]))
+    assert len(sys.argv) == 3
+    launch_one_parameter_tuning(int(sys.argv[2]))
 
 elif sys.argv[1] == "--visualize":
     from NestedOptimization import Parameters, NestedOptimization
@@ -69,23 +77,19 @@ elif sys.argv[1] == "--visualize":
     animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
     animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
-elif sys.argv[1] == "--tune":
-    seeds = list(range(20))
-    from itertools import product
+elif sys.argv[1] == "--local_launch_tune_sequentially":
     from NestedOptimization import convert_from_seconds, experimentProgressTracker
     import joblib
     import pandas as pd
     import time
 
-    parameter_combs = list(product(seeds, [1, 8, 32, 128, 512]))
     progress_filename = "jorgenremtune_progress_report.txt"
     start_index = 0
-    prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
+    end_index = 100
+    prog = experimentProgressTracker(progress_filename, start_index, end_index)
     while not prog.done:
         i = prog.get_next_index()
-        seed, default_inner_quantity = parameter_combs[i]
-        print("seed, default_inner_quantity = ", seed, default_inner_quantity)
-        exit_status = os.system(f"python src/jorgenrem_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
+        exit_status = os.system(f"python src/jorgenrem_experiment.py --local_launch_tuning {i}")
         if exit_status == 0:
             prog.mark_index_done(i)
         else:
