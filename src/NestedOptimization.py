@@ -325,7 +325,7 @@ class NestedOptimization:
     iteration = 0
     evaluation = 0
     done = False
-    write_header = True
+    initialize_result_file = True
     iterations_since_best_found = 0
     is_reevaluating_flag = False
     ESNOF_ARRAY_SIZE = 2000
@@ -347,11 +347,7 @@ class NestedOptimization:
         self.params = params
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
-        if deletePreviousResults:
-            if os.path.isfile(self.result_file_path):
-                os.remove(self.result_file_path)
-        else: 
-            assert not os.path.isfile(self.result_file_path), f"File {self.result_file_path} already exists. You can udse deletePreviousResults=True to delete previous results."
+        self.deletePreviousResults = deletePreviousResults
         self.max_frames = params.max_frames
         assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
 
@@ -531,26 +527,41 @@ class NestedOptimization:
             self.mutex.release()
 
 
+    def check_result_file_and_write_header(self):
+        if self.deletePreviousResults:
+            if os.path.isfile(self.result_file_path):
+                os.remove(self.result_file_path)
+            if os.path.isfile(self.result_file_path):
+                print(f"File {self.result_file_path} already exists and could not be deleted.")
+                raise FileExistsError()
+        else:
+            if os.path.isfile(self.result_file_path):
+                print(f"File {self.result_file_path} already exists. You can udse deletePreviousResults=True to delete previous results.")
+                raise FileExistsError()
+        with open(self.result_file_path, "a") as f:
+            f.write("level,evaluation,f_best,f,controller_size,controller_size2,morphology_size,time,time_including_reeval,step,step_including_reeval\n")
+        self.initialize_result_file = False
 
     def write_to_file(self, level):
         self.mutex.acquire()
-        try:
-            assert os.path.isdir(os.path.dirname(os.path.abspath(self.result_file_path)))
+        if self.initialize_result_file:
+            try:
+                assert os.path.isdir(os.path.dirname(os.path.abspath(self.result_file_path)))
+                self.check_result_file_and_write_header()
+            except AssertionError:
+                print(f"ERROR: result directory {os.path.dirname(os.path.abspath(self.result_file_path))} does not exist. Exit...")
+                exit(1)
+            except FileExistsError:
+                print(f"ERROR: result file {os.path.dirname(os.path.abspath(self.result_file_path))} already exists and was not deleted. Exit...")
+                exit(1)
 
-            with open(self.result_file_path, "a") as f:
-                if self.write_header:
-                    f.write("level,evaluation,f_best,f,controller_size,controller_size2,morphology_size,time,time_including_reeval,step,step_including_reeval\n")
-                    self.write_header = False
-                if level == 2:
-                    f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
-                elif level == 3:
-                    f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
-        except AssertionError:
-            print(f"ERROR: directory {os.path.dirname(os.path.abspath(self.result_file_path))} does not exist, can't save results. Exit...")
-            exit(1)
+        with open(self.result_file_path, "a") as f:
+            if level == 2:
+                f.write(f"{level},{self.evaluation},{self.f_best},{self.f_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+            elif level == 3:
+                f.write(f"{level},{self.evaluation},{self.f_reeval_best},{self.f_reeval_observed},{self.controller_size},{self.controller_size2},{self.morphology_size},{self.sw.get_time()},{self.sw.get_time() + self.sw_reeval.get_time()},{self.step},{self.step + self.reevaluating_steps}\n")
+        self.mutex.release()
 
-        finally:
-            self.mutex.release()
 
     def get_seed(self):
         return self.params.seed

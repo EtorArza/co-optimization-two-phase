@@ -90,7 +90,7 @@ elif sys.argv[1] == "--tune":
 
 
     parameter_combs = list(product(seeds, [1, 8, 32, 128, 512]))
-    progress_filename = "gymrem2d_progress_report.txt"
+    progress_filename = "gymrem2d_progress.txt"
     start_index = 0
     prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
     while not prog.done:
