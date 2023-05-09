@@ -101,7 +101,12 @@ class Parameters:
             self.ESNOF_t_max = self._default_inner_length
 
         elif framework_name == "gymrem2d":
-            self.max_frames = 4000000 # max_frames=4000000 is the default value on average
+            # max_frames=3002177 is the default value on average. However, the framework 
+            # itself is not a nested optimization approach. The framework by default evaluates 10000.
+            # using 3002177 frames would not be enough because each morphology is now evaluated multiple times.
+            # hence, we consider a budget x4 of the original, 
+
+            self.max_frames = 12008708
             self.env_name_list = ["default"]
             self._default_inner_quantity =  50 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage

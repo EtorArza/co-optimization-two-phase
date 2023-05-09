@@ -104,6 +104,23 @@ elif sys.argv[1] == "--tune":
             print(exit_status)
             exit(1)
 
+elif sys.argv[1] == "--get_frames_by_default":
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+
+    def get_n_frames(seed):
+        with open(f"/home/paran/Dropbox/BCAM/07_estancia_1/code/results/data/veenstra/problemspecific_{seed}.txt", "r") as f:
+            lines = f.readlines()
+            while len(lines[-1]) < 50:
+                line = lines.pop()
+            line = lines.pop()
+            return int(line.split(",")[3])
+
+
+    frames = np.array([get_n_frames(seed) for seed in range(2,23)])
+    print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames.")
+
 
 
 elif sys.argv[1] == "--plot_tune":
@@ -116,6 +133,7 @@ elif sys.argv[1] == "--plot_tune":
         return (s.split(start))[1].split(end)[0]
 
     exp_dir = "results/gymrem2d/data"
+    fig_dir = "results/gymrem2d/figures"
 
     rows = []
     for csv_name in os.listdir(exp_dir):
@@ -154,20 +172,21 @@ elif sys.argv[1] == "--plot_tune":
     plt.violinplot(dataset = [df[df.innerquantity == el]["f"].values for el in inner_quantity_list],showmedians=True)
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("f")
-    plt.show()
+    plt.savefig(fig_dir+r"/f_tune.pdf")
     plt.close()
 
     plt.violinplot(dataset = [df[df.innerquantity == el]["nrows"].values for el in inner_quantity_list],showmedians=True)
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("nrows")
-    plt.show()
+    plt.yscale("log")
+    plt.savefig(fig_dir+r"/nrows_tune.pdf")
     plt.close()
 
     plt.violinplot(dataset = [df[df.innerquantity == el]["step"].values for el in inner_quantity_list],showmedians=True)
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("step")
     plt.yscale("log")
-    plt.show()
+    plt.savefig(fig_dir+r"/step_tune.pdf")
     plt.close()
 
 else:
