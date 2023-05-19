@@ -89,7 +89,7 @@ elif sys.argv[1] == "--tune":
     import joblib
 
 
-    parameter_combs = list(product(seeds, [1, 8, 32, 128, 512]))
+    parameter_combs = list(product(seeds, [1, 8, 16, 32, 128, 512]))
     progress_filename = "gymrem2d_progress.txt"
     start_index = 0
     prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
