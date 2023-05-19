@@ -95,6 +95,8 @@ elif sys.argv[1] == "--tune":
     prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
     while not prog.done:
         i = prog.get_next_index()
+        if prog.done:
+            exit(0)
         seed, default_inner_quantity = parameter_combs[i]
         print("seed, default_inner_quantity = ", seed, default_inner_quantity)
         exit_status = os.system(f"python src/gymrem2d_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
