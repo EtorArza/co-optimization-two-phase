@@ -103,6 +103,16 @@ def read_comparison_parameter_csvs(csv_folder_path):
             df = pd.concat([df, n_df.copy()], ignore_index=True)
 
 
+    # Check how many steps where computed.
+    indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
+    max_only_df = df.loc[indices_with_highest_step,]
+    acceptable_rows = max_only_df[max_only_df["step"] > np.mean(max_only_df["step"]) * 0.95]
+
+    print("Number of rows per class: ", np.array(max_only_df.groupby(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"]).count()["env_name"]))
+    print("Number of rows per class after pruning crashed exp.: ", np.array(acceptable_rows.groupby(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"]).count()["env_name"]))
+
+    df = df[df["experiment_index"].isin(acceptable_rows["experiment_index"])]
+
 
     # # Adjust runtimes based on resumable dimension:
     # assert resumable_dimension in ("length", "quantity", "neither", None) 
