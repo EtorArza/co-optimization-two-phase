@@ -87,7 +87,8 @@ class ind_controller:
         self.MAX_OFFSET = 3.14159265358979
         self.MAX_FREQUENCY = 0.1
         self.MAX_PHASE = 1.0
-        self.params_array = np.random.uniform(size=len(ind.genome.moduleList)*4)
+        rng = np.random.RandomState(seed)
+        self.params_array = rng.uniform(size=len(ind.genome.moduleList)*4)
         self.best_f = -1e9
         self.best_x = None
 
@@ -124,7 +125,7 @@ class ind_controller:
 
 
     def initialize_cma_es(self):
-        self.cmaes = cma.CMAEvolutionStrategy(self.params_array, 0.33, inopts={'bounds': [0, 1],'seed': self.seed,'maxiter':1e9, 'maxfevals':1e9})
+        self.cmaes = cma.CMAEvolutionStrategy(self.params_array, 0.33, {'bounds': [0, 1],'seed': self.seed,'maxiter':1e9, 'maxfevals':1e9})
         self._new_gen_cmaes()
 
 
@@ -350,7 +351,8 @@ class run2D():
             self.PLOT_TREE = False
 
     def train_controller(self, ind, seed): # Train controller in ind and return f
-        ctr = ind_controller(ind, seed)
+        real_seed = abs(seed) + 1 # cma generates random seed when seed = 0. 
+        ctr = ind_controller(ind, real_seed)
         ctr.initialize_cma_es()
         f_best = -10e10
         for i in range(self.no.get_inner_quantity()):
