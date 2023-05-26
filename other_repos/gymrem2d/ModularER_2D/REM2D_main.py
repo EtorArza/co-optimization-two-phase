@@ -352,13 +352,16 @@ class run2D():
     def train_controller(self, ind, seed): # Train controller in ind and return f
         ctr = ind_controller(ind, seed)
         ctr.initialize_cma_es()
+        f_best = -10e10
         for i in range(self.no.get_inner_quantity()):
             ctr.load_next_solution_to_ind(ind)
             f = evaluate(ind, self.no,  TestMode=False, save_animation = False, TREE_DEPTH = self.TREE_DEPTH)
+            if f > f_best:
+                f_best = f
             self.no.next_inner(f)
             ctr.get_solution_fitness_cmaes(f)
         ctr.load_best_solution_to_ind(ind)
-        self.no.next_outer(f, len(ind.genome.moduleList), -1, ind.genome.n_modules)
+        self.no.next_outer(f_best, len(ind.genome.moduleList), -1, ind.genome.n_modules)
         return ctr.best_f
 
 
