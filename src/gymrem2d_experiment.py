@@ -171,7 +171,7 @@ elif sys.argv[1] == "--plot_tune":
         ax.set_xlim(0.25, len(labels) + 0.75)
         ax.set_xlabel('Controllers evaluated per morphology')
 
-    plt.violinplot(dataset = [df[df.innerquantity == el]["f"].values for el in inner_quantity_list],showmedians=True)
+    plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list])
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("f")
     plt.savefig(fig_dir+r"/f_tune.pdf")
