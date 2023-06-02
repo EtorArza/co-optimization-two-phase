@@ -22,7 +22,7 @@ def launch_one_parameter_tuning(i):
     from NestedOptimization import Parameters, NestedOptimization
 
     seeds_tune = list(range(20))
-    tuning_parameter_combs = list(product(seeds_tune, [1, 8, 32, 128, 512]))
+    tuning_parameter_combs = list(product(seeds_tune, [1, 8, 16, 32, 128, 512]))
 
     seed, default_inner_quantity = tuning_parameter_combs[i]
     print("seed, default_inner_quantity = ", seed, default_inner_quantity)
