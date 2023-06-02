@@ -30,9 +30,15 @@ date
 python src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID
 echo -n "Done src/evogym_experiment.py --local_launch $SLURM_ARRAY_TASK_ID | "
 date
+
+n_visualizations=45
+if [ "$SLURM_ARRAY_TASK_ID" -gt "$n_visualizations" ]; then
 echo -n "Generating visualization |"
 date
 xvfb-run -a python src/evogym_experiment.py --visualize $SLURM_ARRAY_TASK_ID
 echo -n "Done generating evogym_experiment |"
 date
+fi
+
+
 echo "--"
