@@ -54,14 +54,24 @@ def launch_one_parameter_tuning(seed, default_inner_quantity):
     experiment = run2D(no,config,dir)
     experiment.run(config)
 
+if sys.argv[1] == "--clean":
+    import os
+    os.system("rm -f gymrem2d_local_launch.txt")
+    os.system("rm -f gymrem2d_local_launch.txt_log.txt")
+    os.system("rm -f gymrem2d_local_launch.txt")
+    os.system("rm -f results/gymrem2d/data/reevaleachvsend_*")
+    os.system("rm -f results/gymrem2d/figures/*")
+    os.system("rm -f results/gymrem2d/videos/*")
+    os.system("rm -f other_repos/gymrem2d/dumps_for_animation/anim*")
 
+    
 
-if sys.argv[1] == "--local_launch":
+elif sys.argv[1] == "--local_launch":
     import itertools
     import time
     launch_one(int(sys.argv[2]))
 
-if sys.argv[1] == "--local_launch_tuning":
+elif sys.argv[1] == "--local_launch_tuning":
     import itertools
     import time
     assert len(sys.argv) == 4
@@ -114,6 +124,7 @@ elif sys.argv[1] == "--local_launch_all":
     from NestedOptimization import Parameters, NestedOptimization, experimentProgressTracker
     params = Parameters("gymrem2d", 1)
     n = params.get_n_experiments()
+    n_visualize = 21
     threads = 8
     prog = experimentProgressTracker("gymrem2d_local_launch.txt",0,n)
 
@@ -129,6 +140,8 @@ elif sys.argv[1] == "--local_launch_all":
     import joblib
     results = Parallel(n_jobs=threads)(delayed(launch_next)(prog) for _ in range(n))
 
+    for i in range(n_visualize):
+        os.system(f"python src/gymrem2d_experiment.py --visualize {i}")
 
 
 
