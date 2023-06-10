@@ -1,9 +1,10 @@
 import time
-from threading import Thread, Lock
+from threading import Lock
 import numpy as np
 from datetime import datetime
 import os
 import functools
+from pathlib import Path
 
 
 # https://stackoverflow.com/a/32238541/13012332
@@ -582,51 +583,28 @@ class NestedOptimization:
 
 
 import os
-class lock(object):
-    def __init__(self, file_name):
-        self.lock_file_name = file_name + ".lock"
-        self.start_time = time.time()
+import fcntl
+
+import fcntl
+
+class Lock:
+    def __init__(self, filenames):
+        if isinstance(filenames, str):
+            self.filenames = [filenames]
+        self.files = [open(filename, 'r+') for filename in self.filenames]
 
     def __enter__(self):
-        timeout = 10  # Maximum timeout in seconds
-
-        while True:
-            if not os.path.exists(self.lock_file_name):
-                try:
-                    with open(self.lock_file_name, 'x') as f:
-                        print(f"Lock adquired by thread {threading.get_ident()}.",  flush=True)
-                        return
-                except FileExistsError:
-                    continue
-
-            elif time.time() - self.start_time >= timeout:
-                raise TimeoutError(f"Thread {threading.get_ident()} failed to acquire lock within the timeout period.")
-
-            else:
-
-                print(f"Thread {threading.get_ident()} wating {time.time() - self.start_time}...") 
-                time.sleep(0.1)  # Sleep for a short duration before retrying
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        timeout = 10  # Maximum timeout in seconds
-        exit_time = time.time()
-        time.sleep(0.5)  # Sleep for a short duration before trying to delete lock file.
-        if not os.path.exists(self.lock_file_name):
-            print(f"File seems to not exist for thread {threading.get_ident()} on exit.", flush=True)
-            exit(1)
+        for file in self.files:
+            fcntl.flock(file.fileno(), fcntl.LOCK_EX)
+        if len(self.filenames) == 1:
+            return self.files[0]
         else:
-            print(f"Thread {threading.get_ident()} deleting lock file...", flush=True)
-            while os.path.exists(self.lock_file_name): 
-                os.remove(self.lock_file_name)
-                time.sleep(0.1)
-                if time.time() - exit_time >= timeout:
-                    raise TimeoutError(f"Thread {threading.get_ident()} failed to delete lock file.")
-            print(f"Deleted lock. Lock lasted {time.time() -  self.start_time} s", flush=True)
-                
+            return self.files
 
-
-
-        
+    def __exit__(self, exc_type, exc_value, traceback):
+        for file in self.files:
+            fcntl.flock(file.fileno(), fcntl.LOCK_UN)
+            file.close()
 
 
 
@@ -636,9 +614,7 @@ class experimentProgressTracker:
 
     def __init__(self, progress_filename, start_index, max_index):
 
-        from pathlib import Path
-        import pandas as pd
-        import time
+        self.min_exp_time = 0.0
         self.progress_filename, self.start_index, self.max_index = progress_filename, start_index, max_index
         self.n_experiments_done_this_session = 0
 
@@ -647,40 +623,58 @@ class experimentProgressTracker:
         self.done = False
         
         path = Path('./'+ progress_filename)
-        if not path.is_file():
+        if not path.is_file() or os.stat(path).st_size < 4:
             with open(progress_filename,"a") as f:
-                print("idx", file=f)
-
-        df = pd.read_csv(progress_filename)
-        self.done_idx_list = []
-        if df.shape[0] > 0:
-            self.done_idx_list = list(df["idx"])
+                print("idx,done", file=f)
+        self._clean_unfinished_jobs_from_log()
 
 
-        self.done_idx_list += [i for i in range(start_index) if i not in self.done_idx_list]
-        self.done_idx_list.sort()
+    def _clean_unfinished_jobs_from_log(self):
+        with Lock(self.progress_filename) as f:
+            lines = f.readlines()
+            f.seek(0)
+            processed_lines = [line for line in lines if line.strip().endswith(',1\n')]
+            self.n_experiments_left = len(processed_lines)-1
+            f.writelines(["idx,done\n"]+processed_lines)
+            f.truncate()
 
-        print(self.done_idx_list)
-    
-    def get_next_index(self):
-        for i in range(self.max_index):
-            if not i in self.done_idx_list:
-                self.last_ref[i] = time.time()
-                self.done_idx_list.append(i)
-                print("------------\nWorking on experiment",i,"\n--------------")
-                return i
-        self.done = True
-        print("No more experiments left.")
+    def _get_next_index(self):
+        with Lock(self.progress_filename) as f:
+            content = f.read()
+            for i in range(self.max_index):
+                if f"{i}," not in content:
+                    self.last_ref[i] = time.time()
+                    print(f"{i},0", file=f, flush=True) # Mark experiment index in progress
+                    return i
         return None
+
+    def get_next_index(self):
+        i = self._get_next_index()
+        if i==None:
+            self.done = True
+            print("No more experiments left.")
+            exit(0)
+
+        print("------------\nWorking on experiment",i,"\n--------------")
+        return i
     
     def mark_index_done(self, i):
-        assert time.time() - self.last_ref[i] > 7.0
+        if self.done:
+            exit(0)
+        assert time.time() - self.last_ref[i] > self.min_exp_time
         self.n_experiments_done_this_session += 1
-        n_experiments_left = self.max_index - len(self.done_idx_list)
+        self.n_experiments_left -= 1
+        n_experiments_left = self.max_index - self.n_experiments_left
         elapsed_time = time.time() - self.start_ref
         time_left = elapsed_time / self.n_experiments_done_this_session * n_experiments_left
 
-        with open(self.progress_filename+"_log.txt","a") as f:
-            f.write(f"{i},{n_experiments_left},{convert_from_seconds(time_left)}, {convert_from_seconds(elapsed_time)}\n")
-        with open(self.progress_filename,"a") as f:
-            print(i, file=f)
+        with Lock(self.progress_filename) as f:
+            with open(self.progress_filename+"_log.txt","a") as f_log:
+                f_log.write(f"{i},{n_experiments_left},{convert_from_seconds(time_left)}, {convert_from_seconds(elapsed_time)}\n")
+            lines = []
+            lines = f.readlines()
+            index = lines.index(f"{i},0\n")
+            lines[index] = f"{i},1\n"
+            f.seek(0)
+            f.truncate()
+            f.writelines(lines)

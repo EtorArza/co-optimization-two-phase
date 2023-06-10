@@ -106,6 +106,33 @@ elif sys.argv[1] == "--tune":
             print(exit_status)
             exit(1)
 
+
+elif sys.argv[1] == "--local_launch_all":
+    
+    from itertools import product
+    import joblib
+    from NestedOptimization import Parameters, NestedOptimization, experimentProgressTracker
+    params = Parameters("gymrem2d", 1)
+    n = params.get_n_experiments()
+    threads = 8
+    prog = experimentProgressTracker("gymrem2d_local_launch.txt",0,n)
+
+    def launch_next(prog: experimentProgressTracker):
+        i = prog.get_next_index()
+        exit_status = os.system(f"python src/gymrem2d_experiment.py --local_launch {i}")
+        if exit_status != 0:
+            print(exit_status)
+            exit(1)
+        else:
+            prog.mark_index_done(i)
+
+    import joblib
+    results = Parallel(n_jobs=threads)(delayed(launch_next)(prog) for _ in range(n))
+
+
+
+
+
 elif sys.argv[1] == "--get_frames_by_default":
     import numpy as np
     from matplotlib import pyplot as plt
