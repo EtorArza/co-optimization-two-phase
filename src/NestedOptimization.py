@@ -594,11 +594,10 @@ class lock(object):
             if not os.path.exists(self.lock_file_name):
                 try:
                     with open(self.lock_file_name, 'x') as f:
-                        print(f"Lock adquired by thread {threading.get_ident()}.", file=f, flush=True)
                         print(f"Lock adquired by thread {threading.get_ident()}.",  flush=True)
                         return
                 except FileExistsError:
-                    pass
+                    continue
 
             elif time.time() - self.start_time >= timeout:
                 raise TimeoutError(f"Thread {threading.get_ident()} failed to acquire lock within the timeout period.")
@@ -611,22 +610,19 @@ class lock(object):
     def __exit__(self, exception_type, exception_value, traceback):
         timeout = 10  # Maximum timeout in seconds
         exit_time = time.time()
-        while True:
-            if not os.path.exists(self.lock_file_name):
-                print("File seems to not exist on exit.", flush=True)
-                time.sleep(0.1)  # Sleep for a short duration before retrying
+        time.sleep(0.5)  # Sleep for a short duration before trying to delete lock file.
+        if not os.path.exists(self.lock_file_name):
+            print(f"File seems to not exist for thread {threading.get_ident()} on exit.", flush=True)
+            exit(1)
+        else:
+            print(f"Thread {threading.get_ident()} deleting lock file...", flush=True)
+            while os.path.exists(self.lock_file_name): 
+                os.remove(self.lock_file_name)
+                time.sleep(0.1)
                 if time.time() - exit_time >= timeout:
-                    raise TimeoutError(f"Thread {threading.get_ident()} failed to delete lock file. Lock file does not exist.")
-
-            else:
-                print(f"Thread {threading.get_ident()} deleting lock file...", flush=True)
-                while os.path.exists(self.lock_file_name): 
-                    os.remove(self.lock_file_name)
-                    time.sleep(0.1)
-                    if time.time() - exit_time >= timeout:
-                        raise TimeoutError(f"Thread {threading.get_ident()} failed to delete lock file.")
-                print(f"Deleted lock. Lock lasted {time.time() -  self.start_time} s", flush=True)
-                break
+                    raise TimeoutError(f"Thread {threading.get_ident()} failed to delete lock file.")
+            print(f"Deleted lock. Lock lasted {time.time() -  self.start_time} s", flush=True)
+                
 
 
 
