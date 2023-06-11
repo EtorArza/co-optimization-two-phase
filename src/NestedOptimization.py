@@ -540,6 +540,7 @@ class NestedOptimization:
             if os.path.isfile(self.result_file_path):
                 print(f"File {self.result_file_path} already exists and could not be deleted.")
                 raise FileExistsError()
+            self.deletePreviousResults = False
         else:
             if os.path.isfile(self.result_file_path):
                 print(f"File {self.result_file_path} already exists. You can udse deletePreviousResults=True to delete previous results.")

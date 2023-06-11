@@ -39,7 +39,7 @@ def launch_one_parameter_tuning(i):
     params._inner_length_proportion = 1.0
 
     params.print_parameters()
-    no = NestedOptimization("../../results/jorgenrem/data", params, deletePreviousResults=True)
+    no = NestedOptimization("../../results/jorgenrem/data", params, deletePreviousResults=False)
     sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
     print(sys.path)
     from run import main
