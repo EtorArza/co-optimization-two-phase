@@ -348,13 +348,14 @@ class NestedOptimization:
     mutex = Lock()
 
 
-    def __init__(self, result_file_folder_path: str, params: Parameters, deletePreviousResults=False):
+    def __init__(self, result_file_folder_path: str, params: Parameters, deletePreviousResults=False, limit_the_amount_of_written_lines=False):
         print("Perhaps if we change the project to: how can we set the inner length and quantity in an online manner? BC that is what we will ultimately need to do for the CONFLOT project...")
         self.params = params
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
         self.deletePreviousResults = deletePreviousResults
         self.max_frames = params.max_frames
+        self.limit_the_amount_of_written_lines = limit_the_amount_of_written_lines 
         assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
 
 
@@ -404,7 +405,10 @@ class NestedOptimization:
         if self.params.experiment_mode in ("reevaleachvsend", "adaptstepspermorphology") or not self.ESNOF_stop:
             self.check_if_best(level=2)
         self.ESNOF_reset_for_next_solution()
-        self.write_to_file(level=2)
+        if self.limit_the_amount_of_written_lines and self.step < 0.99 * self.max_frames and not self.is_reevaluating_flag:
+            pass # we skip writing result.
+        else:
+            self.write_to_file(level=2)
         self.print_progress()
 
 

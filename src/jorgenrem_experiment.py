@@ -1,6 +1,16 @@
 import sys
 import os
 
+if sys.argv[1] == "--clean":
+    os.system("rm -f results/jorgenrem/data/*")
+    os.system("rm -f results/jorgenrem/figures/*")
+    os.system("rm -f results/jorgenrem/videos/*")
+    os.system("rm -f other_repos/jorgenrem/dumps_for_animation/anim*")
+    print("Cleaned experiment files.")
+    exit(0)
+
+
+
 
 
 def launch_one(experiment_index):
@@ -39,7 +49,7 @@ def launch_one_parameter_tuning(i):
     params._inner_length_proportion = 1.0
 
     params.print_parameters()
-    no = NestedOptimization("../../results/jorgenrem/data", params, deletePreviousResults=False)
+    no = NestedOptimization("../../results/jorgenrem/data", params, deletePreviousResults=False, limit_the_amount_of_written_lines=True if default_inner_quantity in [1,8] else False)
     sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
     print(sys.path)
     from run import main
@@ -56,7 +66,7 @@ if sys.argv[1] == "--local_launch":
     import time
     launch_one(int(sys.argv[2]))
 
-if sys.argv[1] == "--local_launch_tune":
+elif sys.argv[1] == "--local_launch_tune":
     import itertools
     import time
     assert len(sys.argv) == 3
