@@ -358,13 +358,6 @@ class NestedOptimization:
         assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
 
 
-    def print_to_result_file(self, msg_string):
-        self.mutex.acquire()
-        try:
-            with open(self.result_file_path, "a") as f:
-                    f.write(msg_string)
-        finally:
-            self.mutex.release()
 
     def next_step(self):
         if self.is_reevaluating_flag:
