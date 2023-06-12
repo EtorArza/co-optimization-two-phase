@@ -5,7 +5,8 @@ if sys.argv[1] == "--clean":
     import os
     os.system("rm -f gymrem2d_local_launch.txt")
     os.system("rm -f gymrem2d_local_launch.txt_log.txt")
-    os.system("rm -f gymrem2d_local_launch.txt")
+    os.system("rm -f gymrem2d_progress_tune.txt")
+    os.system("rm -f gymrem2d_progress_tune.txt_log.txt")
     os.system("rm -f results/gymrem2d/data/*")
     os.system("rm -f results/gymrem2d/figures/*")
     os.system("rm -f results/gymrem2d/videos/*")
