@@ -151,17 +151,20 @@ elif sys.argv[1] == "--get_frames_by_default":
     from matplotlib import pyplot as plt
 
 
-    def get_n_frames(seed):
+    def get_n_frames_and_evals(seed):
         with open(f"/home/paran/Dropbox/BCAM/07_estancia_1/code/results/data/veenstra/problemspecific_{seed}.txt", "r") as f:
             lines = f.readlines()
             while len(lines[-1]) < 50:
                 line = lines.pop()
             line = lines.pop()
-            return int(line.split(",")[3])
+            return int(line.split(",")[3]), (int(line.split(",")[4]) + 1) * 100
 
 
-    frames = np.array([get_n_frames(seed) for seed in range(2,23)])
-    print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames.")
+    frames = np.array([get_n_frames_and_evals(seed)[0] for seed in range(2,23)])
+    frames_per_eval = np.array([get_n_frames_and_evals(seed)[0] / get_n_frames_and_evals(seed)[1] for seed in range(2,23)])
+    
+    print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames in total.")
+    print("On average, the default gymrem2d experiment uses", np.mean(frames_per_eval), "frames per evaluated controller.")
 
 
 
