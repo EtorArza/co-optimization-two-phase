@@ -1,11 +1,25 @@
+import os
+import sys
+
+if sys.argv[1] == "--clean":
+    import os
+    os.system("rm -f gymrem2d_local_launch.txt")
+    os.system("rm -f gymrem2d_local_launch.txt_log.txt")
+    os.system("rm -f gymrem2d_local_launch.txt")
+    os.system("rm -f results/gymrem2d/data/*")
+    os.system("rm -f results/gymrem2d/figures/*")
+    os.system("rm -f results/gymrem2d/videos/*")
+    os.system("rm -f other_repos/gymrem2d/dumps_for_animation/anim*")
+    print("All experiments deleted.")
+    exit(0)
+
+
 from argparse import ArgumentError
 
 import subprocess
 import time
 import re
 from os.path import exists
-import os
-import sys
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from tqdm import tqdm as tqdm
@@ -42,7 +56,7 @@ def launch_one_parameter_tuning(seed, default_inner_quantity):
     params._inner_length_proportion = 1.0
 
     params.print_parameters()
-    no = NestedOptimization("../../../results/gymrem2d/data", params, deletePreviousResults=True)
+    no = NestedOptimization("../../../results/gymrem2d/data", params, deletePreviousResults=True, limit_the_amount_of_written_lines=True if default_inner_quantity == 1 else False)
     sys.path.append(sys.path[0]+"/../other_repos/gymrem2d/ModularER_2D/")
     print(sys.path)
     import REM2D_main
@@ -54,19 +68,10 @@ def launch_one_parameter_tuning(seed, default_inner_quantity):
     experiment = run2D(no,config,dir)
     experiment.run(config)
 
-if sys.argv[1] == "--clean":
-    import os
-    os.system("rm -f gymrem2d_local_launch.txt")
-    os.system("rm -f gymrem2d_local_launch.txt_log.txt")
-    os.system("rm -f gymrem2d_local_launch.txt")
-    os.system("rm -f results/gymrem2d/data/reevaleachvsend_*")
-    os.system("rm -f results/gymrem2d/figures/*")
-    os.system("rm -f results/gymrem2d/videos/*")
-    os.system("rm -f other_repos/gymrem2d/dumps_for_animation/anim*")
 
     
 
-elif sys.argv[1] == "--local_launch":
+if sys.argv[1] == "--local_launch":
     import itertools
     import time
     launch_one(int(sys.argv[2]))
