@@ -107,7 +107,9 @@ class Parameters:
             # using 3002177 frames would not be enough because each morphology is now evaluated multiple times.
             # hence, we consider a budget x4 of the original, 
 
-            self.max_frames = 12008708
+            # self.max_frames = 12008708
+            self.max_frames = 3002177
+
             self.env_name_list = ["default"]
             self._default_inner_quantity =  128 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage

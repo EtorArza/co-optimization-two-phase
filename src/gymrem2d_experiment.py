@@ -98,23 +98,24 @@ elif sys.argv[1] == "--tune":
     from NestedOptimization import convert_from_seconds, experimentProgressTracker
     import joblib
 
-
+    threads = 8
     parameter_combs = list(product(seeds, [1, 8, 16, 32, 128, 512]))
-    progress_filename = "gymrem2d_progress.txt"
+    progress_filename = "gymrem2d_progress_tune.txt"
     start_index = 0
-    prog = experimentProgressTracker(progress_filename, start_index, len(parameter_combs))
-    while not prog.done:
+    prog = experimentProgressTracker(progress_filename, 0, len(parameter_combs))
+    
+    def launch_next(prog: experimentProgressTracker):
         i = prog.get_next_index()
-        if prog.done:
-            exit(0)
         seed, default_inner_quantity = parameter_combs[i]
-        print("seed, default_inner_quantity = ", seed, default_inner_quantity)
+
         exit_status = os.system(f"python src/gymrem2d_experiment.py --local_launch_tuning {seed} {default_inner_quantity}")
         if exit_status == 0:
             prog.mark_index_done(i)
         else:
             print(exit_status)
             exit(1)
+
+    Parallel(n_jobs=threads)(delayed(launch_next)(prog) for _ in range(len(parameter_combs)))
 
 
 elif sys.argv[1] == "--local_launch_all":
@@ -137,8 +138,7 @@ elif sys.argv[1] == "--local_launch_all":
         else:
             prog.mark_index_done(i)
 
-    import joblib
-    results = Parallel(n_jobs=threads)(delayed(launch_next)(prog) for _ in range(n))
+    Parallel(n_jobs=threads)(delayed(launch_next)(prog) for _ in range(n))
 
     for i in range(n_visualize):
         os.system(f"python src/gymrem2d_experiment.py --visualize {i}")
