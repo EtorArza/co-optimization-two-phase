@@ -616,7 +616,6 @@ class experimentProgressTracker:
 
         self.min_exp_time = 0.0
         self.progress_filename, self.start_index, self.max_index = progress_filename, start_index, max_index
-        self.n_experiments_done_this_session = 0
 
         self.start_ref = time.time()
         self.last_ref = dict()
@@ -634,7 +633,7 @@ class experimentProgressTracker:
             lines = f.readlines()
             f.seek(0)
             processed_lines = [line for line in lines if line.endswith(',1\n')]
-            self.n_experiments_left = len(processed_lines)-1
+            self.n_experiments_done_initially = len(processed_lines)
             f.writelines(["idx,done\n"]+processed_lines)
             f.truncate()
 
@@ -662,15 +661,8 @@ class experimentProgressTracker:
         if self.done:
             exit(0)
         assert time.time() - self.last_ref[i] > self.min_exp_time
-        self.n_experiments_done_this_session += 1
-        self.n_experiments_left -= 1
-        n_experiments_left = self.max_index - self.n_experiments_left
-        elapsed_time = time.time() - self.start_ref
-        time_left = elapsed_time / self.n_experiments_done_this_session * n_experiments_left
 
         with Lock(self.progress_filename) as f:
-            with open(self.progress_filename+"_log.txt","a") as f_log:
-                f_log.write(f"{i},{n_experiments_left},{convert_from_seconds(time_left)}, {convert_from_seconds(elapsed_time)}\n")
             lines = []
             lines = f.readlines()
             index = lines.index(f"{i},0\n")
@@ -678,3 +670,12 @@ class experimentProgressTracker:
             f.seek(0)
             f.truncate()
             f.writelines(lines)
+            n_experiments_done_total = len([0 for line in lines if line.endswith(',1\n')])
+            n_experiments_done_this_session = n_experiments_done_total - self.n_experiments_done_initially
+            n_experiments_left = self.max_index - n_experiments_done_total
+            elapsed_time = time.time() - self.start_ref
+            time_left = elapsed_time / n_experiments_done_this_session * n_experiments_left
+
+
+            with open(self.progress_filename+"_log.txt","a") as f_log:
+                f_log.write(f"{i},{n_experiments_left},{convert_from_seconds(time_left)}, {convert_from_seconds(elapsed_time)}\n")
