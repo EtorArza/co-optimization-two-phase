@@ -26,6 +26,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 import argparse
+from plot_src import *
 
 
 
@@ -172,7 +173,8 @@ elif sys.argv[1] == "--get_frames_by_default":
     print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames in total.")
     print("On average, the default gymrem2d experiment uses", np.mean(frames_per_eval), "frames per evaluated controller.")
 
-
+elif sys.argv[1] == "--plot":
+    df = plot_comparison_parameters("results/gymrem2d/data", "results/gymrem2d/figures")
 
 elif sys.argv[1] == "--plot_tune":
     import os
