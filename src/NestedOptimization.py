@@ -633,7 +633,7 @@ class experimentProgressTracker:
         with Lock(self.progress_filename) as f:
             lines = f.readlines()
             f.seek(0)
-            processed_lines = [line for line in lines if line.strip().endswith(',1\n')]
+            processed_lines = [line for line in lines if line.endswith(',1\n')]
             self.n_experiments_left = len(processed_lines)-1
             f.writelines(["idx,done\n"]+processed_lines)
             f.truncate()
