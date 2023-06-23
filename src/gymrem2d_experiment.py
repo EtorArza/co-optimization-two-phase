@@ -100,13 +100,13 @@ elif sys.argv[1] == "--visualize":
     animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--tune":
-    seeds = list(range(20))
+    seeds = list(range(120))
     from itertools import product
     from NestedOptimization import convert_from_seconds, experimentProgressTracker
     import joblib
 
     threads = 8
-    parameter_combs = list(product(seeds, [1, 8, 16, 32, 128, 512]))
+    parameter_combs = list(product(seeds, [1, 8, 16, 32, 64, 128, 512]))
     progress_filename = "gymrem2d_progress_tune.txt"
     start_index = 0
     prog = experimentProgressTracker(progress_filename, 0, len(parameter_combs))
@@ -241,6 +241,40 @@ elif sys.argv[1] == "--plot_tune":
     plt.yscale("log")
     plt.savefig(fig_dir+r"/step_tune.pdf")
     plt.close()
+
+
+    from scipy.stats import gaussian_kde
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+
+    markers = ['o', 's', 'D', 'v', '^', 'p', 'P']
+    line_styles = ['-', '--', '-.', ':']
+    line_colors = ['black', 'gray', 'darkgray', 'lightgray']
+    num_colors = len(inner_quantity_list)
+    import matplotlib.cm as cm
+    cmap = cm.get_cmap('Greys', num_colors+1)  # Linear colormap from light to dark
+    marker_step = 10  # Set the step size for markers
+
+    for idx, inner_quantity in enumerate(inner_quantity_list):
+        data = df[df.innerquantity == inner_quantity]["f"].values
+        kde = gaussian_kde(data)
+        x = np.linspace(min(data), max(data), 100)
+        density = kde(x)
+        cumulative_density = np.cumsum(density) / np.sum(density)  # Compute cumulative distribution
+        color = cmap(idx+1)  # Get color from the colormap
+        ax.plot(x, cumulative_density, marker=markers[idx], linestyle=line_styles[idx % len(line_styles)],
+                color=color, markevery=marker_step, label=str(inner_quantity))
+
+    ax.set_xlabel('Objective value')
+    ax.set_ylabel('Cumulative Distribution')
+    ax.set_title('f_cumulative')
+    ax.legend()
+
+    plt.savefig(fig_dir + r"/f_tune_cumulative.pdf")
+    plt.show()
+    plt.close()
+
 
 else:
     raise ValueError(f"Argument {sys.argv[1]} not recognized.")
