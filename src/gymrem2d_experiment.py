@@ -5,8 +5,8 @@ if sys.argv[1] == "--clean":
     import os
     os.system("rm -f gymrem2d_local_launch.txt")
     os.system("rm -f gymrem2d_local_launch.txt_log.txt")
-    os.system("rm -f gymrem2d_progress_tune.txt")
-    os.system("rm -f gymrem2d_progress_tune.txt_log.txt")
+    os.system("rm -f gymrem2d_tune.txt")
+    os.system("rm -f gymrem2d_tune.txt_log.txt")
     os.system("rm -f results/gymrem2d/data/*")
     os.system("rm -f results/gymrem2d/figures/*")
     os.system("rm -f results/gymrem2d/videos/*")
@@ -107,7 +107,7 @@ elif sys.argv[1] == "--tune":
 
     threads = 8
     parameter_combs = list(product(seeds, [1, 8, 16, 32, 64, 128, 512]))
-    progress_filename = "gymrem2d_progress_tune.txt"
+    progress_filename = "gymrem2d_tune.txt"
     start_index = 0
     prog = experimentProgressTracker(progress_filename, 0, len(parameter_combs))
     
