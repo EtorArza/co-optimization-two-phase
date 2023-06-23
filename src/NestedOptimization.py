@@ -111,7 +111,7 @@ class Parameters:
             self.max_frames = 3002177
 
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  128 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  32 # <- Need to do some parameter search!!!
             self._default_inner_length = 100 # Represents the speed of the early stopping blue wall in percentage
             self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length
