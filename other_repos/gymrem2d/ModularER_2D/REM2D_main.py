@@ -175,10 +175,14 @@ xgd-open <filelname>
 """
 def save_frames_as_gif(frames, save_animation_path):
 
+    save_one_every_k_frames = 2
+    frames = [frames[i] for i in range(0,len(frames), save_one_every_k_frames)]
+
+
     print("saving animation...", end="")
 
     #Mess with this to change frame size
-    plt.figure(figsize=(frames[0].shape[1] / 20.0, frames[0].shape[0] / 20.0), dpi=20)
+    plt.figure(figsize=(frames[0].shape[1] / 40.0, frames[0].shape[0] / 40.0), dpi=20)
 
     patch = plt.imshow(frames[0])
     plt.axis('off')
@@ -187,8 +191,8 @@ def save_frames_as_gif(frames, save_animation_path):
         patch.set_data(frames[i])
 
     print("N frames: ", len(frames))
-    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
-    anim.save(save_animation_path, writer='imagemagick', fps=30)
+    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50, cache_frame_data=False)
+    anim.save(save_animation_path, dpi =20, writer='imagemagick', fps=30 // save_one_every_k_frames, progress_callback = lambda i, n: print(f'Saving frame {i} of {n}'))
     print("saved.")
 
 class Encoding_Type(Enum):
@@ -481,7 +485,7 @@ def evaluate(individual, no, TREE_DEPTH = None, save_animation=False, save_anima
     env.unwrapped.TestMode = False
     episode_length = no.get_inner_length()
     assert episode_length > 0
-
+    env.unwrapped.wod.max_steps = episode_length
 
     # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
 
@@ -490,7 +494,7 @@ def evaluate(individual, no, TREE_DEPTH = None, save_animation=False, save_anima
     currentBestfTest = -1e6
 
     frames=[]
-    for i in range(episode_length):
+    for i in range(episode_length+1):
 
         if save_animation:
             # print("rendering")

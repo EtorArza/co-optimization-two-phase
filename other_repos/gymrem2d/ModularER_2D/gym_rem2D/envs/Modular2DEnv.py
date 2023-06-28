@@ -104,12 +104,16 @@ class WallOfDeath:
 	def __init__(self, speed):
 		# x position
 		self.position = 0.0
-		self.speed = speed
-		self.default_speed = speed
+		self.speed = 0
+		self.default_speed = 0
+		self.max_steps = -1
+
 	def update(self):
-		self.position += self.speed
+		self.position += 0
 		#self.speed = self.speed + 0.00001
 	def change_wall_speed(self, new_speed_percentage):
+		print("change_wall_speed is deprecated and shold not have been called.")
+		exit(1)
 		self.speed = self.default_speed / (new_speed_percentage / 100)
 		
 
@@ -669,7 +673,7 @@ class Modular2D(gym.Env, EzPickle):
 					reward = -99
 					done   = True
 				if self.wod:
-					if self.wod.position > self.robot.components[0].position[0]:
+					if self.wod.max_steps <= self.current_steps:
 						reward = -98
 						done   = True
 		else:
