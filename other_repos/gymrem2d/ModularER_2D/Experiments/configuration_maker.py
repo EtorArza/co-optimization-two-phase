@@ -31,7 +31,6 @@ def create(experiment_nr = 0,mr = 0.01,mmr = 0.01,ms = 0.1,enc = 'lsystem',dir='
 	# showing the best individual after each run (note, box2D time-out can lead to frozen window)
 	config['ea']['show_best'] = '0'
 	# In case you simply want to load the best individuals
-	config['ea']['load_best'] = '0'
 	# number of dedicated CPU cores for the experiments
 	config['ea']['n_cores'] = '6'
 	# placeholder, not implemented in this version

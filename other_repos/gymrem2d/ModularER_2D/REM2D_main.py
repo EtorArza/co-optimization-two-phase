@@ -162,7 +162,7 @@ def save_data_animation(dump_path, no, ind, tree_dpth, video_label):
 def animate_from_dump(dump_path):
     with open (dump_path, "rb") as f:
         read_ind, read_no, tree_dpth, video_label = pickle.load(f)
-    evaluate(read_ind, read_no, TestMode=False, save_animation = True, TREE_DEPTH = tree_dpth, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
+    evaluate(read_ind, read_no, TREE_DEPTH = tree_dpth, save_animation = True, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
 
 
 
@@ -178,7 +178,7 @@ def save_frames_as_gif(frames, save_animation_path):
     print("saving animation...", end="")
 
     #Mess with this to change frame size
-    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
+    plt.figure(figsize=(frames[0].shape[1] / 20.0, frames[0].shape[0] / 20.0), dpi=20)
 
     patch = plt.imshow(frames[0])
     plt.axis('off')
@@ -186,6 +186,7 @@ def save_frames_as_gif(frames, save_animation_path):
     def animate(i):
         patch.set_data(frames[i])
 
+    print("N frames: ", len(frames))
     anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
     anim.save(save_animation_path, writer='imagemagick', fps=30)
     print("saved.")
@@ -268,22 +269,12 @@ class run2D():
         self.fitnessData = da.FitnessData() # stores data of the progression
 
         # TODO take from configuration file
-        self.EVALUATION_STEPS = 10000
         self.TOTAL_EVALUATIONS = 50000
         self.SAVEDATA = True
 
         # Initializing modules
         self.moduleList = get_module_list() # stores which module types to select from. This list is mutated using the L-System
 
-
-    def ev_best(self, global_vars):
-        print("Loading best")
-        STOPWATCH.pause()
-        individual = pickle.load(open(self.SAVE_FILE_DIRECTORY + self.BEST_INDIVIDUAL_FILE,"rb"))
-        best_f_test = evaluate(individual, self.no, TestMode=True, global_vars=global_vars, save_animation = True, )
-        print("best",best_f_test)
-        STOPWATCH.resume()
-        return best_f_test
 
 
                 
@@ -331,9 +322,6 @@ class run2D():
         self.headless = False
         if (int(config['ea']['headless']) == 1):
             self.headless = True
-        self.load_best = False
-        if (int(config['ea']['load_best']) == 1):
-            self.load_best = True
         # plots the virtual creates at every <interval> frames 
         self.interval = int(config['ea']['interval'])
 
@@ -357,7 +345,7 @@ class run2D():
         f_best = -10e10
         for i in range(self.no.get_inner_quantity()):
             ctr.load_next_solution_to_ind(ind)
-            f = evaluate(ind, self.no,  TestMode=False, save_animation = False, TREE_DEPTH = self.TREE_DEPTH)
+            f = evaluate(ind, self.no, save_animation = False, TREE_DEPTH = self.TREE_DEPTH)
             if f > f_best:
                 f_best = f
             self.no.next_inner(f)
@@ -470,7 +458,7 @@ class run2D():
     def callback_end_of_gen(self):
         raise NotImplementedError()
 
-def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, save_animation=False, INTERVAL=1, ENV_LENGTH=100, TREE_DEPTH = None, CONTROLLER = None, save_animation_path=None):
+def evaluate(individual, no, TREE_DEPTH = None, save_animation=False, save_animation_path=None):
 
     env = getEnv()
     if TREE_DEPTH is None:
@@ -490,19 +478,19 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, save_animation=F
         ctr_dst.controller.frequency = ctr_src.controller.frequency
         ctr_dst.controller.phase = ctr_src.controller.phase
 
-    env.unwrapped.TestMode = TestMode
-    env.wod.change_wall_speed(no.get_inner_length())
+    env.unwrapped.TestMode = False
+    episode_length = no.get_inner_length()
+    assert episode_length > 0
 
 
     # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
-    assert not TestMode
 
     fitness = 0
     break_this_it = False
     currentBestfTest = -1e6
 
     frames=[]
-    for i in range(EVALUATION_STEPS):
+    for i in range(episode_length):
 
         if save_animation:
             # print("rendering")
@@ -520,8 +508,8 @@ def evaluate(individual, no, TestMode, EVALUATION_STEPS= 10000, save_animation=F
 
         if reward< -10:
             break_this_it = True
-        elif reward > ENV_LENGTH:
-            reward += (EVALUATION_STEPS-i)/EVALUATION_STEPS
+        elif reward > 100:
+            reward += (episode_length-i)/episode_length
             fitness = reward
             break_this_it = True
         if reward > 0:

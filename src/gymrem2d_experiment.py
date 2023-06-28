@@ -53,7 +53,7 @@ def launch_one_parameter_tuning(seed, default_inner_quantity):
         return f"paramtuning_{default_inner_quantity}_{seed}"
     params.get_result_file_name=return_filename
     params._default_inner_quantity = default_inner_quantity
-    params._default_inner_length = 100
+    params._default_inner_length = 360
     params._inner_quantity_proportion = 1.0 
     params._inner_length_proportion = 1.0
 
@@ -171,7 +171,7 @@ elif sys.argv[1] == "--get_frames_by_default":
     frames_per_eval = np.array([get_n_frames_and_evals(seed)[0] / get_n_frames_and_evals(seed)[1] for seed in range(2,23)])
     
     print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames in total.")
-    print("On average, the default gymrem2d experiment uses", np.mean(frames_per_eval), "frames per evaluated controller.")
+    print("On average, the default gymrem2d experiment uses", np.mean(frames_per_eval), "frames per evaluated controller (average episode length in frames).")
 
 elif sys.argv[1] == "--plot":
     df = plot_comparison_parameters("results/gymrem2d/data", "results/gymrem2d/figures")
