@@ -164,14 +164,19 @@ elif sys.argv[1] == "--get_frames_by_default":
             while len(lines[-1]) < 50:
                 line = lines.pop()
             line = lines.pop()
-            return int(line.split(",")[3]), (int(line.split(",")[4]) + 1) * 100
+            frames = int(line.split(",")[3])
+            evals = (int(line.split(",")[4]) + 1) * 100
+            frames_per_episode_last_gen = (frames - int(lines.pop().split(",")[3])) / 100
+            return frames, evals, frames_per_episode_last_gen
 
 
     frames = np.array([get_n_frames_and_evals(seed)[0] for seed in range(2,23)])
     frames_per_eval = np.array([get_n_frames_and_evals(seed)[0] / get_n_frames_and_evals(seed)[1] for seed in range(2,23)])
-    
+    frames_per_episode_last_gen = np.array([get_n_frames_and_evals(seed)[2] for seed in range(2,23)])
+
     print("On average, the default gymrem2d experiment uses", np.mean(frames), "frames in total.")
     print("On average, the default gymrem2d experiment uses", np.mean(frames_per_eval), "frames per evaluated controller (average episode length in frames).")
+    print("On average, IN THE LAST GENERATION, the default gymrem2d experiment uses", np.mean(frames_per_episode_last_gen), "frames per evaluated controller (average episode length in frames).")
 
 elif sys.argv[1] == "--plot":
     df = plot_comparison_parameters("results/gymrem2d/data", "results/gymrem2d/figures")

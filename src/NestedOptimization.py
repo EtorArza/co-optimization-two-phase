@@ -112,7 +112,7 @@ class Parameters:
 
             self.env_name_list = ["default"]
             self._default_inner_quantity =  32 # <- Need to do some parameter search!!!
-            self._default_inner_length = 360 # Represents the average episode length in steps
+            self._default_inner_length = 424 # Represents the average episode length in steps
             self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length
 
