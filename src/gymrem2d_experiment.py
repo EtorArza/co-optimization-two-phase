@@ -100,7 +100,7 @@ elif sys.argv[1] == "--visualize":
     animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--tune":
-    seeds = list(range(120))
+    seeds = list(range(40))
     from itertools import product
     from NestedOptimization import convert_from_seconds, experimentProgressTracker
     import joblib
@@ -227,7 +227,13 @@ elif sys.argv[1] == "--plot_tune":
         ax.set_xlim(0.25, len(labels) + 0.75)
         ax.set_xlabel('Controllers evaluated per morphology')
 
-    plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list])
+    boxplot = plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list], showmeans=True)
+
+    # Add legend handles and labels
+    legend_handles = [boxplot["medians"][0], boxplot["means"][0]]
+    legend_labels = ["Median", "Mean"]
+    plt.legend(legend_handles, legend_labels)
+
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("f")
     plt.savefig(fig_dir+r"/f_tune.pdf")

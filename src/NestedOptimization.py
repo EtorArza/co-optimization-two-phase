@@ -108,10 +108,10 @@ class Parameters:
             # hence, we consider a budget x4 of the original, 
 
             # self.max_frames = 12008708
-            self.max_frames = 3002177
+            self.max_frames = 12008708
 
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  32 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  64 # <- Need to do some parameter search!!!
             self._default_inner_length = 424 # Represents the average episode length in steps
             self.non_resumable_param = "length"
             self.ESNOF_t_max = self._default_inner_length
