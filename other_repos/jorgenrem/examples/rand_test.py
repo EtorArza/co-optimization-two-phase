@@ -54,15 +54,12 @@ parser.add_argument('--gui', '-g', action='store_true',
                     help="Show GUI")
 parser.add_argument('--quiet', '-q', action='store_true',
                     help="Do not show progress")
-parser.add_argument('--seed', type=int, default=1234,
-                    help="Random seed")
 parser.add_argument('--env', choices=['2d', '3d'], default='3d',
                     help="Use 2D or 3D environment")
 parser.add_argument('--distance', '-d', type=float, default=0.1,
                     help="Maximum distance before something is reported")
 args = parser.parse_args()
 # Set seed for reproducibility
-np.random.seed(args.seed)
 # Create default environment
 if args.env == '3d':
     env = gym.make('ModularLocomotion3D-v0')

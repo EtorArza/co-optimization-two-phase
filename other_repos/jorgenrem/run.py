@@ -92,8 +92,6 @@ def main(no):
                         help="Experiment configuration to execute")
     parser.add_argument('--shared', default="configs/shared.cfg",
                         help="Shared configuration for all experiments")
-    parser.add_argument('--seed', type=int, default=1234,
-                        help="Seed for the given run")
     parser.add_argument('--output', default=None,
                         help="Output path to store results")
     parser.add_argument('--population', default=None,
@@ -110,7 +108,7 @@ def main(no):
     # Parse arguments and execute experiment
     args = parser.parse_args()
 
-    print(args)
+    # print(args)
 
     # Parse configuration file
     config = configparser.ConfigParser()
@@ -148,17 +146,6 @@ def main(no):
         import multiprocessing
         pool = multiprocessing.Pool(processes=args.processes)
         toolbox.register('map', pool.map, chunksize=args.chunksize)
-    # If initial population is None, we try to load the population for seeding
-    # of the run
-    # if args.population is not None:
-    #     # If given a zip with multiple seeds inside we assume the users wants
-    #     # to restart with the same seed
-    #     args.population = _load_initial(args.population, str(args.seed))
-    # Run actual evolution taking care to set seed
-    seed = args.seed
-    # Setup random state
-    numpy.random.seed(seed)
-    random.seed(seed)
     # Setup profiler
     profiler = Profiler()
     toolbox.register('profile', profiler)
