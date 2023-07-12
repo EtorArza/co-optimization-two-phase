@@ -20,7 +20,9 @@ def launch_one(experiment_index):
     params = Parameters("jorgenrem", experiment_index)
     no = NestedOptimization("../../results/jorgenrem/data", params)
     params.print_parameters()
+    print("os.getcwd() = ", os.getcwd())
     sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
+    sys.path.append(os.getcwd())
     from run import main
     sys.argv = [sys.argv[0]]
     main(no)
@@ -83,8 +85,15 @@ elif sys.argv[1] == "--visualize":
     print(sys.path)
     from modular_er.eval import animate_from_dump
 
-
+    import numpy as np
+    np.random.seed(2)
+    import random
+    random.seed(2)
     animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
+    import numpy as np
+    np.random.seed(2)
+    import random
+    random.seed(2)
     animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--local_launch_tune_sequentially":
