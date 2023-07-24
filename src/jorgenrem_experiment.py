@@ -56,7 +56,7 @@ def launch_one_parameter_tuning(i):
     print(sys.path)
     from run import main
     import modular_er.eval
-    modular_er.eval.save_data_animation = lambda dump_path, video_label, individual, controller, no, seconds, max_size, warmup, env: None
+    modular_er.eval.save_data_animation = lambda dump_path, video_label, individual, controller, no, seconds, max_size, env: None
     sys.argv = [sys.argv[0]]
     main(no)
     os.chdir(previousDir)
@@ -77,24 +77,30 @@ elif sys.argv[1] == "--local_launch_tune":
 elif sys.argv[1] == "--visualize":
     from NestedOptimization import Parameters, NestedOptimization
 
+    print("Generating a figure completely wrecks pybullet, where the AABB calculation is different.")    
+    print("This makes it impossible to generate the animations in my laptop and reproduce the results during the training.")    
+
+    print("see https://github.com/bulletphysics/bullet3/issues/4502")    
+    # import numpy as np
+    # from matplotlib import pyplot as plt
+    # plt.figure()
+    # image_data = np.random.random((100, 100))
+    # plt.imshow(image_data, cmap='gray')
+    # plt.close()
+
+
     params = Parameters("jorgenrem", int(sys.argv[2]))
     params.print_parameters()
 
     no = NestedOptimization("../../results/jorgenrem/data", params)
     sys.path.append(sys.path[0]+"/../other_repos/jorgenrem/")
     print(sys.path)
-    from modular_er.eval import animate_from_dump
+    import modular_er.eval 
 
-    import numpy as np
-    np.random.seed(2)
-    import random
-    random.seed(2)
-    animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
-    import numpy as np
-    np.random.seed(2)
-    import random
-    random.seed(2)
-    animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
+    from matplotlib import pyplot as plt
+    print("saving animation...", end="")
+    modular_er.eval.animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
+    modular_er.eval.animate_from_dump(f"other_repos/jorgenrem/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
 elif sys.argv[1] == "--local_launch_tune_sequentially":
     from NestedOptimization import convert_from_seconds, experimentProgressTracker
