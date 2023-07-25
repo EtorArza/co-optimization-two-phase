@@ -437,28 +437,131 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     plt.close()
 
 
-def plot_comparison_parameters(csv_folder_path, figpath):
+def plot_tune(data_dir, fig_dir):
+    import os
+    import pandas as pd
+    import numpy as np
+    from matplotlib import pyplot as plt
 
-    df = read_comparison_parameter_csvs(csv_folder_path)
+    def find_between(s, start, end): # find substring between two strings
+        return (s.split(start))[1].split(end)[0]
+
+
+    rows = []
+    for csv_name in os.listdir(data_dir):
+        if ".txt" in csv_name and "paramtuning" in csv_name:
+            df = pd.read_csv(data_dir + "/" + csv_name)
+            f = df.query("level == 2")["f_best"].iloc[-1]
+            step = df.query("level == 2")["step"].iloc[-1]
+            nrows = df.query("level == 2").shape[0]
+            innerquantity = int(find_between(csv_name, "paramtuning_","_"))
+            seed = int(find_between(csv_name, "_",".txt"))
+            rows.append([innerquantity, seed, f, nrows, step])
+    df = pd.DataFrame(rows, columns=["innerquantity", "seed", "f", "nrows","step"])
+
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    inner_quantity_list = sorted(df["innerquantity"].unique())
+    print("inner_quantity_list =", inner_quantity_list)
+
+    # # https://stackoverflow.com/questions/43345599/process-pandas-dataframe-into-violinplot
+    # fig, axes = plt.subplots()
+    # axes.violinplot(dataset = [df[df.innerquantity == el]["f"].values for el in inner_quantity_list],showmedians=True)
+    # axes.set_title('Day Ahead Market')
+    # axes.yaxis.grid(True)
+    # axes.set_xlabel('Scenario')
+    # axes.set_ylabel('LMP ($/MWh)')
+    # plt.show()
+    # plt.close()
+
+    def set_axis_style(ax, labels):
+        ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
+        ax.set_xlim(0.25, len(labels) + 0.75)
+        ax.set_xlabel('Controllers evaluated per morphology')
+
+    boxplot = plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list], showmeans=True)
+
+    # Add legend handles and labels
+    legend_handles = [boxplot["medians"][0], boxplot["means"][0]]
+    legend_labels = ["Median", "Mean"]
+    plt.legend(legend_handles, legend_labels)
+
+    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
+    plt.title("f")
+    plt.savefig(fig_dir+r"/f_tune.pdf")
+    plt.close()
+
+    plt.violinplot(dataset = [df[df.innerquantity == el]["nrows"].values for el in inner_quantity_list],showmedians=True)
+    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
+    plt.title("nrows")
+    plt.yscale("log")
+    plt.savefig(fig_dir+r"/nrows_tune.pdf")
+    plt.close()
+
+    plt.violinplot(dataset = [df[df.innerquantity == el]["step"].values for el in inner_quantity_list],showmedians=True)
+    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
+    plt.title("step")
+    plt.yscale("log")
+    plt.savefig(fig_dir+r"/step_tune.pdf")
+    plt.close()
+
+
+    from scipy.stats import gaussian_kde
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+
+    markers = ['o', 's', 'D', 'v', '^', 'p', 'P']
+    line_styles = ['-', '--', '-.', ':']
+    line_colors = ['black', 'gray', 'darkgray', 'lightgray']
+    num_colors = len(inner_quantity_list)
+    import matplotlib.cm as cm
+    cmap = cm.get_cmap('Greys', num_colors+1)  # Linear colormap from light to dark
+    marker_step = 10  # Set the step size for markers
+
+    for idx, inner_quantity in enumerate(inner_quantity_list):
+        data = df[df.innerquantity == inner_quantity]["f"].values
+        kde = gaussian_kde(data)
+        x = np.linspace(min(data), max(data), 100)
+        density = kde(x)
+        cumulative_density = np.cumsum(density) / np.sum(density)  # Compute cumulative distribution
+        color = cmap(idx+1)  # Get color from the colormap
+        ax.plot(x, cumulative_density, marker=markers[idx], linestyle=line_styles[idx % len(line_styles)],
+                color=color, markevery=marker_step, label=str(inner_quantity))
+
+    ax.set_xlabel('Objective value')
+    ax.set_ylabel('Cumulative Distribution')
+    ax.set_title('f_cumulative')
+    ax.legend()
+
+    plt.savefig(fig_dir + r"/f_tune_cumulative.pdf")
+    plt.show()
+    plt.close()
+
+def plot_comparison_parameters(data_dir, fig_dir):
+
+    df = read_comparison_parameter_csvs(data_dir)
     
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), figpath, "innerlength_or_startquantity")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), fig_dir, "innerlength_or_startquantity")
 
-    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), figpath, "innerquantity_or_targetprob")
+    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
 
 
 
     for param, param_preffix in zip(["innerquantity_or_targetprob", "innerlength_or_startquantity"], ["quantity", "length"]):
-        _plot_performance(f"{param_preffix}_reevalend",      df.copy(), figpath, "reeval",    param, "f", "step")
-        _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), figpath, "reeval",    param, "f_best", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_noreeval",       df.copy(), figpath, "no_reeval", param, "f_best", "step")
-        _plot_performance(f"{param_preffix}_controllersize", df.copy(), figpath, "reeval",    param, "controller_size", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_controllersize2",df.copy(), figpath, "reeval",    param, "controller_size2", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_morphologysize", df.copy(), figpath, "reeval",    param, "morphology_size", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_reevalend",      df.copy(), fig_dir, "reeval",    param, "f", "step")
+        _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), fig_dir, "reeval",    param, "f_best", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_noreeval",       df.copy(), fig_dir, "no_reeval", param, "f_best", "step")
+        _plot_performance(f"{param_preffix}_controllersize", df.copy(), fig_dir, "reeval",    param, "controller_size", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_controllersize2",df.copy(), fig_dir, "reeval",    param, "controller_size2", "step_including_reeval")
+        _plot_performance(f"{param_preffix}_morphologysize", df.copy(), fig_dir, "reeval",    param, "morphology_size", "step_including_reeval")
 
-    _plot_stability(df.copy(), figpath)
+    _plot_stability(df.copy(), fig_dir)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
-        _plot_complexity(df.copy(), figpath, complexity_metric)
+        _plot_complexity(df.copy(), fig_dir, complexity_metric)
 
 
 
