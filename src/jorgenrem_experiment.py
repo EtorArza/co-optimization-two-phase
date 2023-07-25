@@ -1,10 +1,12 @@
 import sys
 import os
+from plot_src import *
+
 
 if sys.argv[1] == "--clean":
-    os.system("rm -f results/jorgenrem/data/*")
-    os.system("rm -f results/jorgenrem/figures/*")
-    os.system("rm -f results/jorgenrem/videos/*")
+    os.system("rm -f results/jorgenrem/data/meth*")
+    os.system("rm -f results/jorgenrem/figures/meth*")
+    os.system("rm -f results/jorgenrem/videos/meth*")
     os.system("rm -f other_repos/jorgenrem/dumps_for_animation/anim*")
     print("Cleaned experiment files.")
     exit(0)
@@ -124,68 +126,7 @@ elif sys.argv[1] == "--local_launch_tune_sequentially":
 
 
 elif sys.argv[1] == "--plot_tune":
-    import os
-    import pandas as pd
-    import numpy as np
-    from matplotlib import pyplot as plt
-
-    def find_between(s, start, end): # find substring between two strings
-        return (s.split(start))[1].split(end)[0]
-
-    exp_dir = "results/gymrem2d/data"
-
-    rows = []
-    for csv_name in os.listdir(exp_dir):
-        if ".txt" in csv_name and "paramtuning" in csv_name:
-            df = pd.read_csv(exp_dir + "/" + csv_name)
-            f = df.query("level == 2")["f_best"].iloc[-1]
-            step = df.query("level == 2")["step"].iloc[-1]
-            nrows = df.query("level == 2").shape[0]
-            innerquantity = int(find_between(csv_name, "paramtuning_","_"))
-            seed = int(find_between(csv_name, "_",".txt"))
-            rows.append([innerquantity, seed, f, nrows, step])
-    df = pd.DataFrame(rows, columns=["innerquantity", "seed", "f", "nrows","step"])
-
-    import pandas as pd
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    inner_quantity_list = sorted(df["innerquantity"].unique())
-    print("inner_quantity_list =", inner_quantity_list)
-
-    # # https://stackoverflow.com/questions/43345599/process-pandas-dataframe-into-violinplot
-    # fig, axes = plt.subplots()
-    # axes.violinplot(dataset = [df[df.innerquantity == el]["f"].values for el in inner_quantity_list],showmedians=True)
-    # axes.set_title('Day Ahead Market')
-    # axes.yaxis.grid(True)
-    # axes.set_xlabel('Scenario')
-    # axes.set_ylabel('LMP ($/MWh)')
-    # plt.show()
-    # plt.close()
-
-    def set_axis_style(ax, labels):
-        ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
-        ax.set_xlim(0.25, len(labels) + 0.75)
-        ax.set_xlabel('Controllers evaluated per morphology')
-
-    plt.violinplot(dataset = [df[df.innerquantity == el]["f"].values for el in inner_quantity_list],showmedians=True)
-    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
-    plt.title("f")
-    plt.show()
-    plt.close()
-
-    plt.violinplot(dataset = [df[df.innerquantity == el]["nrows"].values for el in inner_quantity_list],showmedians=True)
-    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
-    plt.title("nrows")
-    plt.show()
-    plt.close()
-
-    plt.violinplot(dataset = [df[df.innerquantity == el]["step"].values for el in inner_quantity_list],showmedians=True)
-    set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
-    plt.title("step")
-    plt.yscale("log")
-    plt.show()
-    plt.close()
+    plot_tune("results/jorgenrem/data", "results/jorgenrem/figures")
 
 else:
     raise ValueError(f"Argument {sys.argv[1]} not recognized.")
