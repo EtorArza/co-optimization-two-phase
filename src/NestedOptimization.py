@@ -94,7 +94,7 @@ class Parameters:
 
 
         elif framework_name == "tholiao":
-            self.max_frames = 250000 # max_frames=2000000 is the default value (total steps)
+            self.max_frames = 500000 # max_frames=2000000 is the default value (total steps)
             self.env_name_list = ["FlatTerrainTask"]
             self._default_inner_quantity =  50 # The number of controllers tested per morphology
             self._default_inner_length = 400 # Steps per episode
