@@ -64,6 +64,7 @@ class stopwatch:
 
 class Parameters:
     nseeds = 60
+    nseeds_proposed_method = 4
 
     def __init__(self, framework_name: str, experiment_index: int):
 
@@ -81,7 +82,6 @@ class Parameters:
             self._default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
             self._default_inner_length = 128 # Episode length.
             self.non_resumable_param = "length"
-            self.ESNOF_t_max = round(self._default_inner_quantity / 50)
 
 
         elif framework_name == "robogrammar":
@@ -90,7 +90,6 @@ class Parameters:
             self._default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
             self._default_inner_length = 128 # Episode length.
             self.non_resumable_param = "quantity"
-            self.ESNOF_t_max = self._default_inner_length
 
 
         elif framework_name == "tholiao":
@@ -99,7 +98,6 @@ class Parameters:
             self._default_inner_quantity =  50 # The number of controllers tested per morphology
             self._default_inner_length = 400 # Steps per episode
             self.non_resumable_param = "length"
-            self.ESNOF_t_max = self._default_inner_length
 
         elif framework_name == "gymrem2d":
             # max_frames=3002177 is the default value on average. However, the framework 
@@ -114,7 +112,6 @@ class Parameters:
             self._default_inner_quantity =  64 # <- Need to do some parameter search!!!
             self._default_inner_length = 424 # Represents the average episode length in steps
             self.non_resumable_param = "length"
-            self.ESNOF_t_max = self._default_inner_length
 
 
         elif framework_name == "jorgenrem":
@@ -123,7 +120,6 @@ class Parameters:
             self._default_inner_quantity =  10 # <- Need to do some parameter search!!!
             self._default_inner_length = 4800 # Represents the number of steps per controller tested
             self.non_resumable_param = "length"
-            self.ESNOF_t_max = self._default_inner_length
 
         else:
             raise ValueError(f"Framework {framework_name} not found.")
@@ -132,10 +128,13 @@ class Parameters:
         params = self._get_parameter_list()[experiment_index]
 
         if "reevaleachvsend" in params:
-            self.seed, self._inner_quantity_proportion, self._inner_length_proportion, self.env_name, self.experiment_mode = params
-        elif "incrementalandesnof" in params:
-            self.seed, self.minimum_non_resumable_param, self.time_grace, self.env_name, self.experiment_mode = params
-            self.ESNOF_t_grace = round(self.time_grace * self.ESNOF_t_max)
+            self.experiment_mode, self.seed, self._inner_quantity_proportion, self._inner_length_proportion, self.env_name = params
+        elif "standard" in params or "ctalatii" in params or "gesp" in params or "ctalatii&gesp" in params:
+            self._inner_quantity_proportion = 1.0
+            self._inner_length_proportion = 1.0
+            self.method_mode, self.seed, self.env_name,  = params
+            self.experiment_mode = "proposedmethod"
+
         elif "adaptstepspermorphology" in params:
             print("With the new experiment, the objective value used as a reference for wether to reevaluate is generated with different inner_quantity parameter from the new solutions. This is a problem, because if the inner quantity is smaller, it means that objective funcions in general will be lower, and it would be less likely to find new best solutions. This can be solved in evogym because we generate partial objective values with different inner quantity values, but it might not be possible to do in robogrammar. A possibility is to partially reevaluate best solution and thus get a valid reference.")
             print("Exiting...")
@@ -153,39 +152,6 @@ class Parameters:
         return int(self._inner_length_proportion * self._default_inner_length)
 
 
-    def _get_parameter_list_old(self):
-        nseeds_old = 20
-        import itertools
-        res = []
-        seed_list = list(range(2,2 + nseeds_old))
-
-        # reevaleachvsend
-        _inner_quantity_proportion_list = [0.25, 0.5, 0.75, 1.0]
-        _inner_length_proportion_list =   [0.25, 0.5, 0.75, 1.0]
-        experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(_inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list, seed_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
-        res += params_with_undesired_combinations
-
-
-        # # incrementalandesnof
-        # minimum_non_resumable_param_list = [0.2, 1.0]
-        # time_grace_list = [0.2, 1.0]
-        # experiment_mode_list = ["incrementalandesnof"]
-        # params_with_undesired_combinations = list(itertools.product(seed_list, minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list))
-        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[1] == item[2]] # remove the combinations containining 2 different parameters != 1.0.
-        # res += params_with_undesired_combinations
-
-        # adaptstepspermorphology
-        target_probability = [0.75]
-        _start_quantity_proportion = [0.1]
-        experiment_mode_list = ["adaptstepspermorphology"]
-        params_with_undesired_combinations = list(itertools.product(seed_list, target_probability, _start_quantity_proportion, self.env_name_list, experiment_mode_list))
-        res += params_with_undesired_combinations
-
-        return res
-
-
     def _get_parameter_list(self):
         import itertools
         res = []
@@ -195,18 +161,23 @@ class Parameters:
         _inner_quantity_proportion_list = [0.1, 0.25, 0.5, 0.75, 1.0]
         _inner_length_proportion_list =   [0.1, 0.25, 0.5, 0.75, 1.0]
         experiment_mode_list = ["reevaleachvsend"]
-        params_with_undesired_combinations = list(itertools.product(seed_list, _inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list, experiment_mode_list))
-        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item[1:3]] # remove the combinations in which one of the parameters is not 1.0.
+        params_with_undesired_combinations = list(itertools.product(experiment_mode_list, seed_list, _inner_quantity_proportion_list, _inner_length_proportion_list, self.env_name_list))
+        params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item[2:4]] # remove the combinations in which one of the parameters is not 1.0.
         res += params_with_undesired_combinations
 
 
-        # # incrementalandesnof
-        # minimum_non_resumable_param_list = [0.2, 1.0]
-        # time_grace_list = [0.2, 1.0]
-        # experiment_mode_list = ["incrementalandesnof"]
-        # params_with_undesired_combinations = list(itertools.product(minimum_non_resumable_param_list, time_grace_list, self.env_name_list, experiment_mode_list, seed_list))
-        # params_with_undesired_combinations = [item for item in params_with_undesired_combinations if 1.0 in item or item[0] == item[1]] # remove the combinations containining 2 different parameters != 1.0.
-        # res += params_with_undesired_combinations
+        # proposedmethod
+        seed_list = list(range(1,1 + self.nseeds_proposed_method))
+        # "ctalatii" = Continue training as long as there is improvement.
+        # "gesp"
+        self.ctalatii_reference_ratio = 0.5 # max time until stop with ctalatii, where 0.5 means in the last half of the evaluations no improvement observed.
+        self.max_time_per_morph_ratio = 0.05 # max time to spend per morphology divided by max time total.
+        self.esnof_min_time_ratio = 0.01 * self.max_time_per_morph_ratio # also grace time
+
+        _method_list = ["standard", "ctalatii", "gesp", "ctalatii&gesp"] 
+        params = list(itertools.product(_method_list, seed_list, self.env_name_list))
+        params = [item for item in params]
+        res += params
 
         # # adaptstepspermorphology
         # target_probability = [0.75]
@@ -218,66 +189,12 @@ class Parameters:
         return res
 
 
-    def reindex_all_result_files(self, directory, extension):
-        old_params = self._get_parameter_list_old()
-        params = self._get_parameter_list()
-
-        all_result_file_paths: list[str] = []
-        for filepath in os.listdir(directory):
-            f = os.path.join(directory, filepath)
-            if os.path.isfile(f) and extension in f:
-                all_result_file_paths.append(f)
- 
-        new_index_exists = np.zeros(10000)
-        largest_new_index = 0
-        for i, el in enumerate(old_params):
-            old_index = i
-
-            if el not in params:
-                for filepath in all_result_file_paths:
-                    if f"_{old_index}_" in filepath:
-                        os.rename(filepath, filepath.replace(f"_{old_index}_", f"_legacyfile{old_index}_"))
-                        continue
-                continue
-
-            new_index = params.index(el)
-            largest_new_index = max(new_index, largest_new_index)
-            for filepath in all_result_file_paths:
-                if f"_{old_index}_" in filepath:
-                    os.rename(filepath, filepath.replace(f"_{old_index}_", f"_placeholdertext{new_index}_"))
-                    new_index_exists[new_index] = 1
-                    print(el,old_index, "->",new_index)
-
-        for filepath in os.listdir(directory):
-            f = os.path.join(directory, filepath)
-            if os.path.isfile(f) and extension in f:
-                os.rename(f, f.replace("placeholdertext", ""))                
-
-        print("Empty result indexes:")
-        previous = 1
-        for i in range(largest_new_index):
-
-            if new_index_exists[i] == previous: # if there is no change
-                continue
-
-            elif new_index_exists[i] == 0:
-                first_index_0 = i
-                previous = 0
-            
-            elif new_index_exists[i] == 1:
-                print(first_index_0, "-", i-1)
-                previous = 1
-
-
-        print("done!")
-        print("Run \n\nfind results | grep legacyfile | xargs rm\n\n to remove old experiment files.")
-
 
     def get_result_file_name(self):
         if self.experiment_mode == "reevaleachvsend":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self._inner_quantity_proportion}_{self._inner_length_proportion}_{self.seed}"
-        if self.experiment_mode == "incrementalandesnof":
-            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.minimum_non_resumable_param}_{self.time_grace}_{self.seed}"
+        if self.experiment_mode == "proposedmethod":
+            return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.method_mode}_{self.seed}"
         if self.experiment_mode == "adaptstepspermorphology":
             return f"{self.experiment_mode}_{self.experiment_index}_{self.env_name}_{self.target_probability}_{self._start_quantity_proportion}_{self.seed}"
         else:
@@ -288,6 +205,29 @@ class Parameters:
 
     def print_parameters(self):
         print("Total number of executions:", self.get_n_experiments())
+
+        # Create a dictionary to store the positions for each element
+        positions = {}
+
+        # Iterate through the list of tuples
+        for i, key_tup in enumerate(self._get_parameter_list()):
+            key = key_tup[0]
+            if key not in positions:
+                positions[key] = {"start": i, "end": i}
+            else:
+                positions[key]["end"] = i
+
+        # Print the table
+        for key, info in positions.items():
+            start = info["start"]
+            end = info["end"]
+            if start == end:
+                print(f"{key}, {start}")
+            else:
+                print(f"{key}, {start}-{end}")
+
+        print("Total number of executions:", )
+
         print("Parameters current execution:",self._get_parameter_list()[self.experiment_index])
 
 
@@ -306,7 +246,7 @@ class NestedOptimization:
     Once we have found the best candidate morphology, we retrain this morphology with proper resources.
     This 'retraining' can be done each time a new best morphology is found, or, at the end of the search.
     ----------------------------------
-    incrementalandesnof
+    proposedmethod
 
     We apply ESNOF in the 'resumable' parameter, and we incrementally increase the other parameter throughout
     the execution. 
@@ -336,7 +276,7 @@ class NestedOptimization:
     initialize_result_file = True
     iterations_since_best_found = 0
     is_reevaluating_flag = False
-    ESNOF_ARRAY_SIZE = 2000
+    ESNOF_ARRAY_SIZE = 20000
     ESNOF_ref_objective_values =  np.full(ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
     ESNOF_observed_objective_values = np.full(ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
     ESNOF_index = 0
@@ -356,10 +296,11 @@ class NestedOptimization:
         self.sw_reeval.pause()
         self.result_file_path = result_file_folder_path + f"/{params.get_result_file_name()}.txt"
         self.deletePreviousResults = deletePreviousResults
-        self.max_frames = params.max_frames
+        self.max_frames = self.params.max_frames
         self.limit_the_amount_of_written_lines = limit_the_amount_of_written_lines 
-        assert params.experiment_mode in ("reevaleachvsend", "incrementalandesnof","adaptstepspermorphology")
-
+        assert self.params.experiment_mode in ("reevaleachvsend", "proposedmethod","adaptstepspermorphology")
+        if self.params.experiment_mode == "proposedmethod":
+            self.ESNOF_reset_for_next_solution()
 
 
     def next_step(self):
@@ -372,20 +313,71 @@ class NestedOptimization:
     def next_inner(self, f_partial=None):
         if self.is_reevaluating_flag:
             return
-        # print("next_inner() -> ", self.step, "steps.")
-        if self.params.experiment_mode == "incrementalandesnof":
-            self.ESNOF_observed_objective_values[self.ESNOF_index] = f_partial
-            # print("-")
+
+
+        def print_ESNOF(str): # for debug purposes
+            return
+            with open("../../esnof_log", "a") as f:
+                print(str, file=f, flush=True)
+
+
+
+        
+        if self.params.experiment_mode == "proposedmethod":
+            min_steps_per_morph = int(self.params.max_frames * self.params.esnof_min_time_ratio)
+            max_steps_per_morph = int(self.params.max_frames * self.params.max_time_per_morph_ratio)
+            steps_current_morph = self.step - self.ESNOF_steps_begining
+            print_ESNOF(f"next_inner() -> {steps_current_morph} steps. ({min_steps_per_morph, max_steps_per_morph})")
+            
+            assert self.params.method_mode in ["standard","gesp","ctalatii","standard"]
+            if self.ESNOF_index == 0:
+                self.ESNOF_observed_objective_values[0] = f_partial
+            else:
+                # Force observe objective values to monotone increasing
+                self.ESNOF_observed_objective_values[self.ESNOF_index] = max(f_partial, self.ESNOF_observed_objective_values[self.ESNOF_index-1])
+
+
+            print_ESNOF("-")
             # with np.printoptions(threshold=np.inf):
             #     print(np.array([el for el in self.ESNOF_ref_objective_values if not np.isnan(el)]))
             #     print(np.array([el for el in self.ESNOF_observed_objective_values if not np.isnan(el)]))
-            if self.ESNOF_index > self.params.ESNOF_t_grace and self.ESNOF_ref_objective_values[self.ESNOF_index - self.params.ESNOF_t_grace] > f_partial:
-                # print("--stop--")
-                self.ESNOF_stop = True
-            else:
-                # print("--continue--")
+
+            if "standard" in self.params.method_mode:
                 pass
-            # print("-")
+            else:
+                if steps_current_morph < min_steps_per_morph:
+                    self.last_grace_ESNOF_index = self.ESNOF_index
+                    print_ESNOF("--continue_not_min_frames--")
+                elif steps_current_morph >= max_steps_per_morph:
+                    print_ESNOF("--stopp_max_frames_per_morph--")
+                    self.ESNOF_stop = True
+                else:
+                    if "gesp" in self.params.method_mode:
+
+                        current_index = self.ESNOF_index
+                        prev_index = current_index - self.last_grace_ESNOF_index
+
+                        print_ESNOF(f"gesp ({prev_index}, {current_index}) , ({self.ESNOF_ref_objective_values[prev_index]}, {self.ESNOF_observed_objective_values[current_index]})")
+
+                        if self.ESNOF_ref_objective_values[prev_index] > self.ESNOF_observed_objective_values[current_index]:
+                            print_ESNOF("--gesp-stop--")
+                            self.ESNOF_stop = True
+                        else:
+                            print_ESNOF("--gesp-continue--")
+                            pass
+                    if "ctalatii" in self.params.method_mode:
+                        current_index = self.ESNOF_index
+                        prev_index = round(current_index * self.params.ctalatii_reference_ratio)
+
+                        print_ESNOF(f"ctalatii ({prev_index}, {current_index}) , ({self.ESNOF_observed_objective_values[prev_index]}, {self.ESNOF_observed_objective_values[current_index]})")
+
+                        if prev_index > 0 and self.ESNOF_observed_objective_values[current_index] == self.ESNOF_observed_objective_values[prev_index]:
+                            print_ESNOF("--ctalatii-stop--")
+                            self.ESNOF_stop = True
+                        else:
+                            print_ESNOF("--ctalatii-continue--")
+                            pass
+            print_ESNOF("-")
             self.ESNOF_index += 1
 
 
@@ -404,7 +396,7 @@ class NestedOptimization:
             exit(0)
 
         self.evaluation += 1
-        if self.params.experiment_mode in ("reevaleachvsend", "adaptstepspermorphology") or not self.ESNOF_stop:
+        if self.params.experiment_mode == "reevaleachvsend" or (self.params.experiment_mode == "proposedmethod" and not self.ESNOF_stop):
             self.check_if_best(level=2)
         self.ESNOF_reset_for_next_solution()
         if self.limit_the_amount_of_written_lines and self.step < 0.99 * self.max_frames and not self.is_reevaluating_flag:
@@ -415,8 +407,8 @@ class NestedOptimization:
 
 
     def next_reeval(self, f_reeval_observed, controller_size, controller_size2, morphology_size):
-        if self.params.experiment_mode == "incrementalandesnof":
-            raise ValueError("ERROR: Experiment incrementalandesnof should have no reeval.")
+        if self.params.experiment_mode == "proposedmethod":
+            raise ValueError("ERROR: Experiment proposedmethod should have no reeval.")
         self.f_reeval_observed = f_reeval_observed
         self.controller_size = controller_size
         self.morphology_size = morphology_size
@@ -428,6 +420,7 @@ class NestedOptimization:
         self.sw.resume()
 
     def ESNOF_reset_for_next_solution(self):
+        self.ESNOF_steps_begining = self.step
         self.ESNOF_index = 0
         self.ESNOF_stop = False
         self.ESNOF_observed_objective_values = np.full(self.ESNOF_ARRAY_SIZE, np.nan, dtype=np.float64)
@@ -443,9 +436,9 @@ class NestedOptimization:
             if self.f_observed > self.f_best:
                 self.prev_f_best = self.f_best
                 self.f_best = self.f_observed
-                if self.params.experiment_mode == "incrementalandesnof":
+                if self.params.experiment_mode == "proposedmethod":
                     self.ESNOF_load_new_references()
-                if self.params.experiment_mode in ("reevaleachvsend","adaptstepspermorphology"):
+                if self.params.experiment_mode == "reevaleachvsend":
                     self.is_reevaluating_flag = True
                 self.sw_reeval.resume()
                 self.sw.pause()
@@ -466,25 +459,6 @@ class NestedOptimization:
                 # print("Reseting to best_f to self.prev_f_best")
                 # self.f_best = self.prev_f_best
 
-            # Set current inner_quantity
-            if self.params.experiment_mode == "adaptstepspermorphology":
-                if len(self.params.reevaluated_was_new_best_flags) > 3:
-                    current_proportion = np.mean(self.params.reevaluated_was_new_best_flags)
-                    self.params._inner_quantity_proportion += 0.1 * np.sign(self.params.target_probability - current_proportion)
-                    self.params._inner_quantity_proportion = max(0.1, self.params._inner_quantity_proportion)
-                    self.params._inner_quantity_proportion = min(1.0, self.params._inner_quantity_proportion)
-                    print("New inner quantity proportion: ",self.params._inner_quantity_proportion)
-
-
-    def get_inner_non_resumable_increasing(self):
-
-        param_proportion = self.params.minimum_non_resumable_param  + (1.0 - self.params.minimum_non_resumable_param) * (self.step / self.max_frames)
-        if self.params.non_resumable_param == "length":
-            res = round(param_proportion * self.params._default_inner_length)
-        if self.params.non_resumable_param == "quantity":
-            res = round(param_proportion * self.params._default_inner_quantity)
-
-        return res
 
     # @monitor_results
     def get_inner_length(self):
@@ -493,13 +467,8 @@ class NestedOptimization:
         else:
             if self.params.experiment_mode == "reevaleachvsend":
                 return int(self.params._inner_length_proportion * self.params._default_inner_length)
-            elif self.params.experiment_mode == "adaptstepspermorphology":
+            elif self.params.experiment_mode == "proposedmethod":
                 return self.params._default_inner_length
-            elif self.params.experiment_mode == "incrementalesnof":
-                if self.params.non_resumable_param == "length":
-                    return self.get_inner_non_resumable_increasing()
-                if self.params.non_resumable_param == "quantity":
-                    return self.params._default_inner_length
             else:
                 raise ValueError("Experiment not recognized.")
 
@@ -512,13 +481,11 @@ class NestedOptimization:
         else:
             if self.params.experiment_mode == "reevaleachvsend":
                 return int(self.params._inner_quantity_proportion * self.params._default_inner_quantity)
-            elif self.params.experiment_mode == "adaptstepspermorphology":
-                return self.params._get_inner_quantity_absolute()
-            elif self.params.experiment_mode == "incrementalesnof":
-                if self.params.non_resumable_param == "quantity":
-                    return self.get_inner_non_resumable_increasing()
-                if self.params.non_resumable_param == "length":
-                    return self.params._default_inner_quantity
+            elif self.params.experiment_mode == "proposedmethod":
+                if self.params.method_mode == "standard":
+                    return self.params._get_inner_quantity_absolute()
+                else:
+                    return 2000000000
             else:
                 raise ValueError("Experiment not recognized.")
 

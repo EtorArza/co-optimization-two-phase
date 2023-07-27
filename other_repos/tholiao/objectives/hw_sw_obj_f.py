@@ -94,7 +94,7 @@ class HwSwDistSim(DistanceSimulation):
                 self.close_scene()
                 self.stop()
                 self.exit()
-                no.next_inner()
+                no.next_inner(dist)
 
                 return np.array([dist])
 

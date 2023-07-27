@@ -195,7 +195,7 @@ def run_ppo(
             if determ_avg_reward > max_determ_avg_reward:
                 max_determ_avg_reward = determ_avg_reward
                 best_structure = copy.deepcopy(structure)
-                if test or no.params.experiment_mode == "incrementalandesnof":
+                if test or no.params.experiment_mode == "proposedmethod":
                     torch.save([actor_critic,getattr(utils.get_vec_normalize(envs), 'obs_rms', None)], no.controller_path_for_animation)
 
             no.next_inner(max_determ_avg_reward)

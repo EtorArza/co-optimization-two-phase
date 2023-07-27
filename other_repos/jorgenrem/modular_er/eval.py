@@ -291,7 +291,7 @@ def train_individual(individual, no=None, seconds=10.0, max_size=None, env='Modu
     f_best = -1e100
     evaluation_signature_best = None
     controler_best = None
-    for _ in range(optimizer.budget):
+    for _ in range(episode_budget):
         cand = optimizer.ask()
         controller = cand.value
         f, _, evaluation_signature = _evaluate_individual(individual, controller, no, seconds, max_size, env)

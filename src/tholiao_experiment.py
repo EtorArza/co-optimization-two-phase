@@ -2,6 +2,12 @@ import sys
 import os
 import time
 
+if sys.argv[1] == "--clean":
+    os.system("rm other_repos/tholiao/logs/*.npy -f")
+    os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
+    os.system("rm -f results/tholiao/data/*")
+    os.system("rm -f results/tholiao/figures/*")
+    os.system("rm -f results/tholiao/videos/*")
 
 
 
@@ -45,21 +51,24 @@ if sys.argv[1] == "--local_launch":
     local_launch_one(experiment_index)
 
 
+if sys.argv[1] == "--method_launch":
+    experiment_index = int(sys.argv[2])
+    sys.argv = sys.argv[:1]
+    local_launch_one(experiment_index)
+
+
 elif sys.argv[1] == "--sequential_launch":
-    import time
-    from NestedOptimization import experimentProgressTracker
-    ref = time.time()
-    m_start = 0
-    m_end = 180 # in total there are 540 for 60 seeds
 
+    from itertools import product
+    from NestedOptimization import convert_from_seconds, experimentProgressTracker
+    import joblib
 
-    progress_filename = "tholiao_progress.txt"
-    start_index = 0
-    prog = experimentProgressTracker(progress_filename, start_index, m_end)
+    progress_filename = "tholiao_sequential.txt"
 
-    while not prog.done:
+    prog = experimentProgressTracker(progress_filename, 540, 555)
+    
+    def launch_next(prog: experimentProgressTracker):
         i = prog.get_next_index()
-        ref_current = time.time()
 
         exit_status = os.system(f"python src/tholiao_experiment.py --local_launch {i}")
         os.system("rm other_repos/tholiao/logs/*.npy -f")
@@ -69,3 +78,6 @@ elif sys.argv[1] == "--sequential_launch":
         else:
             print(exit_status)
             exit(1)
+
+    while not prog.done:
+        launch_next(prog)

@@ -66,11 +66,12 @@ class JointOptimizerAug(JointBayesOptimizer):
 
             self.train_GP(self.X, self.Y)
             self.optimize_model()
+            if self.no.ESNOF_stop:
+                break
 
         objective_value_x_cn = self.select_y_to_return()
         print(x_cn, float(objective_value_x_cn))
-        if not test:
-            self.no.next_outer(float(objective_value_x_cn), -1, -1, -1)
+        self.no.next_outer(float(objective_value_x_cn), -1, -1, -1)
 
 
 

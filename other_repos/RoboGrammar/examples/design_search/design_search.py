@@ -195,7 +195,7 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOpti
     _, _ = simulate(robot, task, opt_seed, thread_count, episode_count=1, no=no, test=True) # call recursively to reevaluate
 
 
-  if test or no.params.experiment_mode == "incrementalandesnof":
+  if test or no.params.experiment_mode == "proposedmethod":
     from viewer import pickle_simulation_objects_for_video_generation
 
     no.savenext_current=True
