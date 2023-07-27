@@ -607,7 +607,7 @@ class experimentProgressTracker:
     def _get_next_index(self):
         with Lock(self.progress_filename) as f:
             content = f.read()
-            for i in range(self.max_index):
+            for i in range(self.start_index, self.max_index+1):
                 if f"{i}," not in content:
                     self.last_ref[i] = time.time()
                     print(f"{i},0", file=f, flush=True) # Mark experiment index in progress
