@@ -64,7 +64,7 @@ class stopwatch:
 
 class Parameters:
     nseeds = 60
-    nseeds_proposed_method = 4
+    nseeds_proposed_method = 20
 
     def __init__(self, framework_name: str, experiment_index: int):
 

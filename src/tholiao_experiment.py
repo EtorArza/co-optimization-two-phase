@@ -65,7 +65,7 @@ elif sys.argv[1] == "--sequential_launch":
 
     progress_filename = "tholiao_sequential.txt"
 
-    prog = experimentProgressTracker(progress_filename, 540, 555)
+    prog = experimentProgressTracker(progress_filename, 540, 619)
     
     def launch_next(prog: experimentProgressTracker):
         i = prog.get_next_index()
