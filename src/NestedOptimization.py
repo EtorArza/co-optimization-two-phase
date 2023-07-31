@@ -316,7 +316,6 @@ class NestedOptimization:
 
 
         def print_ESNOF(str): # for debug purposes
-            print(str)
             return
             with open("/home/paran/Dropbox/BCAM/08_estancia_2/code/esnof_log_robogrammar.txt", "a") as f:
                 print(str, file=f, flush=True)

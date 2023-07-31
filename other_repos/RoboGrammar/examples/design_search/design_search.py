@@ -12,6 +12,7 @@ import signal
 import sys
 import tasks
 from NestedOptimization import NestedOptimization
+import psutil
 
 def get_applicable_matches(rule, graph):
   """Generates all applicable matches for rule in graph."""
@@ -82,7 +83,7 @@ def _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count=1, no
 
   robot_init_pos, has_self_collision = presimulate(robot)
   if has_self_collision:
-    return None, None, None, None
+    return None, None, None, None, None
 
   def make_sim_fn():
     sim = rd.BulletSimulation(task.time_step)
@@ -104,7 +105,7 @@ def _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count=1, no
   controller_size = dof_count
   morphology_size =links_count
 
-
+  mem_perc = 0.0
 
   value_estimator = rd.NullValueEstimator()
   input_sampler = rd.DefaultInputSampler()
@@ -137,6 +138,9 @@ def _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count=1, no
     obs = np.zeros((value_estimator.get_observation_size(),
                     task.episode_len + 1), order='f')
     rewards = np.zeros(task.episode_len * task.interval)
+
+    mem_perc = max(mem_perc, psutil.virtual_memory().percent)
+
     for j in range(task.episode_len):
 
       optimizer.update()
@@ -179,7 +183,7 @@ def _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count=1, no
                                        returns[:task.episode_len]))
       value_estimator.train(replay_obs, replay_returns)
 
-  return rewards, controller_size, morphology_size, input_sequence
+  return rewards, controller_size, morphology_size, input_sequence, mem_perc
 
 def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOptimization=None):
   """Run trajectory optimization for the robot on the given task, and return the
@@ -194,14 +198,14 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOpti
 
   assert no.params.experiment_mode in ("reevaleachvsend", "proposedmethod")
   if no.params.experiment_mode == "reevaleachvsend":
-    rewards, controller_size, morphology_size, input_sequence = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
+    rewards, controller_size, morphology_size, input_sequence, _ = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
     nsamples = no.get_inner_quantity()
     no.next_inner(np.mean(rewards[np.nonzero(rewards)]))
     no.next_outer(np.mean(rewards), controller_size, -1, morphology_size)
 
     if no.is_reevaluating_flag: # If new best solution found, reevaluate...
       print("Reevaluating...")
-      rewards_reeval, controller_size, morphology_size, input_sequence_reeval = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, test=True) # call recursively to reevaluate
+      rewards_reeval, controller_size, morphology_size, input_sequence_reeval, _ = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, test=True) # call recursively to reevaluate
       reeval_f = np.mean(rewards_reeval)
       no.next_reeval(reeval_f, controller_size, -1, morphology_size)
       from viewer import pickle_simulation_objects_for_video_generation
@@ -231,23 +235,23 @@ def simulate(robot, task, opt_seed, thread_count, episode_count=1, no:NestedOpti
   elif no.params.experiment_mode == "proposedmethod":
     if no.params.method_mode == "standard":
       nsamples = no.get_inner_quantity()
-      rewards, controller_size, morphology_size, input_sequence = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
+      rewards, controller_size, morphology_size, input_sequence, _ = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
       f = np.mean(rewards[np.nonzero(rewards)])
       no.next_outer(f, controller_size, -1, morphology_size)
 
     else:
       nsamples_seq = [2**i for i in range (2, 30)]
       for nsamples in nsamples_seq:
-        rewards, controller_size, morphology_size, input_sequence = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
+        rewards, controller_size, morphology_size, input_sequence, mem_perc = _simulate(nsamples, robot, task, opt_seed, thread_count, episode_count, no, False)
         f = np.mean(rewards[np.nonzero(rewards)])
         # We need to record several next_inner() because the frames used increase exponentially, and
         # the ESNOF_index parameter assumes a linear proportion wrt. frames.
-        print("--")
-        print("-> nsamples, f", nsamples, f)
         for _ in range(int(nsamples / 4)):
           no.next_inner(f) 
         if no.ESNOF_stop:
           break
+        if mem_perc > 45.0:
+          break # We are using too much memory. It will crash if we dont stop.
       no.next_outer(f, controller_size, -1, morphology_size)
       return input_sequence, np.mean(rewards)
   else:
