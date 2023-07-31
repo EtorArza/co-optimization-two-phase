@@ -316,8 +316,9 @@ class NestedOptimization:
 
 
         def print_ESNOF(str): # for debug purposes
+            print(str)
             return
-            with open("../../esnof_log", "a") as f:
+            with open("/home/paran/Dropbox/BCAM/08_estancia_2/code/esnof_log_robogrammar.txt", "a") as f:
                 print(str, file=f, flush=True)
 
 
@@ -367,7 +368,7 @@ class NestedOptimization:
                             pass
                     if "ctalatii" in self.params.method_mode:
                         current_index = self.ESNOF_index
-                        prev_index = round(current_index * self.params.ctalatii_reference_ratio)
+                        prev_index = int((current_index + 1) * self.params.ctalatii_reference_ratio) - 1
 
                         print_ESNOF(f"ctalatii ({prev_index}, {current_index}) , ({self.ESNOF_observed_objective_values[prev_index]}, {self.ESNOF_observed_objective_values[current_index]})")
 

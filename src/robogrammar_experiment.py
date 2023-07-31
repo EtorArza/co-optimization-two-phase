@@ -3,15 +3,15 @@ import os
 figpath = "results/robogrammar/figures"
 
 if sys.argv[1] == "--clean":    
-    os.system("rm other_repos/RoboGrammar/rule_sequence_* -fv")
-    os.system("rm other_repos/RoboGrammar/simulation_objects_* -fv")
+    os.system("rm other_repos/RoboGrammar/rule_sequence_* -f")
+    os.system("rm other_repos/RoboGrammar/simulation_objects_* -f")
     exit(0)
 elif sys.argv[1] == "--cleanall":    
-    os.system("rm other_repos/RoboGrammar/rule_sequence_* -fv")
-    os.system("rm other_repos/RoboGrammar/simulation_objects_* -fv")
-    os.system("rm results/robogrammar/data/*.txt -fv")
-    os.system("rm results/robogrammar/videos/*.mp4 -fv")
-    os.system("rm results/robogrammar/figures/*.pdf -fv")
+    os.system("rm other_repos/RoboGrammar/rule_sequence_* -f")
+    os.system("rm other_repos/RoboGrammar/simulation_objects_* -f")
+    os.system("rm results/robogrammar/data/proposedmethod*.txt -f")
+    os.system("rm results/robogrammar/videos/proposedmethod*.mp4 -f")
+    os.system("rm results/robogrammar/figures/proposedmethod*.pdf -f")
     exit(0)
 
 elif sys.argv[1] == "--cleanfigs":    
