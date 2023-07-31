@@ -172,7 +172,7 @@ class Parameters:
         # "gesp"
         self.ctalatii_reference_ratio = 0.5 # max time until stop with ctalatii, where 0.5 means in the last half of the evaluations no improvement observed.
         self.max_time_per_morph_ratio = 0.05 # max time to spend per morphology divided by max time total.
-        self.esnof_min_time_ratio = 0.01 * self.max_time_per_morph_ratio # also grace time
+        self.esnof_min_time_ratio = 0.001 # also grace time
 
         _method_list = ["standard", "ctalatii", "gesp", "ctalatii&gesp"] 
         params = list(itertools.product(_method_list, seed_list, self.env_name_list))
