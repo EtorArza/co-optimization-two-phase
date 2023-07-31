@@ -298,7 +298,7 @@ class NestedOptimization:
         self.deletePreviousResults = deletePreviousResults
         self.max_frames = self.params.max_frames
         self.limit_the_amount_of_written_lines = limit_the_amount_of_written_lines 
-        assert self.params.experiment_mode in ("reevaleachvsend", "proposedmethod","adaptstepspermorphology")
+        assert self.params.experiment_mode in ("reevaleachvsend", "proposedmethod")
         if self.params.experiment_mode == "proposedmethod":
             self.ESNOF_reset_for_next_solution()
 
@@ -329,7 +329,7 @@ class NestedOptimization:
             steps_current_morph = self.step - self.ESNOF_steps_begining
             print_ESNOF(f"next_inner() -> {steps_current_morph} steps. ({min_steps_per_morph, max_steps_per_morph})")
             
-            assert self.params.method_mode in ["standard","gesp","ctalatii","standard"]
+            assert self.params.method_mode in ["standard","gesp","ctalatii","ctalatii&gesp"]
             if self.ESNOF_index == 0:
                 self.ESNOF_observed_objective_values[0] = f_partial
             else:
