@@ -362,6 +362,10 @@ class run2D():
     def train_and_reeval_if_required(self, ind):
         seed = np.random.randint(2,200000)
         f = self.train_controller(ind, seed)
+
+        if self.no.params.experiment_mode == "proposedmethod":
+            save_data_animation(f"../dumps_for_animation/animation_dump_current{self.no.params.experiment_index}.wb", self.no, ind, self.TREE_DEPTH, f"vid_{self.no.get_video_label()}_current")
+
         if self.no.is_reevaluating_flag:
             f_reeval = self.train_controller(ind, seed)
             self.no.next_reeval(f_reeval, len(ind.genome.moduleList), -1, ind.genome.n_modules)
