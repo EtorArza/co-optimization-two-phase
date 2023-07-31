@@ -2,15 +2,20 @@ import sys
 import os
 
 if sys.argv[1] == "--clean":    
-    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -fv")
-    os.system("rm other_repos/evogym/examples/simulation_objects_* -fv")
+    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -f")
+    os.system("rm other_repos/evogym/examples/simulation_objects_* -f")
+    print("done.")
     exit(0)
 elif sys.argv[1] == "--cleanall":    
-    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -fv")
-    os.system("rm other_repos/evogym/examples/simulation_objects_* -fv")
-    os.system("rm results/evogym/data/*.txt -fv")
-    os.system("rm results/evogym/videos/*.gif -fv")
-    os.system("rm results/evogym/figures/*.pdf -fv")
+    os.system("rm other_repos/evogym/examples/controller_to_generate_animation_* -f")
+    os.system("rm other_repos/evogym/examples/simulation_objects_* -f")
+    os.system("rm other_repos/evogym/examples/saved_data/* -fr")
+
+    
+    os.system("rm results/evogym/data/proposedmethod*.txt -f")
+    os.system("rm results/evogym/videos/proposedmethod*.gif -f")
+    os.system("rm results/evogym/figures/proposedmethod*.pdf -f")
+    print("done.")
     exit(0)
 
 elif sys.argv[1] == "--cleanfigs":    
