@@ -481,6 +481,7 @@ def plot_tune(data_dir, fig_dir):
         ax.set_xlim(0.25, len(labels) + 0.75)
         ax.set_xlabel('Controllers evaluated per morphology')
 
+    plt.figure(figsize=(4, 3))
     boxplot = plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list], showmeans=True)
 
     # Add legend handles and labels
@@ -489,28 +490,36 @@ def plot_tune(data_dir, fig_dir):
     plt.legend(legend_handles, legend_labels)
 
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
-    plt.title("f")
+    plt.title("")
+    plt.tight_layout()
+
     plt.savefig(fig_dir+r"/f_tune.pdf")
     plt.close()
 
+    plt.figure(figsize=(4, 3))
     plt.violinplot(dataset = [df[df.innerquantity == el]["nrows"].values for el in inner_quantity_list],showmedians=True)
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("nrows")
     plt.yscale("log")
+    plt.tight_layout()
+
     plt.savefig(fig_dir+r"/nrows_tune.pdf")
     plt.close()
 
+    plt.figure(figsize=(4, 3))
     plt.violinplot(dataset = [df[df.innerquantity == el]["step"].values for el in inner_quantity_list],showmedians=True)
     set_axis_style(plt.gca(), [str(el) for el in inner_quantity_list])
     plt.title("step")
     plt.yscale("log")
+    plt.tight_layout()
+
     plt.savefig(fig_dir+r"/step_tune.pdf")
     plt.close()
 
 
     from scipy.stats import gaussian_kde
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(4, 3))
 
 
     markers = ['o', 's', 'D', 'v', '^', 'p', 'P']
@@ -535,7 +544,7 @@ def plot_tune(data_dir, fig_dir):
     ax.set_ylabel('Cumulative Distribution')
     ax.set_title('f_cumulative')
     ax.legend()
-
+    plt.tight_layout()
     plt.savefig(fig_dir + r"/f_tune_cumulative.pdf")
     plt.show()
     plt.close()
