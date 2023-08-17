@@ -639,7 +639,7 @@ class experimentProgressTracker:
             f.writelines(lines)
             n_experiments_done_total = len([0 for line in lines if line.endswith(',1\n')])
             n_experiments_done_this_session = n_experiments_done_total - self.n_experiments_done_initially
-            n_experiments_left = self.max_index - n_experiments_done_total
+            n_experiments_left = self.max_index - n_experiments_done_total - self.start_index
             elapsed_time = time.time() - self.start_ref
             time_left = elapsed_time / n_experiments_done_this_session * n_experiments_left
 
