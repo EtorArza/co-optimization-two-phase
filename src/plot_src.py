@@ -540,6 +540,72 @@ def plot_tune(data_dir, fig_dir):
     plt.show()
     plt.close()
 
+
+def plot_proposedmethod(data_dir, fig_dir):
+    
+    # Create an empty DataFrame to store the combined data
+    df = pd.DataFrame()
+
+
+    file_names = [csv_name for csv_name in os.listdir(data_dir) if "proposedmethod" in csv_name and ".txt" in csv_name]
+    sorted_file_names = sorted(file_names, key=lambda x: int(x.split("_")[1]))
+
+
+    for csv_name in sorted_file_names:
+        if "proposedmethod" in csv_name and ".txt" in csv_name:
+            experiment_index = int(csv_name.split("_")[1])
+            method = csv_name.split("_")[3]
+            seed = int(csv_name.split("_")[-1].split(".")[0])
+            csv_path = os.path.join(data_dir, csv_name)
+            tmp_df = pd.read_csv(csv_path, header=0)
+            tmp_df["experiment_index"] = experiment_index
+            tmp_df["method"] = method
+            tmp_df["seed"] = seed
+            tmp_df['f_best'] = tmp_df['f'].cummax()
+
+            df = pd.concat([df, tmp_df], ignore_index=True)
+
+    methods = df["method"].unique()
+    seeds = sorted(df["seed"].unique())    
+    step_slices = 100
+    max_steps = 8633000
+    print(methods)
+    for meth_idx, method in enumerate(methods):
+        sub_df: pd.DataFrame = df.copy()[df["method"]==method]
+        sub_df = sub_df.reset_index(drop=True)
+
+
+        x = []
+        y_mean = []
+        y_lower = []
+        y_upper = []
+
+
+        marker = marker_list[meth_idx]
+        linestyle = linestyle_list[meth_idx]
+        color = color_list[meth_idx]
+
+
+        for step in np.linspace(0, max_steps, step_slices):
+            step = int(step)
+            selected_indices = sub_df[sub_df["step"] < step].groupby("seed")["step"].idxmax()
+            scores = np.array(sub_df.loc[selected_indices,]["f_best"])
+
+            if len(scores) < 0.75*len(seeds):
+                continue
+            x.append(step)
+            mean, lower, upper = bootstrap_mean_and_confiance_interval(scores)
+            y_mean.append(mean)
+            y_lower.append(lower)
+            y_upper.append(upper)
+
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=method)
+        plt.legend()
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+    plt.show()
+
+
+
 def plot_comparison_parameters(data_dir, fig_dir):
 
     df = read_comparison_parameter_csvs(data_dir)

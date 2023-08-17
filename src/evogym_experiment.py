@@ -75,6 +75,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "--plot":
         print("Inner learning algorithm in evogym is ppo.")
         df = plot_comparison_parameters("results/evogym/data", figpath)
+        df = plot_proposedmethod("results/evogym/data", figpath)
 
     elif sys.argv[1] == "--reindex_result_files":
         print("Reindexing results files...")
