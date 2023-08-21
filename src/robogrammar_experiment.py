@@ -117,6 +117,17 @@ if __name__ == "__main__":
             generate_video(task, robot, opt_seed, input_sequence, save_obj_dir, visualization_path)
 
 
+    elif sys.argv[1] == "--move_anomaly_videos":
+        import subprocess
+        # standard
+        for i, method in zip([8, 17, 4, 13, 0, 9], ["standard"]*2+["reduced_length"]*2 + ["reduced_quantity"]*2):
+            result = subprocess.run(f"ls results/robogrammar/videos/reevaleachvsend_{i}_*current.mp4", shell=True, capture_output=True, text=True)
+            file_names = result.stdout.strip().split('\n')
+            assert len(file_names) == 1
+            file_name = file_names[0]
+            os.system(f"ffmpeg -i {file_name} -vf \"scale=320:240\" -r 10 animations_for_the_paper/tiny_quantity_vs_length_robogrammar/gif_{method}_{i}_robogrammar.gif")
+
+
     elif sys.argv[1] == "--cluster_launch":
         print("Command to launch evogym in cluster...")
         from NestedOptimization import Parameters

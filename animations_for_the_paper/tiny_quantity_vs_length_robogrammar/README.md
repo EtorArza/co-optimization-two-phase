@@ -1,11 +1,17 @@
+### Original parameters
+| Seed 1 | Seed 2 |
+|-------|-------|
+| ![Standard GIF 1](gif_standard_8_robogrammar.gif) | ![Standard GIF 2](gif_standard_17_robogrammar.gif) |
 
-### With number of episodes reduced to 10% the original value
-| Seed 1 | Seed 2 | Seed 3 |
-|-------|-------|-------|
-| ![GIF 1](gif_normal1_quantity0.1_robogrammar.gif) | ![GIF 2](gif_normal2_quantity0.1_robogrammar.gif) | ![GIF 3](gif_normal3_quantity0.1_robogrammar.gif) |
+
+### With number of episodes reduced to 10% of the original value
+| Seed 1 | Seed 2 |
+|-------|-------|
+| ![Reduced Length GIF 1](gif_reduced_length_4_robogrammar.gif) | ![Reduced Length GIF 2](gif_reduced_length_13_robogrammar.gif) |
 
 
-### With the episode length reduced to 10% the original value
-| Seed 1 | Seed 2 | Seed 3 |
-|-------|-------|-------|
-| ![GIF 4](gif_anomaly1_length0.1_robogrammar.gif) | ![GIF 5](gif_anomaly2_length0.1_robogrammar.gif) | ![GIF 6](gif_anomaly3_length0.1_robogrammar.gif) |
+### With the episode length reduced to 10% of the original value
+| Seed 1 | Seed 2 |
+|-------|-------|
+| ![Reduced Quantity GIF 1](gif_reduced_quantity_0_robogrammar.gif) | ![Reduced Quantity GIF 2](gif_reduced_quantity_9_robogrammar.gif) |
+
