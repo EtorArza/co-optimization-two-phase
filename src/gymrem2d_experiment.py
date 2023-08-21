@@ -99,6 +99,12 @@ elif sys.argv[1] == "--visualize":
     animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_current{int(sys.argv[2])}.wb")
     animate_from_dump(f"other_repos/gymrem2d/dumps_for_animation/animation_dump_best{int(sys.argv[2])}.wb")
 
+elif sys.argv[1] == "--visualize_all":
+    for i, method in zip([8, 17, 4, 13, 0, 9], ["standard"]*2+["reduced_length"]*2 + ["reduced_quantity"]*2):
+        os.system(f"python src/gymrem2d_experiment.py --visualize {i}")
+        os.system(f"mv results/gymrem2d/videos/vid_reevaleachvsend_{i}_*_best.gif animations_for_the_paper/tiny_quantity_vs_length_gymrem2d/gif_{method}_{i}_gymrem2d.gif")
+    os.system("rm results/gymrem2d/videos/vid_reevaleachvsend_*.gif")
+
 elif sys.argv[1] == "--tune":
     seeds = list(range(40))
     from itertools import product

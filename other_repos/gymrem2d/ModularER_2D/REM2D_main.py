@@ -159,9 +159,11 @@ def save_data_animation(dump_path, no, ind, tree_dpth, video_label):
     with open(dump_path, "wb") as f:
         pickle.dump((ind,no,tree_dpth, video_label), file=f)
 
-def animate_from_dump(dump_path):
+def animate_from_dump(dump_path, original_EL=False):
     with open (dump_path, "rb") as f:
         read_ind, read_no, tree_dpth, video_label = pickle.load(f)
+    if original_EL:
+        read_no.is_reevaluating_flag=True
     evaluate(read_ind, read_no, TREE_DEPTH = tree_dpth, save_animation = True, save_animation_path = f"results/gymrem2d/videos/{video_label}.gif")
 
 
