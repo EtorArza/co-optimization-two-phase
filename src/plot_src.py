@@ -214,7 +214,7 @@ def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, fig
 
 
 # Compare reevaluating every best solution vs reevaluating at the end.
-def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
+def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpath, param):
 
     from NestedOptimization import Parameters
     max_steps = Parameters("evogym",0).max_frames
@@ -222,7 +222,7 @@ def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
 
     param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
 
-    df = df.query("level == '3'")
+    df3 = df.query("level == '3'")
 
 
     # Remove all ocurrences in which param_equal_1 parameter is not 1.0
@@ -233,7 +233,7 @@ def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
 
 
 
-    for param_idx, param_value in enumerate(sorted(df[param].unique(), reverse=True)):
+    for param_idx, param_value in enumerate(sorted(df3[param].unique(), reverse=True)):
 
 
 
@@ -241,9 +241,21 @@ def _plot_performance_all_seeds(plotname, df:pd.DataFrame, figpath, param):
         x = np.linspace(0,max_steps,step_slices)
         y = np.ones((nseeds,step_slices))
         y *= np.nan
+
+
+        print("Add the runtime that reevaluating at the end takes, which is not otherwise taken into account.")
         for seed in range(2,2+nseeds):
-            df_reeval_end   = df.query(f"step < {max_steps}                  and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
-            df_reeval_every = df.query(f"step_including_reeval < {max_steps} and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+            df_reeval_end   = df3.query(f"step < {max_steps}                  and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+            df_reeval_every = df3.query(f"step_including_reeval < {max_steps} and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
+
+            if len(df.index) == 0 or len(df3.query(f"level == '3' and seed == {seed}").index) == 0:
+                print("DataFrame has no rows")
+                continue
+ 
+            indx_first_lvl_3 = df3.query(f"level == '3' and seed == {seed}").index[0]
+
+
+            difference = df.loc[indx_first_lvl_3, 'step_including_reeval'] - df.loc[indx_first_lvl_3 - 1, 'step_including_reeval']
 
             for i, step in enumerate(x):
                 if df_reeval_end[df_reeval_end["step"] < step]["step"].size == 0:
@@ -620,11 +632,11 @@ def plot_proposedmethod(data_dir, fig_dir):
 def plot_comparison_parameters(data_dir, fig_dir):
 
     df = read_comparison_parameter_csvs(data_dir)
+    _plot_performance_reeval_every_best_vs_end("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
     
     _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
     _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), fig_dir, "innerlength_or_startquantity")
 
-    _plot_performance_all_seeds("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
 
 
 
