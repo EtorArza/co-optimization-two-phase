@@ -86,6 +86,8 @@ def read_comparison_parameter_csvs(csv_folder_path):
             #     continue
             if "param" in csv_name:
                 continue
+            if "proposedmethod" in csv_name:
+                continue
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
             experiment_name,experiment_index,env_name,innerquantity_or_targetprob, innerlength_or_startquantity, seed = removesuffix(csv_name,".txt").split("_")
