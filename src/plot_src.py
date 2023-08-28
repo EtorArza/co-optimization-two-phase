@@ -232,7 +232,7 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
 
 
 
-
+    plt.figure(figsize=(4, 3))
     for param_idx, param_value in enumerate(sorted(df3[param].unique(), reverse=True)):
 
 
@@ -279,11 +279,13 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
         plt.plot(x, y_mean, color=color, marker=marker, markevery=1/10, label=f"{param_value}")
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color)
     plt.axhline(0, color="black", linestyle="--")
-    plt.ylabel("- reevaluate_end      +    reevaluate_every")
+    plt.ylabel("- reevaluate_end              + reevaluate_every_new_best")
     plt.xlabel("steps")
     plt.legend(title=param_name)
-    plt.title(plotname)
-    plt.text(1,-3,"quantity = 1.0 is in the negative side, because with \n reevaluate every we waste time\n reevaluating with no benefit.")
+    plt.title("Reeval every new best - reevaluate end")
+    # plt.text(1,-3,"quantity = 1.0 is in the negative side, because with \n reevaluate every we waste time\n reevaluating with no benefit.")
+    # plt.show()
+    plt.tight_layout()
     plt.savefig(figpath + f"/{plotname}.pdf")
     plt.close()
 
@@ -327,9 +329,19 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     innerquantity_or_targetprob_values = sorted(list(df["innerquantity_or_targetprob"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
     innerlength_or_startquantity_values = sorted(list(df["innerlength_or_startquantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
+    param_values = sorted(list(set(innerlength_or_startquantity_values + innerlength_or_startquantity_values)), key=lambda x: -float(x))
+    print("param_values", param_values)
+    assert len(innerquantity_or_targetprob_values) == 1 or len(innerlength_or_startquantity_values) == 1
+
+    legendtitle = {
+        "innerquantity_or_targetprob":"quantity",
+        "innerlength_or_startquantity":"length",
+    }[param]
+
     step_slices = 100
     i=-1
-    for group_name, df_group in tqdm(df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])):
+    plt.figure(figsize=(4, 3))
+    for group_name, df_group in tqdm(sorted(df.groupby(param), key=lambda x: -float(x[0]))):
         i+=1
 
         x = []
@@ -338,8 +350,8 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
         y_upper = []
 
 
-        marker = marker_list[innerquantity_or_targetprob_values.index(group_name[0])]
-        linestyle = linestyle_list[innerlength_or_startquantity_values.index(group_name[1])]
+        marker = marker_list[i]
+        linestyle = linestyle_list[i]
         color = color_list[i]
 
         df_group = df_group.reset_index()
@@ -362,16 +374,17 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
             y_lower.append(lower)
             y_upper.append(upper)
 
-        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10)
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=group_name)
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
-    for innerquantity_or_targetprob, marker in zip(innerquantity_or_targetprob_values[1:], marker_list[1:]):
-        plt.plot([],[],label=f"innerquantity_or_targetprob = {innerquantity_or_targetprob}", marker=marker, color="black")
+    # for innerquantity_or_targetprob, marker in zip(innerquantity_or_targetprob_values[1:], marker_list[1:]):
+    #     plt.plot([],[],label=f"innerquantity_or_targetprob = {innerquantity_or_targetprob}", marker=marker, color="black")
 
-    for innerlength_or_startquantity, linestyle in zip(innerlength_or_startquantity_values[1:], linestyle_list[1:]):
-        plt.plot([],[],label=f"innerlength_or_startquantity = {innerlength_or_startquantity}", linestyle=linestyle,color="black")
+    # for innerlength_or_startquantity, linestyle in zip(innerlength_or_startquantity_values[1:], linestyle_list[1:]):
+    #     plt.plot([],[],label=f"innerlength_or_startquantity = {innerlength_or_startquantity}", linestyle=linestyle,color="black")
     # plt.xscale("log")
-    plt.legend()
+    plt.legend(title=legendtitle)
+    plt.tight_layout()
     plt.savefig(figpath + f"/performance_{plotname}.pdf")
     plt.close()
 
@@ -560,7 +573,7 @@ def plot_tune(data_dir, fig_dir):
     ax.legend()
     plt.tight_layout()
     plt.savefig(fig_dir + r"/f_tune_cumulative.pdf")
-    plt.show()
+    # plt.show()
     plt.close()
 
 
@@ -625,7 +638,7 @@ def plot_proposedmethod(data_dir, fig_dir):
         plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=method)
         plt.legend()
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
-    plt.show()
+    # plt.show()
 
 
 
