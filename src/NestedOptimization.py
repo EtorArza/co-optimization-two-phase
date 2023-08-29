@@ -65,6 +65,7 @@ class stopwatch:
 class Parameters:
     nseeds = 60
     nseeds_proposed_method = 20
+    stopping_criterion=int(8e6)
 
     def __init__(self, framework_name: str, experiment_index: int):
 
@@ -77,7 +78,7 @@ class Parameters:
             # of the model is only saved every 50 iterations, and if the parameter inner 
             # _inner_quantity_proportion is 0.5, we get 50 iterations when default_train_iters = 100.
 
-            self.max_frames = 8633000 # Default 34532000 considering 250 morphologies evaluated (easy tasks).
+            self.max_frames = self.stopping_criterion # Default 34532000 considering 250 morphologies evaluated (easy tasks).
             self.env_name_list = ["Walker-v0"]
             self._default_inner_quantity = 1000 # The number of the iterations of the PPO algorithm.
             self._default_inner_length = 128 # Episode length.
@@ -85,7 +86,7 @@ class Parameters:
 
 
         elif framework_name == "robogrammar":
-            self.max_frames = 10240000 # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
+            self.max_frames = self.stopping_criterion # max_frames=40960000 is the default value if we consider 5000 iterations as in the example in the GitHub.
             self.env_name_list = ["FlatTerrainTask"]
             self._default_inner_quantity = 64 # The number of random samples to generate when simulating each step.
             self._default_inner_length = 128 # Episode length.
@@ -105,8 +106,7 @@ class Parameters:
             # using 3002177 frames would not be enough because each morphology is now evaluated multiple times.
             # hence, we consider a budget x4 of the original, 
 
-            # self.max_frames = 12008708
-            self.max_frames = 12008708
+            self.max_frames = self.stopping_criterion
 
             self.env_name_list = ["default"]
             self._default_inner_quantity =  64 # <- Need to do some parameter search!!!
@@ -115,9 +115,9 @@ class Parameters:
 
 
         elif framework_name == "jorgenrem":
-            self.max_frames = 480000000 # max_frames=480000000 is the default value
+            self.max_frames = self.stopping_criterion # max_frames=480000000 is the default value
             self.env_name_list = ["default"]
-            self._default_inner_quantity =  10 # <- Need to do some parameter search!!!
+            self._default_inner_quantity =  128 # <- Need to do some parameter search!!!
             self._default_inner_length = 4800 # Represents the number of steps per controller tested
             self.non_resumable_param = "length"
 
