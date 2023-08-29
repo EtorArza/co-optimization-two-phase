@@ -6,6 +6,9 @@ import os
 from tqdm import tqdm as tqdm
 import numpy as np
 
+
+stopping_criterion=int(8e6)
+
 # copy figures / plots to paper dir with rsync -> 
 # rsync -zarv --delete --prune-empty-dirs --include "*/"  --include="*.pdf" --exclude="*" "results" "../paper/results"
 
@@ -217,7 +220,7 @@ def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, fig
 def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpath, param):
 
     from NestedOptimization import Parameters
-    max_steps = Parameters("evogym",0).max_frames
+    max_steps = stopping_criterion
     nseeds = Parameters("evogym",0).nseeds
 
     param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
@@ -296,7 +299,7 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     assert scorelevel in ["reeval", "no_reeval"]
 
     from NestedOptimization import Parameters
-    max_steps = Parameters("evogym",0).max_frames
+    max_steps = stopping_criterion
     nseeds = Parameters("evogym",0).nseeds
 
 
@@ -478,6 +481,7 @@ def plot_tune(data_dir, fig_dir):
     for csv_name in os.listdir(data_dir):
         if ".txt" in csv_name and "paramtuning" in csv_name:
             df = pd.read_csv(data_dir + "/" + csv_name)
+            df = df.query(f"step <= {stopping_criterion}") # set max steps to stopping_criterion
             f = df.query("level == 2")["f_best"].iloc[-1]
             step = df.query("level == 2")["step"].iloc[-1]
             nrows = df.query("level == 2").shape[0]
@@ -604,7 +608,7 @@ def plot_proposedmethod(data_dir, fig_dir):
     methods = df["method"].unique()
     seeds = sorted(df["seed"].unique())    
     step_slices = 100
-    max_steps = 8633000
+    max_steps = stopping_criterion
     print(methods)
     for meth_idx, method in enumerate(methods):
         sub_df: pd.DataFrame = df.copy()[df["method"]==method]
