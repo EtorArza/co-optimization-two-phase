@@ -76,7 +76,7 @@ if __name__ == "__main__":
         from plot_src import *
         print("Inner learning algorithm in robogrammar is MPC.")
         df = plot_comparison_parameters("results/robogrammar/data", figpath)
-        df = plot_proposedmethod("results/evogym/data", figpath)
+        df = plot_proposedmethod("results/robogrammar/data", figpath)
 
     elif sys.argv[1] == "--reindex_result_files":
         print("Reindexing results files...")

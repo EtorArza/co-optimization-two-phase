@@ -640,8 +640,9 @@ def plot_proposedmethod(data_dir, fig_dir):
             y_upper.append(upper)
 
         plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=method)
-        plt.legend()
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+    plt.legend()
+    plt.savefig(fig_dir + r"/performance_ctalatii_gesp.pdf")
     # plt.show()
 
 
