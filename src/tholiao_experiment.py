@@ -38,7 +38,7 @@ def local_launch_one(experiment_index):
     random.seed(params.seed)
     np.random.seed(params.seed)
  
-    no = NestedOptimization("../../results/tholiao/data/", params)
+    no = NestedOptimization("../../results/tholiao/data/", params, deletePreviousResults=True)
 
 
 
@@ -65,11 +65,14 @@ elif sys.argv[1] == "--sequential_launch":
 
     progress_filename = "tholiao_sequential.txt"
 
-    prog = experimentProgressTracker(progress_filename, 540, 619)
+    prog = experimentProgressTracker(progress_filename, 0, 539)
     
     def launch_next(prog: experimentProgressTracker):
         i = prog.get_next_index()
-
+        os.system("rm other_repos/tholiao/logs/*.npy -f")
+        os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
+        import time
+        time.sleep(2)
         exit_status = os.system(f"python src/tholiao_experiment.py --local_launch {i}")
         os.system("rm other_repos/tholiao/logs/*.npy -f")
         os.system("rm V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/logs/models/20* -f")
