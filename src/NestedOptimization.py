@@ -121,6 +121,14 @@ class Parameters:
             self._default_inner_length = 4800 # Represents the number of steps per controller tested
             self.non_resumable_param = "length"
 
+
+        elif framework_name == "kevincoadapting":
+            self.max_frames = self.stopping_criterion
+            self.env_name_list = ["default"]
+            self._default_inner_quantity =  100 # As a percentage
+            self._default_inner_length = 100 # As a percentage
+            self.non_resumable_param = "length"
+
         else:
             raise ValueError(f"Framework {framework_name} not found.")
 
@@ -226,8 +234,7 @@ class Parameters:
             else:
                 print(f"{key}, {start}-{end}")
 
-        print("Total number of executions:", )
-
+        print(f"quantity={self._get_parameter_list()[self.experiment_index][2]}, length={self._get_parameter_list()[self.experiment_index][3]}")
         print("Parameters current execution:",self._get_parameter_list()[self.experiment_index])
 
 

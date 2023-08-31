@@ -143,7 +143,6 @@ class Coadaptation(object):
             - Log data
 
         """
-        print("Time for one iteration: {}".format(time.time() - self._last_single_iteration_time))
         self._last_single_iteration_time = time.time()
         self._replay.set_mode("species")
         self.collect_training_experience()
@@ -155,6 +154,8 @@ class Coadaptation(object):
         self.execute_policy()
         self.save_logged_data()
         self.save_networks()
+        print("Time for one iteration: {}".format(time.time() - self._last_single_iteration_time))
+
 
     def collect_training_experience(self):
         """ Collect training data.
@@ -181,6 +182,7 @@ class Coadaptation(object):
         else:
             utils.move_to_cuda(self._config)
 
+        print("Episode length: ", self._episode_length, self._episode_counter)
         while not(done) and nmbr_of_steps <= self._episode_length:
             nmbr_of_steps += 1
             self.total_number_of_steps += 1

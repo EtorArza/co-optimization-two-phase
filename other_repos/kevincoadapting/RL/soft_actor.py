@@ -101,6 +101,8 @@ class SoftActorCritic(RL_algorithm):
             train_ind: Boolean. If true the individual networks will be trained.
             train_pop: Boolean. If true the population networks will be trained.
         """
+        print("single_train_step(): train_ind=", train_ind, "train_pop=", train_pop)
+
         if train_ind:
           # Get only samples from the species buffer
           self._replay.set_mode('species')

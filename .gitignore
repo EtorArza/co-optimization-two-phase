@@ -192,3 +192,5 @@ gymrem2d_local_launch.txt
 gymrem2d_local_launch.txt_log.txt
 tholiao_sequential.txt
 tholiao_sequential.txt_log.txt
+data_exp_sac_pso_batch/*
+report.log
