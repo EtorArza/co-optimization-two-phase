@@ -128,5 +128,8 @@ elif sys.argv[1] == "--local_launch_tune_sequentially":
 elif sys.argv[1] == "--plot_tune":
     plot_tune("results/jorgenrem/data", "results/jorgenrem/figures")
 
+elif sys.argv[1] == "--plot":
+    df = plot_comparison_parameters("results/jorgenrem/data", "results/jorgenrem/figures")
+
 else:
     raise ValueError(f"Argument {sys.argv[1]} not recognized.")
