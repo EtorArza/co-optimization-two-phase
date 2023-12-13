@@ -24,7 +24,7 @@ def translate_to_plot_labels(param, experiment_name):
 
     assert experiment_name in ("reevaleachvsend", "adaptstepspermorphology")
 
-    if param == "innerquantity_or_targetprob":
+    if param == "quantity_param":
         if experiment_name == "reevaleachvsend":
             return "Controllers per morphology (wr to default params)"
         elif experiment_name == "adaptstepspermorphology":
@@ -32,7 +32,7 @@ def translate_to_plot_labels(param, experiment_name):
         else:
             raise ValueError("experiment_name=",experiment_name,"not recognized.")
 
-    elif param == "innerlength_or_startquantity":
+    elif param == "length_param":
         if experiment_name == "reevaleachvsend":
             return "Episode length (wr to default params)"
         elif experiment_name == "adaptstepspermorphology":
@@ -73,13 +73,13 @@ def read_comparison_parameter_csvs(csv_folder_path):
         "step_including_reeval": np.int64,
         "experiment_index": object,
         "env_name": object,
-        "innerquantity_or_targetprob": object,
-        "innerlength_or_startquantity": object,
+        "quantity_param": object,
+        "length_param": object,
         "seed": int,
     }
 
 
-    df = pd.DataFrame(columns=["env_name","experiment_index","experiment_name","level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","innerquantity_or_targetprob","innerlength_or_startquantity","seed"])
+    df = pd.DataFrame(columns=["env_name","experiment_index","experiment_name","level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","quantity_param","length_param","seed"])
     df = df.astype(dtype=dtypes)
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
@@ -93,14 +93,14 @@ def read_comparison_parameter_csvs(csv_folder_path):
                 continue
 
             n_df = pd.read_csv(csv_folder_path+"/"+csv_name, header=0, dtype=dtypes)
-            experiment_name,experiment_index,env_name,innerquantity_or_targetprob, innerlength_or_startquantity, seed = removesuffix(csv_name,".txt").split("_")
-            # if innerlength_or_startquantity != '1.0':
+            experiment_name,experiment_index,env_name,quantity_param, length_param, seed = removesuffix(csv_name,".txt").split("_")
+            # if length_param != '1.0':
             #     continue
             n_df["experiment_name"] = experiment_name
             n_df["experiment_index"] = experiment_index
             n_df["env_name"] = env_name
-            n_df["innerquantity_or_targetprob"] = float(innerquantity_or_targetprob)
-            n_df["innerlength_or_startquantity"] = float(innerlength_or_startquantity)
+            n_df["quantity_param"] = float(quantity_param)
+            n_df["length_param"] = float(length_param)
             n_df["seed"] = int(seed)
 
             # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
@@ -114,8 +114,8 @@ def read_comparison_parameter_csvs(csv_folder_path):
     max_only_df = df.loc[indices_with_highest_step,]
     acceptable_rows = max_only_df[max_only_df["step"] > np.mean(max_only_df["step"]) * 0.95]
 
-    print("Number of rows per class: ", np.array(max_only_df.groupby(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"]).count()["env_name"]))
-    print("Number of rows per class after pruning crashed exp.: ", np.array(acceptable_rows.groupby(by=["innerquantity_or_targetprob", "innerlength_or_startquantity"]).count()["env_name"]))
+    print("Number of rows per class: ", np.array(max_only_df.groupby(by=["quantity_param", "length_param"]).count()["env_name"]))
+    print("Number of rows per class after pruning crashed exp.: ", np.array(acceptable_rows.groupby(by=["quantity_param", "length_param"]).count()["env_name"]))
 
     df = df[df["experiment_index"].isin(acceptable_rows["experiment_index"])]
 
@@ -126,10 +126,10 @@ def read_comparison_parameter_csvs(csv_folder_path):
     # """
     # What is the parameter reusable_dimension?
 
-    # Computation time can be saved in special cases when either innerlength_or_startquantity or innerquantity_or_targetprob are 1.0
+    # Computation time can be saved in special cases when either length_param or quantity_param are 1.0
     # For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
-    # innerquantity_or_targetprob = 0.5 during training, it will only train for 500 iterations. If we have considered 
-    # the default episode length (with innerlength_or_startquantity = 1.0), then, when reevaluating, we only need to finish
+    # quantity_param = 0.5 during training, it will only train for 500 iterations. If we have considered 
+    # the default episode length (with length_param = 1.0), then, when reevaluating, we only need to finish
     # the next 500 iterations. In this case, the resumable dimension would be quantity.  
 
     # quantity -> number of controllers tested
@@ -140,21 +140,21 @@ def read_comparison_parameter_csvs(csv_folder_path):
     # evogym      -> resumable_dimension = quantity
     # RoboGrammar -> resumable_dimension = length
 
-    # When resumable == "neither", only innerlength_or_startquantity == innerquantity_or_targetprob == 1.0 gets a bonus of not having to
+    # When resumable == "neither", only length_param == quantity_param == 1.0 gets a bonus of not having to
     # reevaluate at all.
     # """
     # if resumable_dimension == 'quantity':
-    #     sub_df = df.query("innerlength_or_startquantity == 1.0 & level == '3'")
-    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerquantity_or_targetprob"]
+    #     sub_df = df.query("length_param == 1.0 & level == '3'")
+    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["quantity_param"]
     #     cols = list(df.columns) 
     #     df.loc[sub_df.index, cols] = sub_df[cols]
     # elif resumable_dimension == 'length':
-    #     sub_df = df.query("innerquantity_or_targetprob == 1.0 & level == '3'")
-    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["innerlength_or_startquantity"]
+    #     sub_df = df.query("quantity_param == 1.0 & level == '3'")
+    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["length_param"]
     #     cols = list(df.columns) 
     #     df.loc[sub_df.index, cols] = sub_df[cols]
     # elif resumable_dimension == 'neither':
-    #     sub_df = df.query("innerquantity_or_targetprob == 1.0 & innerquantity_or_targetprob == 1.0 & level == '3'")
+    #     sub_df = df.query("quantity_param == 1.0 & quantity_param == 1.0 & level == '3'")
     #     sub_df["step_including_reeval"] = sub_df["step"]
     #     cols = list(df.columns) 
     #     df.loc[sub_df.index, cols] = sub_df[cols]
@@ -167,13 +167,13 @@ def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, fig
     max_steps = Parameters("evogym",0).max_frames
     nseeds = Parameters("evogym",0).nseeds
 
-    param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
+    param_name = ["quantity", "length"][["quantity_param", "length_param"].index(param)]
 
     df = df.query("level == '3'")
 
 
     # Remove all ocurrences in which param_equal_1 parameter is not 1.0
-    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1 = ["quantity_param", "length_param"]
     param_equal_1.remove(param)
     param_equal_1 = param_equal_1[0]
 
@@ -223,13 +223,13 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
     max_steps = stopping_criterion
     nseeds = Parameters("evogym",0).nseeds
 
-    param_name = ["quantity", "length"][["innerquantity_or_targetprob", "innerlength_or_startquantity"].index(param)]
+    param_name = ["quantity", "length"][["quantity_param", "length_param"].index(param)]
 
     df3 = df.query("level == '3'")
 
 
     # Remove all ocurrences in which param_equal_1 parameter is not 1.0
-    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1 = ["quantity_param", "length_param"]
     param_equal_1.remove(param)
     param_equal_1 = param_equal_1[0]
 
@@ -295,7 +295,7 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
 def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
 
     print(param)
-    assert param in ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    assert param in ["quantity_param", "length_param"]
     assert scorelevel in ["reeval", "no_reeval"]
 
     from NestedOptimization import Parameters
@@ -322,23 +322,23 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
         raise ValueError(f"scorelevel {scorelevel} not valid.")
 
     # Remove all ocurrences in which param_equal_1 parameter is not 1.0
-    param_equal_1 = ["innerquantity_or_targetprob", "innerlength_or_startquantity"]
+    param_equal_1 = ["quantity_param", "length_param"]
     param_equal_1.remove(param)
     param_equal_1 = param_equal_1[0]
     df = df[df[param_equal_1]==1.0]
 
     
     # Get the parameter values such that 1.0 is the first
-    innerquantity_or_targetprob_values = sorted(list(df["innerquantity_or_targetprob"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
-    innerlength_or_startquantity_values = sorted(list(df["innerlength_or_startquantity"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    quantity_param_values = sorted(list(df["quantity_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    length_param_values = sorted(list(df["length_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
-    param_values = sorted(list(set(innerlength_or_startquantity_values + innerlength_or_startquantity_values)), key=lambda x: -float(x))
+    param_values = sorted(list(set(length_param_values + length_param_values)), key=lambda x: -float(x))
     print("param_values", param_values)
-    assert len(innerquantity_or_targetprob_values) == 1 or len(innerlength_or_startquantity_values) == 1
+    assert len(quantity_param_values) == 1 or len(length_param_values) == 1
 
     legendtitle = {
-        "innerquantity_or_targetprob":"quantity",
-        "innerlength_or_startquantity":"length",
+        "quantity_param":"quantity",
+        "length_param":"length",
     }[param]
 
     step_slices = 100
@@ -380,11 +380,11 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
         plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=group_name)
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
-    # for innerquantity_or_targetprob, marker in zip(innerquantity_or_targetprob_values[1:], marker_list[1:]):
-    #     plt.plot([],[],label=f"innerquantity_or_targetprob = {innerquantity_or_targetprob}", marker=marker, color="black")
+    # for quantity_param, marker in zip(quantity_param_values[1:], marker_list[1:]):
+    #     plt.plot([],[],label=f"quantity_param = {quantity_param}", marker=marker, color="black")
 
-    # for innerlength_or_startquantity, linestyle in zip(innerlength_or_startquantity_values[1:], linestyle_list[1:]):
-    #     plt.plot([],[],label=f"innerlength_or_startquantity = {innerlength_or_startquantity}", linestyle=linestyle,color="black")
+    # for length_param, linestyle in zip(length_param_values[1:], linestyle_list[1:]):
+    #     plt.plot([],[],label=f"length_param = {length_param}", linestyle=linestyle,color="black")
     # plt.xscale("log")
     plt.legend(title=legendtitle)
     plt.tight_layout()
@@ -410,7 +410,7 @@ def _plot_stability(df: pd.DataFrame, figpath):
         labels = []
         dfs = []
         index_of_lowest_each_group = []
-        for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
+        for group_name, df_group in sorted(list(max_only_df.groupby(["quantity_param", "length_param"])), key=lambda x: (x[0][1], x[0][0])):
             labels.append(group_name)
             dfs.append(np.array(df_group[fitness_metric]))
             index_of_lowest_each_group.append(df_group[fitness_metric].idxmin())
@@ -425,10 +425,10 @@ def _plot_stability(df: pd.DataFrame, figpath):
             text_label = max_only_df.loc[idx, "experiment_index"]
             plt.text(x_text, y_text, text_label)
 
-        # for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
+        # for group_name, df_group in sorted(list(max_only_df.groupby(["quantity_param", "length_param"])), key=lambda x: (x[0][1], x[0][0])):
         #     plt.text()
 
-        plt.xlabel("(innerquantity_or_targetprob, innerlength_or_startquantity)")
+        plt.xlabel("(quantity_param, length_param)")
         plt.title("")
         plt.ylim((0,11))
         plt.ylabel("objective value")
@@ -450,7 +450,7 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     labels = []
     dfs = []
     index_of_lowest_each_group = []
-    for group_name, df_group in sorted(list(max_only_df.groupby(["innerquantity_or_targetprob", "innerlength_or_startquantity"])), key=lambda x: (x[0][1], x[0][0])):
+    for group_name, df_group in sorted(list(max_only_df.groupby(["quantity_param", "length_param"])), key=lambda x: (x[0][1], x[0][0])):
         labels.append(group_name)
         dfs.append(np.array(df_group[complexity_metric]))
 
@@ -459,7 +459,7 @@ def _plot_complexity(df: pd.DataFrame, figpath, complexity_metric):
     
     plt.figure(figsize=(6.5,3))
     plt.boxplot(dfs, labels=labels)    
-    plt.xlabel("(innerquantity_or_targetprob, innerlength_or_startquantity)")
+    plt.xlabel("(quantity_param, length_param)")
     plt.title("")
     plt.ylabel(f"sol. complexity as {complexity_metric}")
     plt.tight_layout()
@@ -650,15 +650,14 @@ def plot_proposedmethod(data_dir, fig_dir):
 def plot_comparison_parameters(data_dir, fig_dir):
 
     df = read_comparison_parameter_csvs(data_dir)
-    _plot_performance_reeval_every_best_vs_end("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
+    _plot_performance_reeval_every_best_vs_end("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "quantity_param")
     
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "innerquantity_or_targetprob")
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), fig_dir, "innerlength_or_startquantity")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "quantity_param")
+    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), fig_dir, "length_param")
 
 
 
-
-    for param, param_preffix in zip(["innerquantity_or_targetprob", "innerlength_or_startquantity"], ["quantity", "length"]):
+    for param, param_preffix in zip(["quantity_param", "length_param"], ["quantity", "length"]):
         _plot_performance(f"{param_preffix}_reevalend",      df.copy(), fig_dir, "reeval",    param, "f", "step")
         _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), fig_dir, "reeval",    param, "f_best", "step_including_reeval")
         _plot_performance(f"{param_preffix}_noreeval",       df.copy(), fig_dir, "no_reeval", param, "f_best", "step")
