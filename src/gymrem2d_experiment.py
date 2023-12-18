@@ -185,7 +185,7 @@ elif sys.argv[1] == "--get_frames_by_default":
     print("On average, IN THE LAST GENERATION, the default gymrem2d experiment uses", np.mean(frames_per_episode_last_gen), "frames per evaluated controller (average episode length in frames).")
 
 elif sys.argv[1] == "--plot":
-    df = plot_comparison_parameters("results/gymrem2d/data", "results/gymrem2d/figures")
+    df = plot_comparison_parameters("gym_rem2d","results/gymrem2d/data", "results/gymrem2d/figures")
 
 elif sys.argv[1] == "--plot_tune":
     plot_tune("results/gymrem2d/data", "results/gymrem2d/figures")

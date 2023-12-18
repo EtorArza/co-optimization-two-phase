@@ -9,11 +9,31 @@ python src/gymrem2d_experiment.py --plot &
 wait
 echo "produced all the plots"
 
+# Function to crop all PDF figures in a directory and its subdirectories
+crop_pdfs() {
+    local directory="$1"
+
+    # Loop through each PDF in the directory and its subdirectories
+    find "$directory" -type f -name '*.pdf' | while IFS= read -r pdf; do
+        # Construct the output filename (using the same name, thus overwriting the original)
+        output="$pdf"
+
+        # Apply pdfcrop
+        pdfcrop "$pdf" "$output"
+
+        echo "Cropped $pdf"
+    done
+}
+
+
 # Copy results to paper dir
 rsync -zarv --delete --prune-empty-dirs --include '*/' --include '*.pdf' --exclude '*' results/ ../paper/results/
 
 # Recompile paper
 current=`pwd`
 cd ../paper
-pdflatex -synctex=1 -interaction=nonstopmode main.tex
+crop_pdfs "./results/"
+
+
+# pdflatex -synctex=1 -interaction=nonstopmode main.tex
 cd $current 

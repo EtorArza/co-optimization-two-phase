@@ -71,6 +71,7 @@ def read_comparison_parameter_csvs(csv_folder_path):
         "time_including_reeval": np.float64,
         "step": np.int64,
         "step_including_reeval": np.int64,
+        "step_reeval_end": np.int64,
         "experiment_index": object,
         "env_name": object,
         "quantity_param": object,
@@ -79,7 +80,7 @@ def read_comparison_parameter_csvs(csv_folder_path):
     }
 
 
-    df = pd.DataFrame(columns=["env_name","experiment_index","experiment_name","level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","quantity_param","length_param","seed"])
+    df = pd.DataFrame(columns=["env_name","experiment_index","experiment_name","level","evaluation","f_best","f","controller_size","controller_size2","morphology_size","time","time_including_reeval","step","step_including_reeval","step_reeval_end","quantity_param","length_param","seed"])
     df = df.astype(dtype=dtypes)
     for csv_name in tqdm(os.listdir(csv_folder_path)):
         if ".txt" in csv_name:
@@ -103,6 +104,12 @@ def read_comparison_parameter_csvs(csv_folder_path):
             n_df["length_param"] = float(length_param)
             n_df["seed"] = int(seed)
 
+
+            # Compute steps when only one reeval is done
+            steps_per_reevaluation = n_df.loc[1, "step_including_reeval"] - n_df.loc[0, "step_including_reeval"]
+            n_df["step_reeval_end"] = n_df["step"] + steps_per_reevaluation
+
+
             # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
             # import tabloo; tabloo.show(n_df) # View pandas dataframe or table in browser
 
@@ -117,47 +124,7 @@ def read_comparison_parameter_csvs(csv_folder_path):
     print("Number of rows per class: ", np.array(max_only_df.groupby(by=["quantity_param", "length_param"]).count()["env_name"]))
     print("Number of rows per class after pruning crashed exp.: ", np.array(acceptable_rows.groupby(by=["quantity_param", "length_param"]).count()["env_name"]))
 
-    df = df[df["experiment_index"].isin(acceptable_rows["experiment_index"])]
-
-
-    # # Adjust runtimes based on resumable dimension:
-    # assert resumable_dimension in ("length", "quantity", "neither", None) 
-    
-    # """
-    # What is the parameter reusable_dimension?
-
-    # Computation time can be saved in special cases when either length_param or quantity_param are 1.0
-    # For example, imagine the learning algorithm PPO usually runs for 1000 iterations. If we train set 
-    # quantity_param = 0.5 during training, it will only train for 500 iterations. If we have considered 
-    # the default episode length (with length_param = 1.0), then, when reevaluating, we only need to finish
-    # the next 500 iterations. In this case, the resumable dimension would be quantity.  
-
-    # quantity -> number of controllers tested
-    # length   -> the length of the episode
-
-    # With the current frameworks, the resumable dimensions are as follows:
-
-    # evogym      -> resumable_dimension = quantity
-    # RoboGrammar -> resumable_dimension = length
-
-    # When resumable == "neither", only length_param == quantity_param == 1.0 gets a bonus of not having to
-    # reevaluate at all.
-    # """
-    # if resumable_dimension == 'quantity':
-    #     sub_df = df.query("length_param == 1.0 & level == '3'")
-    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["quantity_param"]
-    #     cols = list(df.columns) 
-    #     df.loc[sub_df.index, cols] = sub_df[cols]
-    # elif resumable_dimension == 'length':
-    #     sub_df = df.query("quantity_param == 1.0 & level == '3'")
-    #     sub_df["step_including_reeval"] = sub_df["step_including_reeval"] - (sub_df["step_including_reeval"] - sub_df["step"]) * sub_df["length_param"]
-    #     cols = list(df.columns) 
-    #     df.loc[sub_df.index, cols] = sub_df[cols]
-    # elif resumable_dimension == 'neither':
-    #     sub_df = df.query("quantity_param == 1.0 & quantity_param == 1.0 & level == '3'")
-    #     sub_df["step_including_reeval"] = sub_df["step"]
-    #     cols = list(df.columns) 
-    #     df.loc[sub_df.index, cols] = sub_df[cols]
+    df = df[df["experiment_index"].isin(acceptable_rows["experiment_index"])] 
 
     return df
 
@@ -259,6 +226,7 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
 
 
             difference = df.loc[indx_first_lvl_3, 'step_including_reeval'] - df.loc[indx_first_lvl_3 - 1, 'step_including_reeval']
+            raise ValueError("variable difference is not used. Check this code to make sure that the reevaluation of the best is taken into account.")
 
             for i, step in enumerate(x):
                 if df_reeval_end[df_reeval_end["step"] < step]["step"].size == 0:
@@ -292,11 +260,84 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
     plt.savefig(figpath + f"/{plotname}.pdf")
     plt.close()
 
-def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
+def _plot_exp1_two_phase_vs_one_phase(framework_name, df: pd.DataFrame, figpath):
+
+    plotname = "plot_twophase_vs_onephase"
+    param = "quantity_param"
+    ref_param = "0.25"
+    from NestedOptimization import Parameters
+    nseeds = Parameters("evogym",0).nseeds
+
+
+    # Keep only rows that are relevant to changes in param (the other parameter should be 1.0)
+    param_equal_1 = ["quantity_param", "length_param"]
+    param_equal_1.remove(param)
+    param_equal_1 = param_equal_1[0]
+    df = df[df[param_equal_1]==1.0]
+
+
+    # Get the parameter values such that 1.0 is the first
+    param_values = sorted(list(df[param].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+
+
+
+    i = -1
+    plt.figure(figsize=(4, 3))
+    for legend_label, param_value, level, res_column in zip(["single phase, standard", "single phase, reduced quantity", "two phase"], ["1.0", "0.25", "0.25"], ["2","2","3"], ["step", "step", "step_reeval_end"]):
+        i+=1
+
+        x = []
+        y_mean = []
+        y_lower = []
+        y_upper = []
+
+        
+        marker = marker_list[i]
+        linestyle = linestyle_list[i]
+        color = color_list[i]
+
+        # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
+
+
+        df_group = df.query(f"{param} == {param_value} & level == '{level}'")
+
+
+
+        step_slices = 100
+        for step in np.linspace(0, stopping_criterion, step_slices):
+            step = int(step)
+            selected_indices = df_group[df_group[res_column] < step].groupby("seed")[res_column].idxmax()
+            scores = np.array(df_group.loc[selected_indices,]["f_best"])
+            if len(scores) < 0.75*nseeds:
+                continue
+            x.append(step)
+            mean, lower, upper = bootstrap_mean_and_confiance_interval(scores)
+            y_mean.append(mean)
+            y_lower.append(lower)
+            y_upper.append(upper)
+
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=legend_label)
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+
+
+    plt.xlabel("step")
+    plt.ylabel("objective value")
+    plt.annotate(framework_name, (0.05, 0.9), xycoords='axes fraction')  # Add level to each plot
+
+    if "evogym" in figpath:
+        plt.legend()
+    plt.tight_layout()
+    plt.savefig(figpath + f"/one_phase_vs_2_phase_{plotname}.pdf")
+    plt.close()
+
+
+
+
+def _plot_exp2_performance(framework_name, plotname, df_in: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
 
     print(param)
     assert param in ["quantity_param", "length_param"]
-    assert scorelevel in ["reeval", "no_reeval"]
+    assert scorelevel in ["reeval", "no_reeval"], "score_label= " + str(score_label)
 
     from NestedOptimization import Parameters
     max_steps = stopping_criterion
@@ -304,8 +345,8 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
 
 
     # Check how many steps where computed.
-    indices_with_highest_step = np.array(df.groupby(by="experiment_index")["step"].idxmax())
-    max_only_df = df.loc[indices_with_highest_step,]
+    indices_with_highest_step = np.array(df_in.groupby(by="experiment_index")["step"].idxmax())
+    max_only_df = df_in.loc[indices_with_highest_step,]
 
     ax = max_only_df.boxplot(by=[param], column="step")
 
@@ -315,9 +356,9 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     plt.close()
     
     if scorelevel == 'reeval':
-        df = df.query("level == '3'")
+        df_in = df_in.query("level == '3'")
     elif scorelevel == 'no_reeval':
-        df = df.query("level == '2'")
+        df_in = df_in.query("level == '2'")
     else:
         raise ValueError(f"scorelevel {scorelevel} not valid.")
 
@@ -325,12 +366,11 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     param_equal_1 = ["quantity_param", "length_param"]
     param_equal_1.remove(param)
     param_equal_1 = param_equal_1[0]
-    df = df[df[param_equal_1]==1.0]
+    df_in = df_in[df_in[param_equal_1]==1.0]
 
-    
     # Get the parameter values such that 1.0 is the first
-    quantity_param_values = sorted(list(df["quantity_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
-    length_param_values = sorted(list(df["length_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    quantity_param_values = sorted(list(df_in["quantity_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    length_param_values = sorted(list(df_in["length_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
 
     param_values = sorted(list(set(length_param_values + length_param_values)), key=lambda x: -float(x))
     print("param_values", param_values)
@@ -344,8 +384,13 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     step_slices = 100
     i=-1
     plt.figure(figsize=(4, 3))
-    for group_name, df_group in tqdm(sorted(df.groupby(param), key=lambda x: -float(x[0]))):
+    for group_name, df_group in tqdm(sorted(df_in.groupby(param), key=lambda x: -float(x[0]))):
+
+        if group_name == 0.75:
+            continue
+
         i+=1
+
 
         x = []
         y_mean = []
@@ -367,7 +412,10 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
 
         for step in np.linspace(0, max_steps, step_slices):
             step = int(step)
-            selected_indices = df_group[df_group[resources] < step].groupby("seed")[resources].idxmax()
+
+            # No reevaluation required when default parameters are considered, as it is single phase
+            # and reevaluation returns the same value
+            selected_indices = df_group[df_group[resources] < step].groupby("seed")[resources if group_name != 1.0 else "step"].idxmax()
             scores = np.array(df_group.loc[selected_indices,][score_label])
             if len(scores) < 0.75*nseeds:
                 continue
@@ -377,7 +425,9 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
             y_lower.append(lower)
             y_upper.append(upper)
 
-        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=group_name)
+
+
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/10, label=f"reduced {legendtitle}, {group_name}" if group_name != 1.0 else "single phase, standard")
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
 
     # for quantity_param, marker in zip(quantity_param_values[1:], marker_list[1:]):
@@ -386,7 +436,13 @@ def _plot_performance(plotname, df: pd.DataFrame, figpath, scorelevel, param, sc
     # for length_param, linestyle in zip(length_param_values[1:], linestyle_list[1:]):
     #     plt.plot([],[],label=f"length_param = {length_param}", linestyle=linestyle,color="black")
     # plt.xscale("log")
-    plt.legend(title=legendtitle)
+    if "evogym" in figpath:
+        plt.legend()
+
+    plt.xlabel("step")
+    plt.ylabel("objective value")
+    plt.annotate(framework_name, (0.05, 0.9), xycoords='axes fraction')  # Add level to each plot
+
     plt.tight_layout()
     plt.savefig(figpath + f"/performance_{plotname}.pdf")
     plt.close()
@@ -647,9 +703,20 @@ def plot_proposedmethod(data_dir, fig_dir):
 
 
 
-def plot_comparison_parameters(data_dir, fig_dir):
+def plot_comparison_parameters(framework_name, data_dir, fig_dir):
 
     df = read_comparison_parameter_csvs(data_dir)
+    
+    # Experiment 1
+    _plot_exp1_two_phase_vs_one_phase(framework_name, df, fig_dir)
+
+    # Experiment 2
+    for param in ["quantity_param", "length_param"]:
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_reevalend",   df.copy(), fig_dir, "reeval", param, "f", "step_reeval_end")
+
+
+
+    exit(0)
     _plot_performance_reeval_every_best_vs_end("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "quantity_param")
     
     _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "quantity_param")
@@ -657,13 +724,13 @@ def plot_comparison_parameters(data_dir, fig_dir):
 
 
 
-    for param, param_preffix in zip(["quantity_param", "length_param"], ["quantity", "length"]):
-        _plot_performance(f"{param_preffix}_reevalend",      df.copy(), fig_dir, "reeval",    param, "f", "step")
-        _plot_performance(f"{param_preffix}_reevalbest",     df.copy(), fig_dir, "reeval",    param, "f_best", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_noreeval",       df.copy(), fig_dir, "no_reeval", param, "f_best", "step")
-        _plot_performance(f"{param_preffix}_controllersize", df.copy(), fig_dir, "reeval",    param, "controller_size", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_controllersize2",df.copy(), fig_dir, "reeval",    param, "controller_size2", "step_including_reeval")
-        _plot_performance(f"{param_preffix}_morphologysize", df.copy(), fig_dir, "reeval",    param, "morphology_size", "step_including_reeval")
+    for param in ["quantity_param", "length_param"]:
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_reevalend",      df.copy(), fig_dir, "reeval",    param, "f", "step")
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_reevalbest",     df.copy(), fig_dir, "reeval",    param, "f_best", "step_including_reeval")
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_noreeval",       df.copy(), fig_dir, "no_reeval", param, "f_best", "step")
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_controllersize", df.copy(), fig_dir, "reeval",    param, "controller_size", "step_including_reeval")
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_controllersize2",df.copy(), fig_dir, "reeval",    param, "controller_size2", "step_including_reeval")
+        _plot_exp2_performance(framework_name, f"{param[:-6]}_morphologysize", df.copy(), fig_dir, "reeval",    param, "morphology_size", "step_including_reeval")
 
     _plot_stability(df.copy(), fig_dir)
     for complexity_metric in ["controller_size", "controller_size2", "morphology_size"]:
@@ -671,7 +738,6 @@ def plot_comparison_parameters(data_dir, fig_dir):
 
 
 
-    
 
 
 
