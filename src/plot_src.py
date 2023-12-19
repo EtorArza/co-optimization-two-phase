@@ -45,7 +45,7 @@ def translate_to_plot_labels(param, experiment_name):
 
 marker_list = ["","o","x","s","d","2","^","*"]
 linestyle_list = ["-","--","-.", ":",(0, (3, 5, 1, 5, 1, 5)),(5, (10, 3)), (0, (3, 1, 1, 1))]
-color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+color_list = ['#000004', "#414487","#2a788e","#22a884","#7ad151","#fde725"]
 
 def bootstrap_mean_and_confiance_interval(data,bootstrap_iterations=2000):
     mean_list=[]
@@ -129,7 +129,7 @@ def read_comparison_parameter_csvs(csv_folder_path):
     return df
 
 
-def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, figpath, param):
+def _plot_probability_of_choosing_best_morphology(framework_name, plotname, df:pd.DataFrame, figpath, param):
     from NestedOptimization import Parameters
     max_steps = Parameters("evogym",0).max_frames
     nseeds = Parameters("evogym",0).nseeds
@@ -145,8 +145,10 @@ def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, fig
     param_equal_1 = param_equal_1[0]
 
 
-    param_values_list = list(sorted(df[param].unique(), reverse=True))
-    for param_idx, param_value in enumerate(tqdm(param_values_list)):
+    param_values = list(sorted(df[param].unique(), reverse=True))
+    param_values = [el for el in param_values if el != 0.75 and el != 1.0]
+    plt.figure(figsize=(4, 3))
+    for param_idx, param_value in enumerate(tqdm(param_values)):
 
 
 
@@ -167,24 +169,30 @@ def _plot_probability_of_choosing_best_morphology(plotname, df:pd.DataFrame, fig
         y = np.nan_to_num(y,copy=True,nan=0)
         y_mean, y_lower, y_upper = np.apply_along_axis(bootstrap_mean_and_confiance_interval, 0, y)
         
-        marker = marker_list[param_idx]
-        color = color_list[param_idx]
+        marker = marker_list[param_idx+1]
+        color = color_list[param_idx+1]
+        linestyle = linestyle_list[param_idx+1]
 
-        plt.plot(x, y_mean, color=color, marker=marker, markevery=1/10, label=f"{param_value}")
+        plt.plot(x, y_mean, color=color, marker=marker, linestyle=linestyle, markevery=1/4, label=f"reduced quantity, {param_value}")
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color)
-    plt.axhline(0, color="black", linestyle="--")
+    # plt.axhline(0, color="gray", linestyle="--", linewidth=0.5)
+    # plt.axhline(1, color="gray", linestyle="--", linewidth=0.5)
+
+    plt.ylim((0,1))
+    plt.annotate(framework_name, (0.4, 0.93), xycoords='axes fraction')  # Add level to each plot
+    if "Evogym" in framework_name:
+        plt.legend()
     plt.ylabel("Probability of identifying best")
     plt.xlabel("steps")
-    plt.legend(title=param_name)
-    plt.title(plotname)
-    plt.text(1,-3,"Explaination")
+
+    plt.tight_layout()
     plt.savefig(figpath + f"/{plotname}.pdf")
     plt.close()
 
 
 
 # Compare reevaluating every best solution vs reevaluating at the end.
-def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpath, param):
+def _plot_performance_reeval_every_best_vs_end(framework_name, plotname, df:pd.DataFrame, figpath, param):
 
     from NestedOptimization import Parameters
     max_steps = stopping_criterion
@@ -203,7 +211,11 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
 
 
     plt.figure(figsize=(4, 3))
-    for param_idx, param_value in enumerate(sorted(df3[param].unique(), reverse=True)):
+
+    param_values = sorted(df3[param].unique(), reverse=True)
+    param_values = [el for el in param_values if el != 0.75 and el != 1.0]
+
+    for param_idx, param_value in enumerate(param_values):
 
 
 
@@ -213,7 +225,6 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
         y *= np.nan
 
 
-        print("Add the runtime that reevaluating at the end takes, which is not otherwise taken into account.")
         for seed in range(2,2+nseeds):
             df_reeval_end   = df3.query(f"step < {max_steps}                  and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
             df_reeval_every = df3.query(f"step_including_reeval < {max_steps} and {param} == {param_value} and {param_equal_1} == 1.0 and level == '3' and seed == {seed}")
@@ -225,18 +236,16 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
             indx_first_lvl_3 = df3.query(f"level == '3' and seed == {seed}").index[0]
 
 
-            difference = df.loc[indx_first_lvl_3, 'step_including_reeval'] - df.loc[indx_first_lvl_3 - 1, 'step_including_reeval']
-            raise ValueError("variable difference is not used. Check this code to make sure that the reevaluation of the best is taken into account.")
 
             for i, step in enumerate(x):
-                if df_reeval_end[df_reeval_end["step"] < step]["step"].size == 0:
+                if df_reeval_end[df_reeval_end["step_reeval_end"] < step]["step_reeval_end"].size == 0:
                     continue
                 if df_reeval_every[df_reeval_every["step_including_reeval"] < step]["step_including_reeval"].size == 0:
                     continue
                 
 
 
-                idx_end = df_reeval_end[df_reeval_end["step"] < step]["step"].idxmax()
+                idx_end = df_reeval_end[df_reeval_end["step_reeval_end"] < step]["step_reeval_end"].idxmax()
                 idx_every = df_reeval_every[df_reeval_every["step_including_reeval"] < step]["step_including_reeval"].idxmax()
 
                 y[(seed-2,i)] = df_reeval_every.loc[idx_every,]["f_best"] - df_reeval_end.loc[idx_end,]["f"]
@@ -244,18 +253,28 @@ def _plot_performance_reeval_every_best_vs_end(plotname, df:pd.DataFrame, figpat
         y = np.nan_to_num(y,copy=True,nan=0)
         y_mean, y_lower, y_upper = np.apply_along_axis(bootstrap_mean_and_confiance_interval, 0, y)
         
-        marker = marker_list[param_idx]
-        color = color_list[param_idx]
+        marker = marker_list[param_idx+1]
+        color = color_list[param_idx+1]
+        linestyle = linestyle_list[param_idx+1]
 
-        plt.plot(x, y_mean, color=color, marker=marker, markevery=1/10, label=f"{param_value}")
+        plt.plot(x, y_mean, color=color, marker=marker, linestyle=linestyle, markevery=1/4, label=f"reduced quantity, {param_value}")
         plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color)
-    plt.axhline(0, color="black", linestyle="--")
-    plt.ylabel("- reevaluate_end              + reevaluate_every_new_best")
-    plt.xlabel("steps")
-    plt.legend(title=param_name)
-    plt.title("Reeval every new best - reevaluate end")
-    # plt.text(1,-3,"quantity = 1.0 is in the negative side, because with \n reevaluate every we waste time\n reevaluating with no benefit.")
-    # plt.show()
+
+    ylim_max = max(abs(plt.ylim()[0]), abs(plt.ylim()[1]))
+    plt.ylim((-ylim_max, ylim_max))
+    # import code; code.interact(local=locals()) # Start interactive shell for debug debugging
+
+
+    plt.axhline(0, color="gray", linestyle="--", linewidth=0.5)
+    plt.xlabel("step")
+    plt.ylabel("difference in objective value")
+    plt.annotate(framework_name, (0.05, 0.9), xycoords='axes fraction')  # Add level to each plot
+
+    if "Evogym" in framework_name:
+        plt.legend()
+
+
+    # plt.title("Reeval every new best - reevaluate end")
     plt.tight_layout()
     plt.savefig(figpath + f"/{plotname}.pdf")
     plt.close()
@@ -715,12 +734,13 @@ def plot_comparison_parameters(framework_name, data_dir, fig_dir):
         _plot_exp2_performance(framework_name, f"{param[:-6]}_reevalend",   df.copy(), fig_dir, "reeval", param, "f", "step_reeval_end")
 
 
+    # Experiment 3
+    _plot_performance_reeval_every_best_vs_end(framework_name, "compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "quantity_param")
+    _plot_probability_of_choosing_best_morphology(framework_name, "probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "quantity_param")
+
 
     exit(0)
-    _plot_performance_reeval_every_best_vs_end("compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "quantity_param")
     
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "quantity_param")
-    _plot_probability_of_choosing_best_morphology("probability_reevaluated_morphology_beats_previous_best_length", df.copy(), fig_dir, "length_param")
 
 
 
