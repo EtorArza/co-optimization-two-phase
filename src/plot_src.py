@@ -467,6 +467,125 @@ def _plot_exp2_performance(framework_name, plotname, df_in: pd.DataFrame, figpat
     plt.close()
 
 
+
+
+
+def _plot_exp4_size(framework_name, plotname, df_in: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
+
+    print(param)
+    assert param in ["quantity_param", "length_param"]
+    assert scorelevel in ["reeval", "no_reeval"], "score_label= " + str(score_label)
+
+    from NestedOptimization import Parameters
+    max_steps = stopping_criterion
+    nseeds = Parameters("evogym",0).nseeds
+
+
+    # Check how many steps where computed.
+    indices_with_highest_step = np.array(df_in.groupby(by="experiment_index")["step"].idxmax())
+    max_only_df = df_in.loc[indices_with_highest_step,]
+
+    ax = max_only_df.boxplot(by=[param], column="step")
+
+    ax.set_title("")
+    ax.set_ylabel("step")
+    plt.savefig(figpath + f"/number_of_steps_{param}.pdf")
+    plt.close()
+    
+    if scorelevel == 'reeval':
+        df_in = df_in.query("level == '3'")
+        raise ValueError("We are working with single phase algorithms, hence we assume no retraining and level=2")
+    elif scorelevel == 'no_reeval':
+        df_in = df_in.query("level == '2'")
+    else:
+        raise ValueError(f"scorelevel {scorelevel} not valid.")
+
+    # Remove all ocurrences in which param_equal_1 parameter is not 1.0
+    param_equal_1 = ["quantity_param", "length_param"]
+    param_equal_1.remove(param)
+    param_equal_1 = param_equal_1[0]
+    df_in = df_in[df_in[param_equal_1]==1.0]
+
+    # Get the parameter values such that 1.0 is the first
+    quantity_param_values = sorted(list(df_in["quantity_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+    length_param_values = sorted(list(df_in["length_param"].unique()), key=lambda x: -4*float(x) + 2*float(x)*float(x))
+
+    param_values = sorted(list(set(length_param_values + length_param_values)), key=lambda x: -float(x))
+    print("param_values", param_values)
+    assert len(quantity_param_values) == 1 or len(length_param_values) == 1
+
+    legendtitle = {
+        "quantity_param":"quantity",
+        "length_param":"length",
+    }[param]
+
+    step_slices = 100
+    i=-1
+    plt.figure(figsize=(4, 3) if "evogym" not in figpath else (4, 4.04))
+    for group_name, df_group in tqdm(sorted(df_in.groupby(param), key=lambda x: -float(x[0]))):
+
+        if group_name == 0.75:
+            continue
+
+        i+=1
+
+
+        x = []
+        y_mean = []
+        y_lower = []
+        y_upper = []
+
+
+        marker = marker_list[i]
+        linestyle = linestyle_list[i]
+        color = color_list[i]
+
+        df_group = df_group.reset_index()
+
+        # base = 10
+        # start = 0
+        # end = np.log10(max_steps)
+        # for step in np.logspace(start=start, stop=end, base=base, num=step_slices):
+
+
+        for step in np.linspace(0, max_steps, step_slices):
+            step = int(step)
+
+            # As all algorithms are single phase, we consider the design with best fitness
+            # in level 2 that has less than a certain number of steps
+            selected_indices = df_group[df_group[resources] < step].groupby("seed")["f"].idxmax()
+            scores = np.array(df_group.loc[selected_indices,][score_label])
+            if len(scores) < 0.75*nseeds:
+                continue
+            x.append(step)
+            mean, lower, upper = bootstrap_mean_and_confiance_interval(scores)
+            y_mean.append(mean)
+            y_lower.append(lower)
+            y_upper.append(upper)
+
+
+
+        plt.plot(x, y_mean, color=color, linestyle=linestyle, marker=marker, markevery=1/4, label=f"single phase, reduced quantity {group_name}" if group_name != 1.0 else "single phase, standard")
+        plt.fill_between(x, y_lower, y_upper, alpha=0.1, color=color, linestyle=linestyle)
+
+    # for quantity_param, marker in zip(quantity_param_values[1:], marker_list[1:]):
+    #     plt.plot([],[],label=f"quantity_param = {quantity_param}", marker=marker, color="black")
+
+    # for length_param, linestyle in zip(length_param_values[1:], linestyle_list[1:]):
+    #     plt.plot([],[],label=f"length_param = {length_param}", linestyle=linestyle,color="black")
+    # plt.xscale("log")
+    if "evogym" in figpath:
+        plt.legend(bbox_to_anchor=(0, 1.05, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=1)
+
+
+    plt.xlabel("step")
+    plt.ylabel("design complexity")
+    plt.annotate(framework_name, (0.05, 0.9), xycoords='axes fraction')  # Add level to each plot
+
+    plt.tight_layout()
+    plt.savefig(figpath + f"/performance_{plotname}.pdf")
+    plt.close()
+
 def _plot_stability(df: pd.DataFrame, figpath):
 
     for fitness_metric in ["f", "f_best"]:
@@ -737,6 +856,12 @@ def plot_comparison_parameters(framework_name, data_dir, fig_dir):
     # Experiment 3
     _plot_performance_reeval_every_best_vs_end(framework_name, "compare_reeval_every_minus_end_quantity", df.copy(), fig_dir, "quantity_param")
     _plot_probability_of_choosing_best_morphology(framework_name, "probability_reevaluated_morphology_beats_previous_best_quantity", df.copy(), fig_dir, "quantity_param")
+
+
+    # Experiment 4
+    _plot_exp4_size(framework_name, f"quantity_controllersize", df.copy(), fig_dir, "no_reeval", "quantity_param", "controller_size", "step")
+    _plot_exp4_size(framework_name, f"quantity_controllersize2",df.copy(), fig_dir, "no_reeval", "quantity_param", "controller_size2", "step")
+    _plot_exp4_size(framework_name, f"quantity_morphologysize", df.copy(), fig_dir, "no_reeval", "quantity_param", "morphology_size", "step")
 
 
     exit(0)
