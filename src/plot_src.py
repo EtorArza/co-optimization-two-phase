@@ -165,7 +165,7 @@ def _plot_probability_of_choosing_best_morphology(framework_name, plotname, df:p
                     continue
                 idx_end = int(df_reeval_end[df_reeval_end["step"] < step]["step"].idxmax())
                 row = df_reeval_end.loc[int(idx_end),][["step","f_best","f"]]
-                y[(seed-2,i)] = int(row["f"] == row["f_best"])
+                y[(seed-2,i)] = int(row["f"] == row["f_best"]) # if latest "best" design was really the best design or not 
         y = np.nan_to_num(y,copy=True,nan=0)
         y_mean, y_lower, y_upper = np.apply_along_axis(bootstrap_mean_and_confiance_interval, 0, y)
         
@@ -355,6 +355,13 @@ def _plot_exp1_two_phase_vs_one_phase(framework_name, df: pd.DataFrame, figpath)
 def _plot_exp2_performance(framework_name, plotname, df_in: pd.DataFrame, figpath, scorelevel, param, score_label, resources):
 
     print(param)
+    custom_ylims = {
+        "Evogym":(3, 10),
+        "Robogrammar":(4, 6),
+        "gym_rem2d":(6, 11.5),
+        "Jørgen's modular robots":(0.1, 0.5),
+    }
+
     assert param in ["quantity_param", "length_param"]
     assert scorelevel in ["reeval", "no_reeval"], "score_label= " + str(score_label)
 
@@ -460,6 +467,7 @@ def _plot_exp2_performance(framework_name, plotname, df_in: pd.DataFrame, figpat
 
     plt.xlabel("step")
     plt.ylabel("objective value")
+    plt.ylim(custom_ylims[framework_name])
     plt.annotate(framework_name, (0.05, 0.9), xycoords='axes fraction')  # Add level to each plot
 
     plt.tight_layout()
