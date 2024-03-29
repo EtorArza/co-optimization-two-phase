@@ -1,9 +1,15 @@
 source venv/bin/activate
 
+python --version
+which python
+sleep 2
+
 python src/jorgenrem_experiment.py --plot &
 python src/evogym_experiment.py --plot &
 python src/robogrammar_experiment.py --plot &
 python src/gymrem2d_experiment.py --plot &
+python src/jorgenrem_experiment.py --plot_tune &
+python src/gymrem2d_experiment.py --plot_tune &
 
 
 wait

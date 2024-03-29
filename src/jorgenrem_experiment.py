@@ -129,7 +129,7 @@ elif sys.argv[1] == "--plot_tune":
     plot_tune("results/jorgenrem/data", "results/jorgenrem/figures")
 
 elif sys.argv[1] == "--plot":
-    df = plot_comparison_parameters("Jørgen's modular robots", "results/jorgenrem/data", "results/jorgenrem/figures")
+    df = plot_comparison_parameters("gym-rem", "results/jorgenrem/data", "results/jorgenrem/figures")
 
 else:
     raise ValueError(f"Argument {sys.argv[1]} not recognized.")

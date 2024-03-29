@@ -302,7 +302,7 @@ def _plot_exp1_two_phase_vs_one_phase(framework_name, df: pd.DataFrame, figpath)
 
     i = -1
     plt.figure(figsize=(4, 3))
-    for legend_label, param_value, level, res_column in zip(["single phase, standard", "single phase, reduced quantity", "two phase"], ["1.0", "0.25", "0.25"], ["2","2","3"], ["step", "step", "step_reeval_end"]):
+    for legend_label, param_value, level, res_column in zip(["single phase, standard", "single phase, reduced quantity", "two phase, retrain end"], ["1.0", "0.25", "0.25"], ["2","2","3"], ["step", "step", "step_reeval_end"]):
         i+=1
 
         x = []
@@ -358,8 +358,8 @@ def _plot_exp2_performance(framework_name, plotname, df_in: pd.DataFrame, figpat
     custom_ylims = {
         "Evogym":(3, 10),
         "Robogrammar":(4, 6),
-        "gym_rem2d":(6, 11.5),
-        "Jørgen's modular robots":(0.1, 0.5),
+        "gym-rem 2d":(6, 11.5),
+        "gym-rem":(0.1, 0.5),
     }
 
     assert param in ["quantity_param", "length_param"]
@@ -712,7 +712,8 @@ def plot_tune(data_dir, fig_dir):
     def set_axis_style(ax, labels):
         ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
         ax.set_xlim(0.25, len(labels) + 0.75)
-        ax.set_xlabel('Controllers evaluated per morphology')
+        ax.set_xlabel('controllers evaluated per morphology')
+        ax.set_ylabel('objective value')
 
     plt.figure(figsize=(4, 3))
     boxplot = plt.boxplot([df[df.innerquantity == el]["f"].values for el in inner_quantity_list], showmeans=True)
