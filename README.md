@@ -20,10 +20,8 @@ The project integrates with the following robotic simulation frameworks:
 
 - Python 3.7 (required for compatibility with some frameworks)
 - CMake 3.20+
-- CUDA-compatible GPU (optional, but recommended)
 - Ubuntu 18.04 or later
 - Various OpenGL libraries (see `setup.sh`)
-
 ### Key Python Dependencies
 
 - PyTorch 1.12.0
